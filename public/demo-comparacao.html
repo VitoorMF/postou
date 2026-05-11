@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Comparação — opções de demo</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a0a0c;
+    color: #e0e0e0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    padding: 60px 32px;
+    line-height: 1.5;
+  }
+  h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; letter-spacing: -0.5px; }
+  .subtitle { color: #888; font-size: 16px; margin-bottom: 60px; }
+
+  .section { margin-bottom: 80px; }
+  .section-num {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(65,105,225,0.12);
+    color: #6e8df0;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+  }
+  .section h2 { font-size: 24px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
+  .section .desc { color: #888; font-size: 14.5px; margin-bottom: 28px; max-width: 640px; }
+
+  .verdict {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-left: 8px;
+  }
+  .verdict.bad { background: rgba(244,67,54,0.15); color: #ff6b6b; }
+  .verdict.ok { background: rgba(255,193,7,0.15); color: #ffc107; }
+  .verdict.good { background: rgba(76,175,80,0.15); color: #4caf50; }
+
+  .demo-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    align-items: start;
+  }
+  .demo-col { }
+  .demo-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #555;
+    letter-spacing: 1.5px;
+    margin-bottom: 12px;
+  }
+
+  /* === Mock laptop === */
+  .laptop {
+    background: #1c1c1c;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px 14px 4px 4px;
+    padding: 12px 12px 0 12px;
+    position: relative;
+  }
+  .laptop::after {
+    content: "";
+    position: absolute;
+    bottom: -8px; left: -10%; right: -10%;
+    height: 8px;
+    background: linear-gradient(180deg, #2a2a2a, #0e0e10);
+    border-radius: 0 0 50% 50% / 0 0 100% 100%;
+  }
+  .laptop-screen {
+    background: #0a0a0c;
+    border-radius: 6px;
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* === Mock phone === */
+  .phone {
+    background: #1c1c1c;
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 28px;
+    padding: 10px;
+    width: 200px;
+    box-shadow: 0 0 0 6px #1a1a1c;
+  }
+  .phone-screen {
+    background: #0a0a0c;
+    border-radius: 20px;
+    aspect-ratio: 9/19;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* === Fake content inside screens === */
+  .fake-app {
+    background: linear-gradient(160deg, #2952B3, #1A3580);
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255,255,255,0.6);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .play-icon {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(10px);
+  }
+  .play-icon::after {
+    content: "";
+    width: 0; height: 0;
+    border-left: 14px solid #fff;
+    border-top: 9px solid transparent;
+    border-bottom: 9px solid transparent;
+    margin-left: 4px;
+  }
+
+  /* === Side-by-side scene === */
+  .side-by-side {
+    display: flex;
+    align-items: flex-end;
+    gap: 24px;
+    background: #0e0e10;
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 32px;
+  }
+  .side-by-side .laptop { flex: 1; max-width: 500px; }
+
+  /* === Mobile-only fullwidth === */
+  .mobile-fullwidth-video {
+    aspect-ratio: 9/16;
+    background: linear-gradient(160deg, #2952B3, #1A3580);
+    border-radius: 16px;
+    max-width: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .pros-cons {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    font-size: 13.5px;
+  }
+  .pros, .cons {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 10px;
+    padding: 12px 16px;
+  }
+  .pros-title { color: #4caf50; font-weight: 700; margin-bottom: 6px; font-size: 12px; letter-spacing: 0.5px; }
+  .cons-title { color: #ff6b6b; font-weight: 700; margin-bottom: 6px; font-size: 12px; letter-spacing: 0.5px; }
+  .pros li, .cons li { list-style: none; padding: 3px 0; color: #aaa; }
+  .pros li::before { content: "✓ "; color: #4caf50; }
+  .cons li::before { content: "✗ "; color: #ff6b6b; }
+</style>
+</head>
+<body>
+
+<h1>Comparação — opções de demo da landing</h1>
+<p class="subtitle">3 abordagens visualizadas lado a lado.</p>
+
+<!-- ============ OPÇÃO A ============ -->
+<div class="section">
+  <span class="section-num">OPÇÃO A</span>
+  <h2>
+    Laptop + celular sincronizados
+    <span class="verdict bad">Desencorajada</span>
+  </h2>
+  <p class="desc">Os dois devices aparecem juntos, sincronizados, em qualquer viewport.</p>
+
+  <div class="demo-row" style="grid-template-columns: 1fr;">
+    <div class="demo-col">
+      <div class="demo-label">DESKTOP — visualização</div>
+      <div class="side-by-side">
+        <div class="laptop">
+          <div class="laptop-screen">
+            <div class="fake-app"><div class="play-icon"></div></div>
+          </div>
+        </div>
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="fake-app" style="font-size: 11px;"><div class="play-icon" style="width:32px;height:32px"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons">
+    <div class="pros">
+      <div class="pros-title">PRÓS</div>
+      <li>Sinaliza "disponível em qualquer lugar"</li>
+      <li>Visualmente impactante quando bem feito</li>
+    </div>
+    <div class="cons">
+      <div class="cons-title">CONTRAS</div>
+      <li>Atenção dividida — olho não sabe onde focar</li>
+      <li>Sincronização perfeita é difícil de produzir</li>
+      <li>Precisa altíssima produção pra não parecer cheap</li>
+    </div>
+  </div>
+</div>
+
+<!-- ============ OPÇÃO B ============ -->
+<div class="section">
+  <span class="section-num">OPÇÃO B</span>
+  <h2>
+    Mock conforme viewport (simétrico)
+    <span class="verdict ok">OK, mas redundante no mobile</span>
+  </h2>
+  <p class="desc">Desktop vê laptop. Mobile vê celular. Cada viewport vê o seu mock.</p>
+
+  <div class="demo-row">
+    <div class="demo-col">
+      <div class="demo-label">DESKTOP</div>
+      <div class="laptop">
+        <div class="laptop-screen">
+          <div class="fake-app"><div class="play-icon"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="demo-col">
+      <div class="demo-label">MOBILE (visto no celular)</div>
+      <div style="display:flex;justify-content:center;padding:20px;background:#0e0e10;border:1px solid rgba(255,255,255,0.06);border-radius:16px;">
+        <div class="phone">
+          <div class="phone-screen">
+            <div class="fake-app" style="font-size:11px;"><div class="play-icon" style="width:32px;height:32px"></div></div>
+          </div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:#666;margin-top:10px;font-style:italic;">⚠ Meta-confuso: usuário JÁ tá no celular, mostrar celular dentro do site é redundante. Como uma TV dentro de uma TV.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ OPÇÃO C ============ -->
+<div class="section">
+  <span class="section-num">OPÇÃO C — recomendada</span>
+  <h2>
+    Mock assimétrico (laptop só no desktop)
+    <span class="verdict good">Mais elegante</span>
+  </h2>
+  <p class="desc">Desktop: vídeo dentro do laptop (cria ressonância "é exatamente assim que vou usar"). Mobile: vídeo fullwidth, sem mock (o celular já é o "mock").</p>
+
+  <div class="demo-row">
+    <div class="demo-col">
+      <div class="demo-label">DESKTOP</div>
+      <div class="laptop">
+        <div class="laptop-screen">
+          <div class="fake-app"><div class="play-icon"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="demo-col">
+      <div class="demo-label">MOBILE (visto no celular)</div>
+      <div style="display:flex;justify-content:center;padding:20px;background:#0e0e10;border:1px solid rgba(255,255,255,0.06);border-radius:16px;">
+        <div class="mobile-fullwidth-video">
+          <div class="play-icon"></div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:#4caf50;margin-top:10px;font-style:italic;">✓ Sem mock. O celular físico do usuário já é o mock. Vídeo ocupa a tela toda.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ OPÇÃO D ============ -->
+<div class="section">
+  <span class="section-num">OPÇÃO D — mínima viável</span>
+  <h2>
+    Sem mock nenhum, só o vídeo cru
+    <span class="verdict good">Ship primeiro, polir depois</span>
+  </h2>
+  <p class="desc">Click "Ver demonstração" abre modal com vídeo 16:9. Estilo Linear, Vercel, Notion. Zero molde, zero polish, foco total no produto.</p>
+
+  <div class="demo-row" style="grid-template-columns: 1fr;">
+    <div class="demo-col">
+      <div class="demo-label">QUALQUER VIEWPORT</div>
+      <div style="background:#0e0e10;border:1px solid rgba(255,255,255,0.06);border-radius:16px;padding:32px;display:flex;justify-content:center;">
+        <div style="aspect-ratio:16/9;width:100%;max-width:640px;background:linear-gradient(160deg,#2952B3,#1A3580);border-radius:12px;display:flex;align-items:center;justify-content:center;">
+          <div class="play-icon"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pros-cons">
+    <div class="pros">
+      <div class="pros-title">PRÓS</div>
+      <li>Ship em 1-2h</li>
+      <li>Foco total no produto</li>
+      <li>Mais fácil de medir conversão</li>
+      <li>Padrão da indústria (Linear, Vercel)</li>
+    </div>
+    <div class="cons">
+      <div class="cons-title">CONTRAS</div>
+      <li>Menos "wow"</li>
+      <li>Não diferencia visualmente</li>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top: 80px; padding: 24px; border: 1px solid rgba(65,105,225,0.3); background: rgba(65,105,225,0.04); border-radius: 14px;">
+  <h3 style="color: #6e8df0; font-size: 18px; margin-bottom: 10px;">Recomendação</h3>
+  <p style="color: #ccc; font-size: 14.5px; line-height: 1.6;">
+    Começa com <b>Opção D</b> (sem mock). Grava o vídeo, plugga em modal. Lança. Se a taxa de cliques no botão "Ver demonstração" for boa e tempo médio assistindo > 30s, evolui pra <b>Opção C</b> (assimétrico).
+    <br/><br/>
+    A escolha entre B/C/D não muda quase nada na conversão se o <b>vídeo for ruim</b>. Investe primeiro no conteúdo do vídeo, depois no envelope visual.
+  </p>
+</div>
+
+</body>
+</html>
