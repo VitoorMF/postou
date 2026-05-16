@@ -107,101 +107,102 @@ export default function Settings() {
       <div className="flex-1 overflow-y-auto w-full">
         <div className="px-4 md:px-8 flex flex-col gap-6 pb-4 max-w-4xl mx-auto w-full">
 
-        <div className="flex flex-col gap-2">
-          {[
-            { href: "/settings/brand-kit", label: "Brand kit", sub: "Logotipo, paleta, tipografia e tom de voz" },
-            { href: "/settings/plans", label: "Planos", sub: "Trial · 6 dias restantes" },
-          ].map(({ href, label, sub }) => (
-            <Link key={href} href={href} className="bg-[#1c1c1c] rounded-2xl p-4 flex items-center justify-between">
-              <div>
-                <p className="text-base font-medium">{label}</p>
-                <p className="text-sm text-[#888079]">{sub}</p>
-              </div>
-              <svg width="16" height="16" fill="none" stroke="#888079" strokeWidth="2" viewBox="0 0 24 24">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </Link>
-          ))}
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-semibold text-[#555] tracking-widest">O QUE GERAR</p>
-          <div className="bg-[#1c1c1c] rounded-2xl divide-y divide-[#2a2a2a]">
+          <div className="flex flex-col gap-2">
             {[
-              { key: "carrossel", label: "Carrossel", sub: "9 slides sobre o principal evento do dia" },
-              { key: "post", label: "Post", sub: "1 imagem de destaque ou conquista" },
-              { key: "story", label: "Story", sub: "1 imagem vertical para stories" },
-            ].map(({ key, label, sub }) => (
-              <div key={key} className="flex items-center justify-between p-4 gap-4">
+              { href: "/settings/brand-kit", label: "Brand kit", sub: "Logotipo, paleta, tipografia e tom de voz" },
+              { href: "/settings/plans", label: "Planos", sub: "Trial · 6 dias restantes" },
+              { href: "/settings/whatsapp", label: "WhatsApp", sub: "Configurações do WhatsApp" },
+            ].map(({ href, label, sub }) => (
+              <Link key={href} href={href} className="bg-[#1c1c1c] rounded-2xl p-4 flex items-center justify-between">
                 <div>
                   <p className="text-base font-medium">{label}</p>
                   <p className="text-sm text-[#888079]">{sub}</p>
                 </div>
-                <Toggle
-                  enabled={loaded && postTypes.includes(key)}
-                  onChange={() => toggleType(key)}
-                />
-              </div>
+                <svg width="16" height="16" fill="none" stroke="#888079" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </Link>
             ))}
           </div>
-        </div>
 
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-semibold text-[#555] tracking-widest">HORÁRIO DE ENTREGA</p>
-          <div className="bg-[#1c1c1c] rounded-2xl overflow-hidden">
-            <button
-              onClick={() => setShowTimePicker(!showTimePicker)}
-              className="w-full p-4 flex items-center justify-between"
-            >
-              <div className="text-left">
-                <p className="text-base font-medium">Gerar todo dia às</p>
-                <p className="text-sm text-[#888079]">Você recebe uma notificação quando ficar pronto</p>
-              </div>
-              <span className="text-2xl font-semibold text-[#137EFF] shrink-0">{deliveryTime}</span>
-            </button>
-            {showTimePicker && (
-              <div className="border-t border-[#2a2a2a] flex overflow-x-auto scrollbar-none px-4 pb-4 pt-3 gap-2">
-                {TIMES.map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => pickTime(t)}
-                    className={`shrink-0 px-4 h-9 rounded-full text-sm font-medium transition-colors ${deliveryTime === t ? "bg-[#137EFF] text-white" : "bg-[#2b2b2b] text-[#888079]"}`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2">
-          <p className="text-xs font-semibold text-[#555] tracking-widest">DIAS DA SEMANA</p>
-          <div className="bg-[#1c1c1c] rounded-2xl p-4 flex flex-col gap-3">
-            <p className="text-sm text-[#888079]">Gerar conteúdo somente nos dias selecionados</p>
-            <div className="flex gap-2">
-              {DAYS.map((day, i) => (
-                <button
-                  key={i}
-                  onClick={() => toggleDay(i)}
-                  className={`h-10 flex-1 rounded-full text-sm font-semibold transition-colors ${activeDays.includes(i) ? "bg-[#137EFF] text-white" : "bg-[#2b2b2b] text-[#888079]"}`}
-                >
-                  {day}
-                </button>
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold text-[#555] tracking-widest">O QUE GERAR</p>
+            <div className="bg-[#1c1c1c] rounded-2xl divide-y divide-[#2a2a2a]">
+              {[
+                { key: "carrossel", label: "Carrossel", sub: "9 slides sobre o principal evento do dia" },
+                { key: "post", label: "Post", sub: "1 imagem de destaque ou conquista" },
+                { key: "story", label: "Story", sub: "1 imagem vertical para stories" },
+              ].map(({ key, label, sub }) => (
+                <div key={key} className="flex items-center justify-between p-4 gap-4">
+                  <div>
+                    <p className="text-base font-medium">{label}</p>
+                    <p className="text-sm text-[#888079]">{sub}</p>
+                  </div>
+                  <Toggle
+                    enabled={loaded && postTypes.includes(key)}
+                    onChange={() => toggleType(key)}
+                  />
+                </div>
               ))}
             </div>
           </div>
-        </div>
 
-        <button
-          onClick={handleLogout}
-          className="w-full h-12 rounded-2xl bg-[#1c1c1c] text-[#888079] text-sm font-medium flex items-center justify-center gap-2 hover:text-red-400 transition-colors shrink-0"
-        >
-          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
-          </svg>
-          Sair da conta
-        </button>
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold text-[#555] tracking-widest">HORÁRIO DE ENTREGA</p>
+            <div className="bg-[#1c1c1c] rounded-2xl overflow-hidden">
+              <button
+                onClick={() => setShowTimePicker(!showTimePicker)}
+                className="w-full p-4 flex items-center justify-between"
+              >
+                <div className="text-left">
+                  <p className="text-base font-medium">Gerar todo dia às</p>
+                  <p className="text-sm text-[#888079]">Você recebe uma notificação quando ficar pronto</p>
+                </div>
+                <span className="text-2xl font-semibold text-[#137EFF] shrink-0">{deliveryTime}</span>
+              </button>
+              {showTimePicker && (
+                <div className="border-t border-[#2a2a2a] flex overflow-x-auto scrollbar-none px-4 pb-4 pt-3 gap-2">
+                  {TIMES.map((t) => (
+                    <button
+                      key={t}
+                      onClick={() => pickTime(t)}
+                      className={`shrink-0 px-4 h-9 rounded-full text-sm font-medium transition-colors ${deliveryTime === t ? "bg-[#137EFF] text-white" : "bg-[#2b2b2b] text-[#888079]"}`}
+                    >
+                      {t}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <p className="text-xs font-semibold text-[#555] tracking-widest">DIAS DA SEMANA</p>
+            <div className="bg-[#1c1c1c] rounded-2xl p-4 flex flex-col gap-3">
+              <p className="text-sm text-[#888079]">Gerar conteúdo somente nos dias selecionados</p>
+              <div className="flex gap-2">
+                {DAYS.map((day, i) => (
+                  <button
+                    key={i}
+                    onClick={() => toggleDay(i)}
+                    className={`h-10 flex-1 rounded-full text-sm font-semibold transition-colors ${activeDays.includes(i) ? "bg-[#137EFF] text-white" : "bg-[#2b2b2b] text-[#888079]"}`}
+                  >
+                    {day}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleLogout}
+            className="w-full h-12 rounded-2xl bg-[#1c1c1c] text-[#888079] text-sm font-medium flex items-center justify-center gap-2 hover:text-red-400 transition-colors shrink-0"
+          >
+            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+            </svg>
+            Sair da conta
+          </button>
 
         </div>
       </div>

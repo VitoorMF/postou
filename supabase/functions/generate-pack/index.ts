@@ -273,6 +273,55 @@ async function uploadImage(data: string, path: string): Promise<string | null> {
   return urlData.publicUrl;
 }
 
+// ─── WhatsApp delivery via Z-API ────────────────────────────────────────────
+
+function normalizePhone(input: string): string {
+  const digits = input.replace(/\D/g, "");
+  if (digits.startsWith("55")) return digits;
+  return `55${digits}`;
+}
+
+async function sendWhatsAppPack(
+  phone: string,
+  pack: { title: string; caption: string; cta: string | null; type: string },
+  imageUrl: string | null,
+) {
+  const instanceId = Deno.env.get("Z_API_INSTANCE_ID");
+  const token = Deno.env.get("Z_API_TOKEN");
+  const clientToken = Deno.env.get("Z_API_CLIENT_TOKEN");
+  if (!instanceId || !token) {
+    console.warn("Z-API credenciais ausentes — pulando envio WhatsApp");
+    return;
+  }
+
+  const base = `https://api.z-api.io/instances/${instanceId}/token/${token}`;
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (clientToken) headers["Client-Token"] = clientToken;
+
+  const normalized = normalizePhone(phone);
+  const caption = `*${pack.title}*\n\n${pack.caption}${pack.cta ? `\n\n➡️ ${pack.cta}` : ""}\n\n_— Postou_`;
+
+  try {
+    if (imageUrl) {
+      const res = await fetch(`${base}/send-image`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ phone: normalized, image: imageUrl, caption }),
+      });
+      if (!res.ok) console.error("Z-API send-image falhou:", await res.text());
+    } else {
+      const res = await fetch(`${base}/send-text`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ phone: normalized, message: caption }),
+      });
+      if (!res.ok) console.error("Z-API send-text falhou:", await res.text());
+    }
+  } catch (err) {
+    console.error("Erro envio WhatsApp:", err);
+  }
+}
+
 // ─── Handler ─────────────────────────────────────────────────────────────────
 
 Deno.serve(async (req) => {
@@ -285,7 +334,7 @@ Deno.serve(async (req) => {
 
   const { data: brandKit, error: kitError } = await supabaseAdmin
     .from("brand_kits")
-    .select("id, user_id, business_name, description, voice_tone, context, do_not_do, post_types, palette_hex, persona_urls, logo_url")
+    .select("id, user_id, business_name, description, voice_tone, context, do_not_do, post_types, palette_hex, persona_urls, logo_url, whatsapp_number, whatsapp_verified, whatsapp_delivery_enabled")
     .eq("id", brand_kit_id)
     .single();
 
@@ -387,6 +436,19 @@ Deno.serve(async (req) => {
 
     if (updates.length > 0) {
       await supabaseAdmin.from("updates").update({ used_in_pack_id: pack.id }).eq("id", updates[0].id);
+    }
+
+    // Entrega via WhatsApp se habilitado
+    if (
+      brandKit.whatsapp_delivery_enabled &&
+      brandKit.whatsapp_verified &&
+      brandKit.whatsapp_number
+    ) {
+      await sendWhatsAppPack(
+        brandKit.whatsapp_number as string,
+        { title: generated.title, caption: generated.caption, cta: generated.cta, type },
+        coverImageUrl,
+      );
     }
 
     results.push({ type, pack_id: pack.id });
