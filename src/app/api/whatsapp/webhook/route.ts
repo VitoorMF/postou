@@ -15,11 +15,18 @@ const VALID_FORMATS: Format[] = ["post", "story", "carrossel"];
 // dispara a Edge Function sem aguardar (pra não dar timeout no webhook)
 function fireGeneration(brandKitId: string, theme: string, format: Format) {
   const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-pack`;
+  // server-to-server: usa service role key (JWT válido)
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!key) {
+    console.error("SUPABASE_SERVICE_ROLE_KEY ausente");
+    return;
+  }
   fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+      Authorization: `Bearer ${key}`,
+      apikey: key,
     },
     body: JSON.stringify({
       brand_kit_id: brandKitId,
