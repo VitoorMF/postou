@@ -84,7 +84,8 @@ async function generateEmbedding(text: string): Promise<number[]> {
 async function generatePack(
   type: string,
   brandKit: Record<string, unknown>,
-  updates: { id: string; created_at: string; category: string; content: string }[]
+  updates: { id: string; created_at: string; category: string; content: string }[],
+  themeOverride?: string,
 ) {
   const updatesText = updates.length > 0
     ? updates.map((u) => {
@@ -92,6 +93,26 @@ async function generatePack(
         return `${date} — ${u.category}: ${u.content}`;
       }).join("\n")
     : "Nenhum update registrado. Baseie-se apenas na descrição da marca.";
+
+  const themeBlock = themeOverride
+    ? `\n[TEMA SOLICITADO PELO USUÁRIO]\n${themeOverride}\n`
+    : "";
+
+  const taskBlock = themeOverride
+    ? `Gere um ${type} para Instagram sobre o TEMA SOLICITADO acima.
+
+Regras obrigatórias:
+- O conteúdo deve girar em torno do TEMA SOLICITADO pelo usuário
+- Use os RECENT UPDATES como contexto adicional, apenas se forem relacionados ao tema
+- Mantenha a DESCRIPTION, tom de voz e identidade da marca`
+    : `Gere um ${type} para Instagram com base nos RECENT UPDATES acima.
+
+Regras obrigatórias:
+- O post deve ser sobre um acontecimento real dos RECENT UPDATES
+- NÃO crie posts genéricos de apresentação da marca ou propaganda
+- O tom deve ser de rotina: uma empresa compartilhando o que aconteceu, uma conquista, um bastidor, uma novidade real
+- Use a DESCRIPTION e BRAND MEMORY apenas para ajustar o tom e a voz
+- Se não houver updates, aí sim pode gerar um post sobre a marca`;
 
   const prompt = `Você é um especialista em marketing de conteúdo para Instagram.
 
@@ -104,19 +125,12 @@ ${brandKit.context ?? "Sem histórico acumulado ainda."}
 
 [RECENT UPDATES]
 ${updatesText}
-
+${themeBlock}
 [DO NOT DO]
 ${brandKit.do_not_do ?? "Nenhuma restrição cadastrada."}
 
 [TAREFA]
-Gere um ${type} para Instagram com base nos RECENT UPDATES acima.
-
-Regras obrigatórias:
-- O post deve ser sobre um acontecimento real dos RECENT UPDATES
-- NÃO crie posts genéricos de apresentação da marca ou propaganda
-- O tom deve ser de rotina: uma empresa compartilhando o que aconteceu, uma conquista, um bastidor, uma novidade real
-- Use a DESCRIPTION e BRAND MEMORY apenas para ajustar o tom e a voz
-- Se não houver updates, aí sim pode gerar um post sobre a marca
+${taskBlock}
 
 Responda APENAS em JSON, sem markdown.
 
@@ -329,7 +343,12 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type" } });
   }
 
-  const { brand_kit_id } = await req.json();
+  const body = await req.json();
+  const { brand_kit_id, theme_override, force_type } = body as {
+    brand_kit_id?: string;
+    theme_override?: string;     // se vier, pula planner e usa esse tema direto
+    force_type?: "post" | "carrossel" | "story"; // se vier, gera só esse formato
+  };
   if (!brand_kit_id) return new Response(JSON.stringify({ error: "brand_kit_id obrigatório" }), { status: 400 });
 
   const { data: brandKit, error: kitError } = await supabaseAdmin
@@ -381,7 +400,21 @@ Deno.serve(async (req) => {
   let updates: { id: string; content: string; category: string; created_at: string; photo_urls: string[] | null; used_in_pack_id: string | null }[] = [];
   let usePersona = false;
 
-  if (samples.length > 0) {
+  if (theme_override) {
+    // Modo "gerar sob demanda" — tema vem do user, pula planner
+    usePersona = hasPersona; // deixa a IA decidir nas imagens se faz sentido
+    const themeEmbedding = await generateEmbedding(theme_override);
+
+    const { data: matched } = await supabaseAdmin.rpc("match_updates", {
+      query_embedding: themeEmbedding,
+      match_brand_kit_id: brand_kit_id,
+      only_unused: false, // pode reusar updates (é tema do user, não baseado em update novo)
+      match_count: 5,
+    });
+
+    updates = matched ?? [];
+    // se nada relacionado, segue sem updates — gera apenas com brand kit + tema
+  } else if (samples.length > 0) {
     const plan = await planTheme(brandKit, samples, recentTitles, hasPersona, allUsed);
     usePersona = plan.use_persona;
     const themeEmbedding = await generateEmbedding(plan.theme);
@@ -396,11 +429,14 @@ Deno.serve(async (req) => {
     updates = matched ?? [];
   }
 
-  const postTypes: string[] = brandKit.post_types ?? ["carrossel", "post"];
+  // se force_type vier, só esse formato; senão, usa o que o brand_kit configurou
+  const postTypes: string[] = force_type
+    ? [force_type]
+    : (brandKit.post_types ?? ["carrossel", "post"]);
   const results: { type: string; pack_id: string }[] = [];
 
   for (const type of postTypes) {
-    const generated = await generatePack(type, brandKit, updates);
+    const generated = await generatePack(type, brandKit, updates, theme_override);
     if (!generated) continue;
 
     const { data: pack, error: packError } = await supabaseAdmin
