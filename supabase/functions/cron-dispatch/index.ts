@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
   }
 
   const generateUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-pack`;
+  const internalSecret = Deno.env.get("INTERNAL_SECRET") ?? "";
 
   // Dispara geração pra cada brand kit em paralelo
   const results = await Promise.allSettled(
@@ -34,7 +35,7 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${Deno.env.get("SUPABASE_ANON_KEY")}`,
+          "X-Internal-Secret": internalSecret,
         },
         body: JSON.stringify({ brand_kit_id: kit.id }),
       }).then((r) => r.json())

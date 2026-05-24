@@ -351,6 +351,36 @@ Deno.serve(async (req) => {
   };
   if (!brand_kit_id) return new Response(JSON.stringify({ error: "brand_kit_id obrigatório" }), { status: 400 });
 
+  // ─── Auth: server-to-server (internal secret) OU user JWT com ownership ──
+  const internalSecret = req.headers.get("x-internal-secret");
+  const authHeader = req.headers.get("authorization") ?? "";
+  const expectedInternal = Deno.env.get("INTERNAL_SECRET");
+
+  let isAuthorized = false;
+
+  if (expectedInternal && internalSecret === expectedInternal) {
+    // server-to-server confiável (cron-dispatch ou webhook do WhatsApp)
+    isAuthorized = true;
+  } else if (authHeader.startsWith("Bearer ")) {
+    const token = authHeader.slice(7);
+    const { data: { user } } = await supabaseAdmin.auth.getUser(token);
+    if (user) {
+      // valida se o brand_kit_id pertence ao user
+      const { data: ownerCheck } = await supabaseAdmin
+        .from("brand_kits")
+        .select("user_id")
+        .eq("id", brand_kit_id)
+        .single();
+      if (ownerCheck?.user_id === user.id) {
+        isAuthorized = true;
+      }
+    }
+  }
+
+  if (!isAuthorized) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+  }
+
   const { data: brandKit, error: kitError } = await supabaseAdmin
     .from("brand_kits")
     .select("id, user_id, business_name, description, voice_tone, context, do_not_do, post_types, palette_hex, persona_urls, logo_url, whatsapp_number, whatsapp_verified, whatsapp_delivery_enabled")
