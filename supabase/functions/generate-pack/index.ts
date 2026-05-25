@@ -8,6 +8,19 @@ const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
 );
 
+// Janela em que um update temporal ainda conta como "novidade".
+const FRESHNESS_DAYS = 7;
+
+type Mode = "evento" | "evergreen";
+
+type UpdateRow = {
+  id: string;
+  category: string;
+  content: string;
+  created_at: string;
+  photo_urls: string[] | null;
+};
+
 // ─── Planner ────────────────────────────────────────────────────────────────
 
 async function planTheme(
@@ -15,7 +28,7 @@ async function planTheme(
   samples: { category: string; content: string }[],
   recentTitles: string[],
   hasPersona: boolean,
-  allUsed: boolean
+  mode: Mode,
 ): Promise<{ theme: string; use_persona: boolean }> {
   const samplesText = samples.map((u) => `- ${u.category}: ${u.content.slice(0, 80)}`).join("\n");
 
@@ -24,25 +37,16 @@ async function planTheme(
     : "";
 
   const personaInstruction = hasPersona
-    ? `A marca tem fotos da persona disponíveis. Decida se faz sentido aparecer neste post. Use persona em posts pessoais (bastidor, conquista, evento). Não use em dados técnicos ou parcerias.`
+    ? `A marca tem fotos da persona disponíveis. Decida se faz sentido ela aparecer neste post. Use persona em posts pessoais (bastidor, conquista, evento). Não use em dados técnicos ou parcerias entre marcas.`
     : `A marca não tem persona cadastrada. use_persona deve ser false.`;
 
-  const contextInstruction = allUsed
-    ? `Todos os updates já foram usados. Seja criativo: escolha um dos formatos abaixo que ainda não foi feito recentemente e adapte aos updates disponíveis ou ao nicho da marca.
-Formatos disponíveis:
-- Dica prática do setor
-- Curiosidade do nicho
-- Bastidor / rotina da marca
-- Reflexão ou insight pessoal
-- Tendência do mercado
-- Erro comum e como evitar
-- Pergunta para engajar a audiência
-- Conquista passada contada de outro ângulo`
-    : `Escolha o update mais relevante e interessante para virar post agora.`;
+  const modeInstruction = mode === "evento"
+    ? `Os updates abaixo são acontecimentos recentes e reais da marca. Escolha o mais interessante para virar um post de novidade.`
+    : `NÃO há nenhum acontecimento novo disponível. Os updates abaixo são fatos perenes da marca, sem data. Escolha um e proponha um TEMA DE CONTEÚDO a partir dele — uma dica prática, uma reflexão, um bastidor ou uma pergunta para a audiência. O tema NÃO pode ser um anúncio e NÃO pode fingir que algo acabou de acontecer.`;
 
   const res = await openai.chat.completions.create({
     model: "gpt-4o-mini",
-    temperature: allUsed ? 0.95 : 0.7,
+    temperature: mode === "evergreen" ? 0.9 : 0.7,
     messages: [{
       role: "user",
       content: `Você é um estrategista de conteúdo para Instagram.
@@ -54,21 +58,22 @@ Updates disponíveis:
 ${samplesText}
 ${avoidText}
 
-${contextInstruction}
+${modeInstruction}
 ${personaInstruction}
 
 Responda APENAS em JSON: {"theme": "tema em 1 frase curta", "use_persona": true ou false}`,
     }],
   });
 
+  const fallbackTheme = mode === "evento" ? "novidade da marca" : "bastidor da marca";
   try {
     const parsed = JSON.parse(res.choices[0].message.content?.trim() ?? "{}");
     return {
-      theme: parsed.theme ?? "bastidor da marca",
+      theme: parsed.theme ?? fallbackTheme,
       use_persona: hasPersona ? (parsed.use_persona ?? false) : false,
     };
   } catch {
-    return { theme: "bastidor da marca", use_persona: false };
+    return { theme: fallbackTheme, use_persona: false };
   }
 }
 
@@ -85,34 +90,46 @@ async function generatePack(
   type: string,
   brandKit: Record<string, unknown>,
   updates: { id: string; created_at: string; category: string; content: string }[],
+  mode: Mode,
   themeOverride?: string,
 ) {
   const updatesText = updates.length > 0
     ? updates.map((u) => {
-        const date = new Date(u.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
-        return `${date} — ${u.category}: ${u.content}`;
-      }).join("\n")
+      const date = new Date(u.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" });
+      return `${date} — ${u.category}: ${u.content}`;
+    }).join("\n")
     : "Nenhum update registrado. Baseie-se apenas na descrição da marca.";
 
   const themeBlock = themeOverride
     ? `\n[TEMA SOLICITADO PELO USUÁRIO]\n${themeOverride}\n`
     : "";
 
-  const taskBlock = themeOverride
-    ? `Gere um ${type} para Instagram sobre o TEMA SOLICITADO acima.
+  let taskBlock: string;
+  if (themeOverride) {
+    taskBlock = `Gere um ${type} para Instagram sobre o TEMA SOLICITADO acima.
 
 Regras obrigatórias:
 - O conteúdo deve girar em torno do TEMA SOLICITADO pelo usuário
 - Use os RECENT UPDATES como contexto adicional, apenas se forem relacionados ao tema
-- Mantenha a DESCRIPTION, tom de voz e identidade da marca`
-    : `Gere um ${type} para Instagram com base nos RECENT UPDATES acima.
+- Mantenha a DESCRIPTION, tom de voz e identidade da marca`;
+  } else if (mode === "evento") {
+    taskBlock = `Gere um ${type} para Instagram sobre o acontecimento real dos RECENT UPDATES.
 
 Regras obrigatórias:
-- O post deve ser sobre um acontecimento real dos RECENT UPDATES
+- O post é sobre uma novidade verdadeira: uma conquista, lançamento, evento ou parceria recente
+- O tom é de rotina: uma empresa compartilhando o que aconteceu
 - NÃO crie posts genéricos de apresentação da marca ou propaganda
-- O tom deve ser de rotina: uma empresa compartilhando o que aconteceu, uma conquista, um bastidor, uma novidade real
-- Use a DESCRIPTION e BRAND MEMORY apenas para ajustar o tom e a voz
-- Se não houver updates, aí sim pode gerar um post sobre a marca`;
+- Use a DESCRIPTION e BRAND MEMORY apenas para ajustar o tom e a voz, não como assunto`;
+  } else {
+    taskBlock = `Gere um ${type} de CONTEÚDO para Instagram com base nos RECENT UPDATES como contexto da marca.
+
+Regras obrigatórias:
+- PROIBIDO tratar isto como novidade ou anúncio
+- PROIBIDO usar expressões como "novidade", "agora tenho", "estou animada para compartilhar", "acabei de", "lançamento", "novo"
+- Isto é conteúdo de valor: uma dica prática, uma reflexão, um bastidor ou uma pergunta para a audiência
+- Os RECENT UPDATES são fatos perenes da marca, NÃO acontecimentos novos a serem anunciados
+- Use a DESCRIPTION e BRAND MEMORY para ajustar o tom e a voz`;
+  }
 
   const prompt = `Você é um especialista em marketing de conteúdo para Instagram.
 
@@ -389,33 +406,9 @@ Deno.serve(async (req) => {
 
   if (kitError || !brandKit) return new Response(JSON.stringify({ error: "Brand kit não encontrado" }), { status: 404 });
 
-  // Busca samples pra o planner
-  const { data: updateSamples } = await supabaseAdmin
-    .from("updates")
-    .select("id, category, content, created_at")
-    .eq("brand_kit_id", brand_kit_id)
-    .is("used_in_pack_id", null)
-    .order("created_at", { ascending: false })
-    .limit(20);
-
   const hasPersona = (brandKit.persona_urls as string[] | null)?.length ? true : false;
 
-  // Se não tem unused, busca todos pra o planner reimaginar
-  let samples = updateSamples ?? [];
-  let allUsed = false;
-
-  if (samples.length === 0) {
-    const { data: allSamples } = await supabaseAdmin
-      .from("updates")
-      .select("id, category, content, created_at")
-      .eq("brand_kit_id", brand_kit_id)
-      .order("created_at", { ascending: false })
-      .limit(20);
-    samples = allSamples ?? [];
-    allUsed = true;
-  }
-
-  // Busca títulos dos packs recentes pra evitar repetição
+  // Títulos dos packs recentes (30 dias) — usados pelo planner pra evitar repetição
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const { data: recentPacks } = await supabaseAdmin
@@ -427,36 +420,85 @@ Deno.serve(async (req) => {
     .limit(10);
   const recentTitles = (recentPacks ?? []).map((p: { title: string }) => p.title).filter(Boolean);
 
-  let updates: { id: string; content: string; category: string; created_at: string; photo_urls: string[] | null; used_in_pack_id: string | null }[] = [];
+  let updates: UpdateRow[] = [];
   let usePersona = false;
+  let mode: Mode = "evergreen";
 
   if (theme_override) {
-    // Modo "gerar sob demanda" — tema vem do user, pula planner
-    usePersona = hasPersona; // deixa a IA decidir nas imagens se faz sentido
+    // Modo "gerar sob demanda" — tema vem do user, pula planner.
+    // Tema do usuário não é uma novidade automática → trata como evergreen.
+    mode = "evergreen";
+    usePersona = hasPersona;
     const themeEmbedding = await generateEmbedding(theme_override);
 
     const { data: matched } = await supabaseAdmin.rpc("match_updates", {
       query_embedding: themeEmbedding,
       match_brand_kit_id: brand_kit_id,
-      only_unused: false, // pode reusar updates (é tema do user, não baseado em update novo)
+      only_unused: false,
       match_count: 5,
     });
 
-    updates = matched ?? [];
-    // se nada relacionado, segue sem updates — gera apenas com brand kit + tema
-  } else if (samples.length > 0) {
-    const plan = await planTheme(brandKit, samples, recentTitles, hasPersona, allUsed);
-    usePersona = plan.use_persona;
-    const themeEmbedding = await generateEmbedding(plan.theme);
+    updates = (matched ?? []) as UpdateRow[];
+  } else {
+    // ─── Dois baldes determinísticos ──────────────────────────────────────
+    // Balde de eventos: temporal + dentro da janela de novidade + não usado.
+    const freshCutoff = new Date();
+    freshCutoff.setDate(freshCutoff.getDate() - FRESHNESS_DAYS);
 
-    const { data: matched } = await supabaseAdmin.rpc("match_updates", {
-      query_embedding: themeEmbedding,
-      match_brand_kit_id: brand_kit_id,
-      only_unused: !allUsed,
-      match_count: 5,
-    });
+    const { data: eventBucket } = await supabaseAdmin
+      .from("updates")
+      .select("id, category, content, created_at, photo_urls")
+      .eq("brand_kit_id", brand_kit_id)
+      .eq("nature", "temporal")
+      .is("used_in_pack_id", null)
+      .gte("created_at", freshCutoff.toISOString())
+      .order("created_at", { ascending: false })
+      .limit(10);
 
-    updates = matched ?? [];
+    const events = (eventBucket ?? []) as UpdateRow[];
+
+    if (events.length > 0) {
+      // Tem evento fresco → post de novidade.
+      mode = "evento";
+      updates = events;
+    } else {
+      // Sem evento fresco → conteúdo evergreen (não finge ser novidade).
+      mode = "evergreen";
+      const { data: evergreenBucket } = await supabaseAdmin
+        .from("updates")
+        .select("id, category, content, created_at, photo_urls")
+        .eq("brand_kit_id", brand_kit_id)
+        .eq("nature", "evergreen")
+        .order("created_at", { ascending: false })
+        .limit(15);
+      updates = (evergreenBucket ?? []) as UpdateRow[];
+    }
+
+    if (updates.length > 0) {
+      const plan = await planTheme(
+        brandKit,
+        updates.map((u) => ({ category: u.category, content: u.content })),
+        recentTitles,
+        hasPersona,
+        mode,
+      );
+      usePersona = plan.use_persona;
+
+      // Busca vetorial refina a ordem dentro do balde escolhido.
+      const themeEmbedding = await generateEmbedding(plan.theme);
+      const { data: matched } = await supabaseAdmin.rpc("match_updates", {
+        query_embedding: themeEmbedding,
+        match_brand_kit_id: brand_kit_id,
+        only_unused: mode === "evento",
+        match_count: 5,
+      });
+
+      // Mantém só os updates do balde escolhido — match_updates não conhece
+      // os baldes, então cruzamos pelo id pra não vazar update do balde errado.
+      const bucketIds = new Set(updates.map((u) => u.id));
+      const refined = ((matched ?? []) as UpdateRow[]).filter((u) => bucketIds.has(u.id));
+      if (refined.length > 0) updates = refined;
+    }
   }
 
   // se force_type vier, só esse formato; senão, usa o que o brand_kit configurou
@@ -466,7 +508,7 @@ Deno.serve(async (req) => {
   const results: { type: string; pack_id: string }[] = [];
 
   for (const type of postTypes) {
-    const generated = await generatePack(type, brandKit, updates, theme_override);
+    const generated = await generatePack(type, brandKit, updates, mode, theme_override);
     if (!generated) continue;
 
     const { data: pack, error: packError } = await supabaseAdmin

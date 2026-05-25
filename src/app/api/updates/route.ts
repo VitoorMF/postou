@@ -8,20 +8,41 @@ const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const categories: Category[] = ["novidade", "conquista", "evento", "bastidor", "dica", "parceria", "geral"];
 
-async function classify(content: string): Promise<Category> {
+type Nature = "temporal" | "evergreen";
+
+async function classify(content: string): Promise<{ category: Category; nature: Nature }> {
   const res = await openai.chat.completions.create({
     model: "gpt-4o-mini",
     temperature: 0,
     messages: [
       {
         role: "system",
-        content: `Você é um classificador de posts para Instagram. Escolha UMA categoria: novidade, conquista, evento, bastidor, dica, parceria, geral. Responda APENAS o nome, em minúsculas.`,
+        content: `Você classifica updates de marca em DOIS eixos independentes.
+
+        EIXO 1 — category (sobre o quê é): novidade, conquista, evento, bastidor, dica, parceria, geral.
+
+        EIXO 2 — nature (tem prazo de validade?):
+        - temporal: acontecimento pontual com data. Vira notícia UMA vez e depois envelhece. Ex: "lancei o site", "palestrei hoje", "fechei um cliente", "artigo compartilhado 500x"
+        - evergreen: fato perene, observação ou reflexão sem data. Continua útil indefinidamente. Ex: "14 anos de carreira", "produtores travam ao falar em público"
+
+        Os eixos são independentes: uma "conquista" pode ser temporal (prêmio recebido ontem) ou evergreen (anos de experiência). Decida nature pela existência de uma data por trás, não pela category.
+
+        Responda APENAS em JSON, sem markdown: {"category":"...","nature":"temporal"|"evergreen"}`,
       },
       { role: "user", content },
     ],
   });
-  const raw = res.choices[0].message.content?.trim().toLowerCase() ?? "geral";
-  return categories.includes(raw as Category) ? (raw as Category) : "geral";
+
+  const raw = res.choices[0].message.content?.trim() ?? "{}";
+  try {
+    const parsed = JSON.parse(raw.replace(/```json|```/g, "").trim());
+    return {
+      category: categories.includes(parsed.category) ? parsed.category : "geral",
+      nature: parsed.nature === "temporal" ? "temporal" : "evergreen",
+    };
+  } catch {
+    return { category: "geral", nature: "evergreen" };
+  }
 }
 
 async function generateEmbedding(text: string): Promise<number[]> {
@@ -47,7 +68,7 @@ export async function POST(request: Request) {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  const [category, embedding] = await Promise.all([
+  const [classification, embedding] = await Promise.all([
     classify(content),
     generateEmbedding(content),
   ]);
@@ -57,7 +78,8 @@ export async function POST(request: Request) {
     user_id: user.id,
     brand_kit_id: kit?.id ?? null,
     content: content.trim(),
-    category,
+    category: classification.category,
+    nature: classification.nature,
     photo_urls: photo_urls ?? null,
     embedding,
   });

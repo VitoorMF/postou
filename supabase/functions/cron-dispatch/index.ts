@@ -15,7 +15,6 @@ Deno.serve(async (req) => {
   // Busca brand kits que precisam gerar agora
   const { data: brandKits, error } = await supabaseAdmin.rpc("get_brand_kits_to_generate");
 
-
   if (error) {
     console.error("Erro ao buscar brand kits:", error);
     return new Response(JSON.stringify({ error: error.message }), { status: 500 });
@@ -27,6 +26,7 @@ Deno.serve(async (req) => {
 
   const generateUrl = `${Deno.env.get("SUPABASE_URL")}/functions/v1/generate-pack`;
   const internalSecret = Deno.env.get("INTERNAL_SECRET") ?? "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
   // Dispara geração pra cada brand kit em paralelo
   const results = await Promise.allSettled(
@@ -35,6 +35,9 @@ Deno.serve(async (req) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          // Authorization satisfaz o gateway de JWT do Supabase (porta de entrada do generate-pack).
+          "Authorization": `Bearer ${serviceKey}`,
+          // X-Internal-Secret é validado pelo handler do generate-pack (lógica interna).
           "X-Internal-Secret": internalSecret,
         },
         body: JSON.stringify({ brand_kit_id: kit.id }),
