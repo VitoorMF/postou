@@ -1,5 +1,6 @@
 import OpenAI, { toFile } from "npm:openai";
 import { createClient } from "npm:@supabase/supabase-js";
+import { decodeBase64 } from "jsr:@std/encoding/base64";
 
 const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
 
@@ -160,8 +161,16 @@ Responda APENAS em JSON, sem markdown.
   ]
 }
 
-Para post e story, retorne apenas 1 slide.
-Para carrossel, retorne entre 5 e 9 slides.`;
+Para post e story, retorne apenas 1 slide (sem campo role).
+Para carrossel, retorne entre 4 e 7 slides seguindo esta estrutura obrigatória:
+- Slide 1: role "hook" — frase de impacto que para o scroll, apresenta o tema
+- Slides intermediários: role "body" — cada um desenvolve um ponto específico, conteúdo informativo e conciso
+- Último slide: role "cta" — chamada para ação clara, encoraja comentário, salvamento ou contato
+
+Exemplo para carrossel:
+{ "order": 1, "role": "hook", "content": "texto do hook" }
+{ "order": 2, "role": "body", "content": "ponto 1" }
+{ "order": 5, "role": "cta", "content": "texto do cta" }`;
 
   const response = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -180,7 +189,7 @@ Para carrossel, retorne entre 5 e 9 slides.`;
 // ─── Image ──────────────────────────────────────────────────────────────────
 
 async function generateCoverImage(
-  pack: { title: string; caption: string; type: string },
+  pack: { title: string; caption: string; type: string; role?: string },
   brandKit: Record<string, unknown>,
   usePersona: boolean,
   updatePhotoUrls?: string[] | null
@@ -205,11 +214,20 @@ Reproduce their exact facial features, skin tone, hair, and likeness as accurate
 Do NOT create a generic, stock-photo, or AI-looking person. Use the real person's face.`
     : `IMPORTANT: Do NOT include any person or human figure in this image. Focus on design, typography, brand elements, or the update subject.`;
 
-  const imagePrompt = `Create an organic Instagram post for the brand "${brandKit.business_name ?? "empresa"}".
+  const roleInstruction = pack.role === "hook"
+    ? `Slide role: HOOK (slide 1). Bold, attention-grabbing layout. Large impactful typography. Strong visual that stops the scroll. This is the cover of the carousel.`
+    : pack.role === "cta"
+    ? `Slide role: CTA (last slide). Action-oriented layout. Clear call to action. Encourage engagement: comment, save, or contact. Can include contact info or brand handle.`
+    : pack.role === "body"
+    ? `Slide role: BODY (content slide). Clean, readable layout. Focused on one specific point. Informative and concise. Less decorative than the hook.`
+    : "";
+
+  const imagePrompt = `Create an organic Instagram carousel slide for the brand "${brandKit.business_name ?? "empresa"}".
 Brand context: ${brandKit.description ?? ""}
 ${paletteHint}
 Post theme: ${pack.title}
-Main message: ${pack.caption}
+Slide message: ${pack.caption}
+${roleInstruction}
 
 Reference images provided (in order):
 ${personaUrls.length ? "- First image(s): photos of the brand's real people — use their likeness naturally if relevant" : ""}
@@ -288,7 +306,7 @@ async function uploadImage(data: string, path: string): Promise<string | null> {
   let buffer: ArrayBuffer;
   if (data.startsWith("data:")) {
     const base64 = data.split(",")[1];
-    buffer = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0)).buffer;
+    buffer = decodeBase64(base64).buffer;
   } else {
     const res = await fetch(data);
     buffer = await res.arrayBuffer();
@@ -359,8 +377,12 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: { "Access-Control-Allow-Origin": "*", "Access-Control-Allow-Headers": "authorization, content-type" } });
   }
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405 });
+  }
 
-  const body = await req.json();
+  let body: Record<string, unknown> = {};
+  try { body = await req.json(); } catch { /* ignora — body vazio */ }
   const { brand_kit_id, theme_override, force_type } = body as {
     brand_kit_id?: string;
     theme_override?: string;     // se vier, pula planner e usa esse tema direto
@@ -520,25 +542,51 @@ Deno.serve(async (req) => {
     if (packError || !pack) continue;
 
     const updatePhotoUrls = updates[0]?.photo_urls;
-    const imageData = await generateCoverImage(
-      { title: generated.title, caption: generated.caption, type },
-      brandKit,
-      usePersona,
-      updatePhotoUrls
-    );
+    const slides = (generated.slides ?? []) as { order: number; role?: string; content: string }[];
 
-    let coverImageUrl: string | null = null;
-    if (imageData) {
-      coverImageUrl = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-1.png`);
+    // imagens por slide em paralelo:
+    //  - post/story: 1 imagem (cover)
+    //  - carrossel: 1 imagem por slide (4-7)
+    const slideImageUrls: Record<number, string | null> = {};
+
+    if (type === "carrossel" && slides.length > 0) {
+      await Promise.all(
+        slides.map(async (s) => {
+          const imageData = await generateCoverImage(
+            { title: generated.title, caption: s.content, type, role: s.role },
+            brandKit,
+            usePersona,
+            updatePhotoUrls,
+          );
+          if (!imageData) {
+            slideImageUrls[s.order] = null;
+            return;
+          }
+          slideImageUrls[s.order] = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-${s.order}.png`);
+        }),
+      );
+    } else {
+      // post/story: só uma imagem (cover do slide 1)
+      const imageData = await generateCoverImage(
+        { title: generated.title, caption: generated.caption, type },
+        brandKit,
+        usePersona,
+        updatePhotoUrls,
+      );
+      if (imageData) {
+        slideImageUrls[1] = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-1.png`);
+      }
     }
 
-    if (generated.slides?.length > 0) {
+    const coverImageUrl = slideImageUrls[1] ?? null;
+
+    if (slides.length > 0) {
       await supabaseAdmin.from("slides").insert(
-        generated.slides.map((s: { order: number; content: string }) => ({
+        slides.map((s) => ({
           pack_id: pack.id,
           order: s.order,
-          image_url: s.order === 1 ? coverImageUrl : null,
-        }))
+          image_url: slideImageUrls[s.order] ?? null,
+        })),
       );
     }
 

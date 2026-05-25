@@ -2,9 +2,9 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 import { use } from "react";
 import BackButton from "./BackButton";
-import DownloadButton from "./DownloadButton";
 import CopyButton from "./CopyButton";
 import DeleteButton from "./DeleteButton";
+import SlideViewer from "./SlideViewer";
 
 interface Slide {
   id: string;
@@ -46,7 +46,6 @@ async function PackDetail({ id }: { id: string }) {
   if (!pack) notFound();
 
   const p = pack as Pack;
-  const mainSlide = p.slides[0];
 
   return (
     <div className="flex flex-col h-full bg-[#141414] text-white font-sans">
@@ -73,33 +72,7 @@ async function PackDetail({ id }: { id: string }) {
 
           {/* Coluna esquerda — imagem */}
           <div className="md:w-80 lg:w-96 md:sticky md:top-4 shrink-0">
-            {mainSlide?.image_url ? (
-              <div className="w-full rounded-2xl overflow-hidden">
-                <img
-                  src={mainSlide.image_url}
-                  alt={p.title}
-                  className="w-full h-auto"
-                />
-              </div>
-            ) : (
-              <div className="w-full aspect-[4/5] rounded-2xl bg-[#1c1c1c] flex items-center justify-center">
-                <span className="text-sm text-[#555]">Imagem não gerada</span>
-              </div>
-            )}
-
-            {/* Slides do carrossel — abaixo da imagem no desktop */}
-            {p.type === "carrossel" && p.slides.length > 1 && (
-              <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-none pb-1">
-                {p.slides.map((s) => (
-                  <div key={s.id} className="relative shrink-0 w-16 aspect-square rounded-xl bg-[#1c1c1c] overflow-hidden flex items-end justify-end p-1">
-                    {s.image_url ? (
-                      <img src={s.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                    ) : null}
-                    <span className="relative text-[10px] text-white/40">{s.order}</span>
-                  </div>
-                ))}
-              </div>
-            )}
+            <SlideViewer slides={p.slides} title={p.title} />
           </div>
 
           {/* Coluna direita — metadados */}
@@ -125,7 +98,6 @@ async function PackDetail({ id }: { id: string }) {
               </div>
             )}
 
-            <DownloadButton imageUrl={mainSlide?.image_url ?? null} title={p.title} />
           </div>
 
         </div>
