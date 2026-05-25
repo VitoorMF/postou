@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 
 const DAYS = ["S", "T", "Q", "Q", "S", "S", "D"];
-const TIMES = ["06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00"];
+const TIMES = ["06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
 
 function Toggle({ enabled, onChange }: { enabled: boolean; onChange: () => void }) {
   return (
@@ -132,6 +132,7 @@ export default function Settings() {
                 { key: "carrossel", label: "Carrossel", sub: "9 slides sobre o principal evento do dia" },
                 { key: "post", label: "Post", sub: "1 imagem de destaque ou conquista" },
                 { key: "story", label: "Story", sub: "1 imagem vertical para stories" },
+                { key: "AI", label: "IA decide", sub: "A IA decide o tipo adequado" },
               ].map(({ key, label, sub }) => (
                 <div key={key} className="flex items-center justify-between p-4 gap-4">
                   <div>
