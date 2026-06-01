@@ -15,6 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Postou — Crie carrosséis para Instagram em segundos",
   description: "Postou transforma uma ideia em um carrossel de Instagram completo — texto, design e arte — pronto para postar.",
+  viewport: "width=device-width, initial-scale=1, viewport-fit=cover",
 };
 
 export default function RootLayout({

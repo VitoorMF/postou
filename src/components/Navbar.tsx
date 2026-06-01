@@ -53,7 +53,7 @@ export default function Navbar() {
   return (
     <nav className="
       flex shrink-0 bg-[#1a1a1a]
-      flex-row w-full py-3 justify-around
+      flex-row w-full pt-3 pb-[max(12px,env(safe-area-inset-bottom))] justify-around
       md:flex-col md:w-20 md:h-full md:py-8 md:justify-start md:gap-2 md:order-1
     ">
       {tabs.map(({ label, href, Icon }) => {
