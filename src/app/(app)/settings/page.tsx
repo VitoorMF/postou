@@ -26,27 +26,43 @@ export default function Settings() {
   const [deliveryTime, setDeliveryTime] = useState("07:00");
   const [showTimePicker, setShowTimePicker] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [limitMsg, setLimitMsg] = useState("");
   const [loaded, setLoaded] = useState(false);
+  const [plan, setPlan] = useState("free");
   const router = useRouter();
 
   useEffect(() => {
     const supabase = createClient();
     supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) return;
-      const { data } = await supabase
-        .from("brand_kits")
-        .select("id, post_types, active_days, delivery_time")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      const [{ data }, { data: userData }] = await Promise.all([
+        supabase
+          .from("brand_kits")
+          .select("id, post_types, active_days, delivery_time")
+          .eq("user_id", user.id)
+          .maybeSingle(),
+        supabase
+          .from("users")
+          .select("plan")
+          .eq("id", user.id)
+          .maybeSingle(),
+      ]);
       if (data) {
         setKitId(data.id);
         if (data.post_types?.length) setPostTypes(data.post_types);
         if (data.active_days?.length) setActiveDays(data.active_days.map(Number));
         if (data.delivery_time) setDeliveryTime(data.delivery_time);
       }
+      if (userData?.plan) setPlan(userData.plan);
       setLoaded(true);
     });
   }, []);
+
+  const PLAN_LABELS: Record<string, string> = {
+    free: "Plano Free",
+    starter: "Plano Starter",
+    pro: "Plano Pro",
+  };
 
   async function save(patch: Record<string, unknown>) {
     setSaving(true);
@@ -73,6 +89,13 @@ export default function Settings() {
     const next = activeDays.includes(i)
       ? activeDays.filter((d) => d !== i)
       : [...activeDays, i];
+
+    if (activeDays.includes(i) === false && next.length > 3) {
+      setLimitMsg("Máximo de 3 dias no plano atual. Faça upgrade para Pro.");
+      setTimeout(() => setLimitMsg(""), 3000);
+      return;
+    }
+    setLimitMsg("");
     setActiveDays(next);
     save({ active_days: next.map(String) });
   }
@@ -92,6 +115,20 @@ export default function Settings() {
   return (
     <div className="flex flex-col h-full bg-[#141414] text-white font-sans">
 
+      {/* Toast */}
+      {limitMsg && (
+        <div className="fixed top-6 inset-x-0 z-50 flex justify-center px-4 pointer-events-none">
+          <div className="bg-[#1c1c1c] border border-[#2a2a2a] text-white text-sm font-medium pl-3 pr-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 animate-fade-in pointer-events-auto">
+            <span className="h-7 w-7 rounded-full bg-amber-500/15 flex items-center justify-center shrink-0">
+              <svg width="16" height="16" fill="none" stroke="#f5a524" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+              </svg>
+            </span>
+            <span>{limitMsg}</span>
+          </div>
+        </div>
+      )}
+
       <div className="w-full px-4 md:px-8 pt-12 pb-4 shrink-0 mx-auto">
         <div className="flex items-start justify-between">
           <div>
@@ -110,7 +147,7 @@ export default function Settings() {
           <div className="flex flex-col gap-2">
             {[
               { href: "/settings/brand-kit", label: "Brand kit", sub: "Logotipo, paleta, tipografia e tom de voz" },
-              { href: "/settings/plans", label: "Planos", sub: "Trial · 6 dias restantes" },
+              { href: "/settings/plans", label: "Planos", sub: PLAN_LABELS[plan] ?? "Plano Free" },
               { href: "/settings/whatsapp", label: "WhatsApp", sub: "Configurações do WhatsApp" },
             ].map(({ href, label, sub }) => (
               <Link key={href} href={href} className="bg-[#1c1c1c] rounded-2xl p-4 flex items-center justify-between">

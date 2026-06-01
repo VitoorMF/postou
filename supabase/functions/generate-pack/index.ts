@@ -441,6 +441,66 @@ Deno.serve(async (req) => {
 
   if (kitError || !brandKit) return new Response(JSON.stringify({ error: "Brand kit não encontrado" }), { status: 404 });
 
+  // ─── Cotas por plano ─────────────────────────────────────────────────────
+  const isManual = !!(force_type || theme_override);
+
+  const LIMITS: Record<string, { auto: number; manual: number; carrossel: number }> = {
+    free:    { auto: 1, manual: 1, carrossel: 0 },
+    starter: { auto: 3, manual: 2, carrossel: 1 },
+    pro:     { auto: Infinity, manual: Infinity, carrossel: Infinity },
+  };
+
+  const { data: userRow } = await supabaseAdmin
+    .from("users")
+    .select("plan, weekly_auto_count, weekly_manual_count, weekly_carrossel_count")
+    .eq("id", brandKit.user_id)
+    .single();
+
+  const plan = userRow?.plan ?? "free";
+  const limits = LIMITS[plan] ?? LIMITS.free;
+  const autoCount    = userRow?.weekly_auto_count ?? 0;
+  const manualCount  = userRow?.weekly_manual_count ?? 0;
+  const carrosselCount = userRow?.weekly_carrossel_count ?? 0;
+
+  // Verifica limite de carrossel
+  if (force_type === "carrossel" || (!isManual && (brandKit.post_types as string[])?.includes("carrossel"))) {
+    if (carrosselCount >= limits.carrossel) {
+      if (limits.carrossel === 0) {
+        // Free: carrossel bloqueado
+        const limitMsg = "Carrossel não está disponível no plano gratuito. Faça upgrade para o Starter.";
+        if (brandKit.whatsapp_verified && brandKit.whatsapp_number) {
+          await sendText(brandKit.whatsapp_number as string, `⚠️ ${limitMsg}`);
+        }
+        return new Response(JSON.stringify({ error: limitMsg, code: "carrossel_blocked" }), { status: 403 });
+      }
+      // Starter: carrossel esgotado → cai para IA decide (não bloqueia)
+      if (force_type === "carrossel") {
+        const limitMsg = "Limite de carrosseis da semana atingido. Gerando outro formato automaticamente.";
+        if (brandKit.whatsapp_verified && brandKit.whatsapp_number) {
+          await sendText(brandKit.whatsapp_number as string, `ℹ️ ${limitMsg}`);
+        }
+        // Remove force_type de carrossel — vai cair no fluxo normal com IA decide
+        (body as Record<string, unknown>).force_type = undefined;
+      }
+    }
+  }
+
+  // Verifica limite semanal (auto ou manual)
+  if (isManual) {
+    if (manualCount >= limits.manual) {
+      const limitMsg = `Limite de ${limits.manual} geração${limits.manual > 1 ? "ões" : ""} manual${limits.manual > 1 ? "is" : ""} por semana atingido.`;
+      if (brandKit.whatsapp_verified && brandKit.whatsapp_number) {
+        await sendText(brandKit.whatsapp_number as string, `⚠️ ${limitMsg} Seu limite renova todo domingo.`);
+      }
+      return new Response(JSON.stringify({ error: limitMsg, code: "manual_limit" }), { status: 429 });
+    }
+  } else {
+    if (autoCount >= limits.auto) {
+      console.log(`Kit ${brand_kit_id} atingiu limite automático semanal (${autoCount}/${limits.auto})`);
+      return new Response(JSON.stringify({ error: "Limite automático semanal atingido", code: "auto_limit" }), { status: 429 });
+    }
+  }
+
   const hasPersona = (brandKit.persona_urls as string[] | null)?.length ? true : false;
 
   // Títulos dos packs recentes (30 dias) — usados pelo planner pra evitar repetição
@@ -623,6 +683,19 @@ Deno.serve(async (req) => {
       }
 
       await supabaseAdmin.from("packs").update({ status: "success" }).eq("id", pack.id);
+
+      // Incrementa contador semanal
+      const counterField = isManual ? "weekly_manual_count" : "weekly_auto_count";
+      await supabaseAdmin.rpc("increment_user_counter", {
+        p_user_id: brandKit.user_id,
+        p_field: counterField,
+      });
+      if (type === "carrossel") {
+        await supabaseAdmin.rpc("increment_user_counter", {
+          p_user_id: brandKit.user_id,
+          p_field: "weekly_carrossel_count",
+        });
+      }
 
       // Entrega via WhatsApp se habilitado
       if (

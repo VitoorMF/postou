@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 
 type Format = "post" | "carrossel" | "story";
-type Status = "idle" | "loading" | "success" | "error";
+type Status = "idle" | "loading" | "success" | "error" | "limit";
 
 const FORMATS: { key: Format; label: string; sub: string }[] = [
   { key: "story",    label: "Story",     sub: "1 imagem vertical" },
@@ -15,11 +15,39 @@ const FORMATS: { key: Format; label: string; sub: string }[] = [
 
 export default function GenerateButton() {
   const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
   const [theme, setTheme] = useState("");
   const [format, setFormat] = useState<Format>("story");
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
+  const [dragY, setDragY] = useState(0);
+  const dragStartY = useRef<number | null>(null);
   const router = useRouter();
+
+  // ─── Swipe-to-dismiss ──────────────────────────────────────────────
+  function onDragStart(e: React.PointerEvent) {
+    dragStartY.current = e.clientY;
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+  }
+
+  function onDragMove(e: React.PointerEvent) {
+    if (dragStartY.current === null) return;
+    const delta = e.clientY - dragStartY.current;
+    // só permite arrastar pra baixo
+    if (delta > 0) setDragY(delta);
+  }
+
+  function onDragEnd() {
+    if (dragStartY.current === null) return;
+    dragStartY.current = null;
+    // passou de 120px → fecha; senão volta
+    if (dragY > 120) {
+      handleClose();
+      setDragY(0);
+    } else {
+      setDragY(0);
+    }
+  }
 
   async function handleGenerate() {
     if (status === "loading") return;
@@ -58,25 +86,35 @@ export default function GenerateButton() {
     const data = await res.json();
 
     if (!res.ok) {
-      setStatus("error");
+      setStatus(res.status === 429 || res.status === 403 ? "limit" : "error");
       setMessage(data.error ?? "Erro desconhecido");
       return;
     }
 
     setStatus("success");
-    setOpen(false);
+    dismiss();
     setTheme("");
     router.refresh();
     setTimeout(() => setStatus("idle"), 3000);
   }
 
+  // Anima a saída antes de desmontar
+  function dismiss() {
+    setClosing(true);
+    setTimeout(() => {
+      setOpen(false);
+      setClosing(false);
+    }, 240);
+  }
+
   function handleClose() {
     if (status === "loading") return;
-    setOpen(false);
+    dismiss();
     setTheme("");
     setStatus("idle");
     setMessage("");
   }
+
 
   return (
     <>
@@ -84,11 +122,15 @@ export default function GenerateButton() {
       <button
         onClick={() => setOpen(true)}
         className={`fixed bottom-24 right-4 z-50 flex items-center gap-2 px-4 h-11 rounded-full shadow-lg text-sm font-medium transition-all ${
-          status === "success" ? "bg-emerald-600 text-white" : "bg-[#137EFF] text-white"
+          status === "success" ? "bg-emerald-600 text-white" :
+          status === "limit"   ? "bg-amber-500 text-white" :
+          "bg-[#137EFF] text-white"
         }`}
       >
         {status === "success" ? (
           <>✓ Gerado!</>
+        ) : status === "limit" ? (
+          <>⚠️ Limite atingido</>
         ) : (
           <>
             <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -103,17 +145,31 @@ export default function GenerateButton() {
       {open && (
         <div className="fixed inset-0 z-50 flex items-end justify-center">
           {/* Overlay */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={handleClose} />
+          <div className={`absolute inset-0 bg-black/60 backdrop-blur-sm ${closing ? "animate-overlay-out" : "animate-overlay-in"}`} onClick={handleClose} />
 
           {/* Sheet */}
-          <div className="relative w-full max-w-lg bg-[#1a1a1a] rounded-t-3xl px-5 pt-5 pb-8 flex flex-col gap-5">
+          <div
+            className={`relative w-full max-w-lg bg-[#1a1a1a] rounded-t-3xl px-5 pt-5 pb-8 flex flex-col gap-5 ${
+              dragY > 0 ? "" : closing ? "animate-sheet-down" : "animate-sheet-up"
+            }`}
+            style={dragY > 0 ? { transform: `translateY(${dragY}px)`, transition: "none" } : { transition: "transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)" }}
+          >
 
-            {/* Handle */}
-            <div className="w-10 h-1 bg-[#333] rounded-full mx-auto -mt-1 mb-1" />
+            {/* Zona de arraste — handle + header */}
+            <div
+              onPointerDown={onDragStart}
+              onPointerMove={onDragMove}
+              onPointerUp={onDragEnd}
+              onPointerCancel={onDragEnd}
+              className="flex flex-col gap-5 cursor-grab active:cursor-grabbing touch-none -mx-5 -mt-5 px-5 pt-5"
+            >
+              {/* Handle */}
+              <div className="w-10 h-1 bg-[#333] rounded-full mx-auto -mt-1 mb-1" />
 
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Gerar conteúdo</h2>
-              <button onClick={handleClose} className="text-[#666] hover:text-white transition-colors text-xl leading-none">✕</button>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold text-white">Gerar conteúdo</h2>
+                <button onClick={handleClose} className="text-[#666] hover:text-white transition-colors text-xl leading-none">✕</button>
+              </div>
             </div>
 
             {/* Tema */}
@@ -153,6 +209,14 @@ export default function GenerateButton() {
             {/* Erro */}
             {status === "error" && (
               <p className="text-sm text-red-400">{message}</p>
+            )}
+            {status === "limit" && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 flex flex-col gap-1">
+                <p className="text-sm text-amber-400 font-medium">⚠️ {message}</p>
+                <a href="/settings/plans" className="text-xs text-amber-300 underline underline-offset-2">
+                  Ver planos disponíveis →
+                </a>
+              </div>
             )}
 
             {/* Botão gerar */}

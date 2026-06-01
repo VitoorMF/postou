@@ -44,11 +44,11 @@ function PackCard({ id, type, title, caption, cta, created_at, slides }: Pack) {
       {isCarrossel ? (
         <div className="flex gap-2 items-center">
           {preview.map((s, i) => (
-            <div key={s.id} className="relative flex-1 aspect-square rounded-xl bg-[#e8d5b7] flex items-end justify-end p-1">
+            <div key={s.id} className="relative flex-1 aspect-square rounded-xl bg-[#242424] flex items-end justify-end p-1 overflow-hidden shimmer">
               {s.image_url ? (
-                <img src={s.image_url} alt="" className="absolute inset-0 w-full h-full object-cover rounded-xl" />
+                <img src={s.image_url} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover rounded-xl" />
               ) : null}
-              <span className="relative text-[10px] text-black/40">{i + 1}</span>
+              <span className="relative text-[10px] text-white/30">{i + 1}</span>
             </div>
           ))}
           {extra > 0 && (
@@ -56,11 +56,11 @@ function PackCard({ id, type, title, caption, cta, created_at, slides }: Pack) {
           )}
         </div>
       ) : (
-        <div className="w-full aspect-[4/3] rounded-xl bg-[#e8d5b7] relative flex items-end justify-end p-2">
+        <div className="w-full aspect-[4/3] rounded-xl bg-[#242424] relative flex items-end justify-end p-2 overflow-hidden shimmer">
           {slides[0]?.image_url ? (
-            <img src={slides[0].image_url} alt="" className="absolute inset-0 w-full h-full object-cover rounded-xl" />
+            <img src={slides[0].image_url} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover rounded-xl" />
           ) : null}
-          <span className="relative text-xs text-black/40">1</span>
+          <span className="relative text-xs text-white/30">1</span>
         </div>
       )}
 
@@ -110,13 +110,19 @@ function getDayLabel(dateStr: string) {
   return date.toLocaleDateString("pt-BR", { weekday: "long", day: "2-digit", month: "short" }).toUpperCase();
 }
 
-async function PacksList({ filter }: { filter?: string }) {
+const PAGE_SIZE = 10;
+
+async function PacksList({ filter, count }: { filter?: string; count: number }) {
   const supabase = await createClient();
 
   const now = new Date();
   const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
 
-  let query = supabase.from("packs").select("*, slides(*)").order("created_at", { ascending: false });
+  let query = supabase
+    .from("packs")
+    .select("id, type, title, caption, cta, created_at, slides(id, order, image_url)")
+    .order("created_at", { ascending: false })
+    .limit(count + 1); // +1 pra detectar se há mais
 
   if (filter === "today") {
     query = query.gte("created_at", startOfDay(now));
@@ -128,13 +134,20 @@ async function PacksList({ filter }: { filter?: string }) {
     query = query.gte("created_at", startOfDay(weekAgo));
   }
 
-  const { data: packs } = await query;
+  const { data: allPacks } = await query;
 
-  if (!packs || packs.length === 0) {
+  if (!allPacks || allPacks.length === 0) {
     return (
       <p className="text-sm text-[#555] text-center mt-8">Nenhum conteúdo gerado ainda.</p>
     );
   }
+
+  const hasMore = allPacks.length > count;
+  const packs = hasMore ? allPacks.slice(0, count) : allPacks;
+
+  const nextParams = new URLSearchParams();
+  if (filter) nextParams.set("filter", filter);
+  nextParams.set("count", String(count + PAGE_SIZE));
 
   const groups: { label: string; items: typeof packs }[] = [];
   for (const pack of packs) {
@@ -159,6 +172,19 @@ async function PacksList({ filter }: { filter?: string }) {
           </div>
         </div>
       ))}
+
+      {hasMore && (
+        <Link
+          href={`/content?${nextParams.toString()}`}
+          scroll={false}
+          className="self-center mt-2 flex items-center gap-2 px-5 h-10 rounded-full bg-[#1c1c1c] text-sm font-medium text-[#ccc] hover:bg-[#242424] transition-colors"
+        >
+          Carregar mais
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </Link>
+      )}
     </>
   );
 }
@@ -188,8 +214,9 @@ function PacksSkeleton() {
   );
 }
 
-export default async function ContentPage({ searchParams }: { searchParams: Promise<{ filter?: string }> }) {
-  const { filter } = await searchParams;
+export default async function ContentPage({ searchParams }: { searchParams: Promise<{ filter?: string; count?: string }> }) {
+  const { filter, count } = await searchParams;
+  const parsedCount = Math.max(PAGE_SIZE, parseInt(count ?? "", 10) || PAGE_SIZE);
 
   return (
     <div className="flex flex-col h-full bg-[#141414] text-white font-sans">
@@ -206,7 +233,7 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
 
       <div className="flex-1 overflow-y-auto px-4 md:px-8 flex flex-col gap-6 pb-4 ">
         <Suspense fallback={<PacksSkeleton />}>
-          <PacksList filter={filter} />
+          <PacksList filter={filter} count={parsedCount} />
         </Suspense>
       </div>
 
