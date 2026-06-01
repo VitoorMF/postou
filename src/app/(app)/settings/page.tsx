@@ -129,7 +129,7 @@ export default function Settings() {
             <p className="text-xs font-semibold text-[#555] tracking-widest">O QUE GERAR</p>
             <div className="bg-[#1c1c1c] rounded-2xl divide-y divide-[#2a2a2a]">
               {[
-                { key: "carrossel", label: "Carrossel", sub: "9 slides sobre o principal evento do dia" },
+                { key: "carrossel", label: "Carrossel", sub: "Slides sobre o principal evento do dia" },
                 { key: "post", label: "Post", sub: "1 imagem de destaque ou conquista" },
                 { key: "story", label: "Story", sub: "1 imagem vertical para stories" },
                 { key: "AI", label: "IA decide", sub: "A IA decide o tipo adequado" },

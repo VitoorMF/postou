@@ -53,7 +53,7 @@ export default function Landing() {
               <h1>Sua empresa <span className="hl">postando</span> todos os dias.</h1>
               <p className="hero-sub">O Postou aprende sobre sua marca e transforma novidades do seu negócio em posts prontos para publicar.</p>
               <div className="hero-ctas">
-                <SignInButton className="btn btn-primary btn-lg">Criar meu primeiro grátis</SignInButton>
+                <SignInButton className="btn btn-primary btn-lg">Criar meu primeiro post grátis</SignInButton>
                 <DemoTrigger className="btn btn-ghost btn-lg">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
                   Ver demonstração

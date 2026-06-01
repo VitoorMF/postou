@@ -30,7 +30,8 @@ async function planTheme(
   recentTitles: string[],
   hasPersona: boolean,
   mode: Mode,
-): Promise<{ theme: string; use_persona: boolean }> {
+  aiDecideType: boolean,
+): Promise<{ theme: string; use_persona: boolean; type?: string }> {
   const samplesText = samples.map((u) => `- ${u.category}: ${u.content.slice(0, 80)}`).join("\n");
 
   const avoidText = recentTitles.length > 0
@@ -44,6 +45,16 @@ async function planTheme(
   const modeInstruction = mode === "evento"
     ? `Os updates abaixo são acontecimentos recentes e reais da marca. Escolha o mais interessante para virar um post de novidade.`
     : `NÃO há nenhum acontecimento novo disponível. Os updates abaixo são fatos perenes da marca, sem data. Escolha um e proponha um TEMA DE CONTEÚDO a partir dele — uma dica prática, uma reflexão, um bastidor ou uma pergunta para a audiência. O tema NÃO pode ser um anúncio e NÃO pode fingir que algo acabou de acontecer.`;
+
+  const typeInstruction = aiDecideType
+    ? `
+Você também deve decidir o FORMATO ideal para este conteúdo seguindo esta hierarquia obrigatória:
+- "story" é o padrão — use sempre que o conteúdo for simples, cotidiano ou evergreen
+- "post" apenas quando houver uma conquista ou novidade relevante que justifique destaque
+- "carrossel" apenas quando o conteúdo for rico o suficiente para uma série de slides (ex: evento importante, lançamento, conteúdo educativo extenso) — use com parcimônia
+
+Adicione "type": "story" | "post" | "carrossel" no JSON de resposta.`
+    : "";
 
   const res = await openai.chat.completions.create({
     model: "gpt-4o-mini",
@@ -61,8 +72,9 @@ ${avoidText}
 
 ${modeInstruction}
 ${personaInstruction}
+${typeInstruction}
 
-Responda APENAS em JSON: {"theme": "tema em 1 frase curta", "use_persona": true ou false}`,
+Responda APENAS em JSON: {"theme": "tema em 1 frase curta", "use_persona": true ou false${aiDecideType ? `, "type": "story" | "post" | "carrossel"` : ""}}`,
     }],
   });
 
@@ -72,9 +84,10 @@ Responda APENAS em JSON: {"theme": "tema em 1 frase curta", "use_persona": true 
     return {
       theme: parsed.theme ?? fallbackTheme,
       use_persona: hasPersona ? (parsed.use_persona ?? false) : false,
+      type: aiDecideType ? (parsed.type ?? "story") : undefined,
     };
   } catch {
-    return { theme: fallbackTheme, use_persona: false };
+    return { theme: fallbackTheme, use_persona: false, type: aiDecideType ? "story" : undefined };
   }
 }
 
@@ -162,7 +175,7 @@ Responda APENAS em JSON, sem markdown.
 }
 
 Para post e story, retorne apenas 1 slide (sem campo role).
-Para carrossel, retorne entre 4 e 7 slides seguindo esta estrutura obrigatória:
+Para carrossel, retorne entre 4 e 5 slides seguindo esta estrutura obrigatória:
 - Slide 1: role "hook" — frase de impacto que para o scroll, apresenta o tema
 - Slides intermediários: role "body" — cada um desenvolve um ponto específico, conteúdo informativo e conciso
 - Último slide: role "cta" — chamada para ação clara, encoraja comentário, salvamento ou contato
@@ -495,119 +508,140 @@ Deno.serve(async (req) => {
         .limit(15);
       updates = (evergreenBucket ?? []) as UpdateRow[];
     }
-
-    if (updates.length > 0) {
-      const plan = await planTheme(
-        brandKit,
-        updates.map((u) => ({ category: u.category, content: u.content })),
-        recentTitles,
-        hasPersona,
-        mode,
-      );
-      usePersona = plan.use_persona;
-
-      // Busca vetorial refina a ordem dentro do balde escolhido.
-      const themeEmbedding = await generateEmbedding(plan.theme);
-      const { data: matched } = await supabaseAdmin.rpc("match_updates", {
-        query_embedding: themeEmbedding,
-        match_brand_kit_id: brand_kit_id,
-        only_unused: mode === "evento",
-        match_count: 5,
-      });
-
-      // Mantém só os updates do balde escolhido — match_updates não conhece
-      // os baldes, então cruzamos pelo id pra não vazar update do balde errado.
-      const bucketIds = new Set(updates.map((u) => u.id));
-      const refined = ((matched ?? []) as UpdateRow[]).filter((u) => bucketIds.has(u.id));
-      if (refined.length > 0) updates = refined;
-    }
   }
 
-  // se force_type vier, só esse formato; senão, usa o que o brand_kit configurou
+  const aiDecideType = !force_type && (brandKit.post_types as string[] | null)?.includes("AI") === true;
+  let aiChosenType: string | undefined;
+
+  if (updates.length > 0) {
+    const plan = await planTheme(
+      brandKit,
+      updates.map((u) => ({ category: u.category, content: u.content })),
+      recentTitles,
+      hasPersona,
+      mode,
+      aiDecideType,
+    );
+    usePersona = plan.use_persona;
+    if (aiDecideType) aiChosenType = plan.type;
+
+    // Busca vetorial refina a ordem dentro do balde escolhido.
+    const themeEmbedding = await generateEmbedding(plan.theme);
+    const { data: matched } = await supabaseAdmin.rpc("match_updates", {
+      query_embedding: themeEmbedding,
+      match_brand_kit_id: brand_kit_id,
+      only_unused: mode === "evento",
+      match_count: 5,
+    });
+
+    // Mantém só os updates do balde escolhido — match_updates não conhece
+    // os baldes, então cruzamos pelo id pra não vazar update do balde errado.
+    const bucketIds = new Set(updates.map((u) => u.id));
+    const refined = ((matched ?? []) as UpdateRow[]).filter((u) => bucketIds.has(u.id));
+    if (refined.length > 0) updates = refined;
+  }
+
+  // força um tipo específico se vier no body, senão usa ia_decide ou post_types do brand_kit
   const postTypes: string[] = force_type
     ? [force_type]
+    : aiDecideType
+    ? [aiChosenType ?? "story"]
     : (brandKit.post_types ?? ["carrossel", "post"]);
   const results: { type: string; pack_id: string }[] = [];
 
   for (const type of postTypes) {
-    const generated = await generatePack(type, brandKit, updates, mode, theme_override);
-    if (!generated) continue;
-
+    // Insere o pack como pending imediatamente — permite retry se falhar
     const { data: pack, error: packError } = await supabaseAdmin
       .from("packs")
-      .insert({ brand_kit_id, user_id: brandKit.user_id, type, title: generated.title, caption: generated.caption, cta: generated.cta })
+      .insert({ brand_kit_id, user_id: brandKit.user_id, type, status: "pending" })
       .select("id")
       .single();
 
     if (packError || !pack) continue;
 
-    const updatePhotoUrls = updates[0]?.photo_urls;
-    const slides = (generated.slides ?? []) as { order: number; role?: string; content: string }[];
+    try {
+      const generated = await generatePack(type, brandKit, updates, mode, theme_override);
+      if (!generated) throw new Error("generatePack retornou null");
 
-    // imagens por slide em paralelo:
-    //  - post/story: 1 imagem (cover)
-    //  - carrossel: 1 imagem por slide (4-7)
-    const slideImageUrls: Record<number, string | null> = {};
+      // Atualiza título/caption agora que temos o conteúdo gerado
+      await supabaseAdmin
+        .from("packs")
+        .update({ title: generated.title, caption: generated.caption, cta: generated.cta })
+        .eq("id", pack.id);
 
-    if (type === "carrossel" && slides.length > 0) {
-      await Promise.all(
-        slides.map(async (s) => {
-          const imageData = await generateCoverImage(
-            { title: generated.title, caption: s.content, type, role: s.role },
-            brandKit,
-            usePersona,
-            updatePhotoUrls,
-          );
-          if (!imageData) {
-            slideImageUrls[s.order] = null;
-            return;
-          }
-          slideImageUrls[s.order] = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-${s.order}.png`);
-        }),
-      );
-    } else {
-      // post/story: só uma imagem (cover do slide 1)
-      const imageData = await generateCoverImage(
-        { title: generated.title, caption: generated.caption, type },
-        brandKit,
-        usePersona,
-        updatePhotoUrls,
-      );
-      if (imageData) {
-        slideImageUrls[1] = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-1.png`);
+      const updatePhotoUrls = updates[0]?.photo_urls;
+      const slides = (generated.slides ?? []) as { order: number; role?: string; content: string }[];
+
+      // imagens por slide em paralelo:
+      //  - post/story: 1 imagem (cover)
+      //  - carrossel: 1 imagem por slide (4-5)
+      const slideImageUrls: Record<number, string | null> = {};
+
+      if (type === "carrossel" && slides.length > 0) {
+        await Promise.all(
+          slides.map(async (s) => {
+            const imageData = await generateCoverImage(
+              { title: generated.title, caption: s.content, type, role: s.role },
+              brandKit,
+              usePersona,
+              updatePhotoUrls,
+            );
+            if (!imageData) {
+              slideImageUrls[s.order] = null;
+              return;
+            }
+            slideImageUrls[s.order] = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-${s.order}.png`);
+          }),
+        );
+      } else {
+        // post/story: só uma imagem (cover do slide 1)
+        const imageData = await generateCoverImage(
+          { title: generated.title, caption: generated.caption, type },
+          brandKit,
+          usePersona,
+          updatePhotoUrls,
+        );
+        if (imageData) {
+          slideImageUrls[1] = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-1.png`);
+        }
       }
+
+      const coverImageUrl = slideImageUrls[1] ?? null;
+
+      if (slides.length > 0) {
+        await supabaseAdmin.from("slides").insert(
+          slides.map((s) => ({
+            pack_id: pack.id,
+            order: s.order,
+            image_url: slideImageUrls[s.order] ?? null,
+          })),
+        );
+      }
+
+      if (updates.length > 0) {
+        await supabaseAdmin.from("updates").update({ used_in_pack_id: pack.id }).eq("id", updates[0].id);
+      }
+
+      await supabaseAdmin.from("packs").update({ status: "success" }).eq("id", pack.id);
+
+      // Entrega via WhatsApp se habilitado
+      if (
+        brandKit.whatsapp_delivery_enabled &&
+        brandKit.whatsapp_verified &&
+        brandKit.whatsapp_number
+      ) {
+        await sendWhatsAppPack(
+          brandKit.whatsapp_number as string,
+          { title: generated.title, caption: generated.caption, cta: generated.cta, type },
+          coverImageUrl,
+        );
+      }
+
+      results.push({ type, pack_id: pack.id });
+    } catch (err) {
+      console.error(`Falha ao gerar pack ${pack.id}:`, err);
+      await supabaseAdmin.from("packs").update({ status: "failed" }).eq("id", pack.id);
     }
-
-    const coverImageUrl = slideImageUrls[1] ?? null;
-
-    if (slides.length > 0) {
-      await supabaseAdmin.from("slides").insert(
-        slides.map((s) => ({
-          pack_id: pack.id,
-          order: s.order,
-          image_url: slideImageUrls[s.order] ?? null,
-        })),
-      );
-    }
-
-    if (updates.length > 0) {
-      await supabaseAdmin.from("updates").update({ used_in_pack_id: pack.id }).eq("id", updates[0].id);
-    }
-
-    // Entrega via WhatsApp se habilitado
-    if (
-      brandKit.whatsapp_delivery_enabled &&
-      brandKit.whatsapp_verified &&
-      brandKit.whatsapp_number
-    ) {
-      await sendWhatsAppPack(
-        brandKit.whatsapp_number as string,
-        { title: generated.title, caption: generated.caption, cta: generated.cta, type },
-        coverImageUrl,
-      );
-    }
-
-    results.push({ type, pack_id: pack.id });
   }
 
   return new Response(JSON.stringify({ generated: results }), {

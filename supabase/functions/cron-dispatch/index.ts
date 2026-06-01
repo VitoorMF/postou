@@ -28,25 +28,38 @@ Deno.serve(async (req) => {
   const internalSecret = Deno.env.get("INTERNAL_SECRET") ?? "";
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-  // Dispara geração pra cada brand kit em paralelo
-  const results = await Promise.allSettled(
-    brandKits.map((kit: { id: string }) =>
-      fetch(generateUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          // Authorization satisfaz o gateway de JWT do Supabase (porta de entrada do generate-pack).
-          "Authorization": `Bearer ${serviceKey}`,
-          // X-Internal-Secret é validado pelo handler do generate-pack (lógica interna).
-          "X-Internal-Secret": internalSecret,
-        },
-        body: JSON.stringify({ brand_kit_id: kit.id }),
-      }).then((r) => r.json())
-    )
-  );
+  // Busca packs failed de hoje para retry
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const { data: failedPacks } = await supabaseAdmin
+    .from("packs")
+    .select("brand_kit_id")
+    .eq("status", "failed")
+    .gte("created_at", todayStart.toISOString());
+
+  const failedKitIds = new Set((failedPacks ?? []).map((p: { brand_kit_id: string }) => p.brand_kit_id));
+
+  // Une brand kits novos + retries de failed
+  const allKitIds = new Set([
+    ...(brandKits as { id: string }[]).map((k) => k.id),
+    ...failedKitIds,
+  ]);
+
+  // Dispara geração pra cada brand kit sem aguardar resposta (fire-and-forget)
+  for (const kitId of allKitIds) {
+    fetch(generateUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${serviceKey}`,
+        "X-Internal-Secret": internalSecret,
+      },
+      body: JSON.stringify({ brand_kit_id: kitId }),
+    }).catch((err) => console.error(`Erro ao disparar kit ${kitId}:`, err));
+  }
 
   return new Response(
-    JSON.stringify({ processed: brandKits.length, results }),
+    JSON.stringify({ dispatched: allKitIds.size, retries: failedKitIds.size }),
     { headers: { "Content-Type": "application/json" } }
   );
 });
