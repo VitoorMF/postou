@@ -64,6 +64,16 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
   const isPaid = selectedPlan?.priceNum !== null;
   const isCurrentPlan = selected === currentPlan;
 
+  // Formata CPF enquanto digita: 000.000.000-00
+  function maskCpf(value: string) {
+    return value
+      .replace(/\D/g, "")
+      .slice(0, 11)
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  }
+
   async function handleCheckout() {
     setLoading(true);
     setError("");
@@ -191,8 +201,9 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
                 type="text"
                 inputMode="numeric"
                 value={cpf}
-                onChange={(e) => setCpf(e.target.value)}
+                onChange={(e) => setCpf(maskCpf(e.target.value))}
                 placeholder="000.000.000-00"
+                maxLength={14}
                 className="w-full bg-[#242424] text-white text-sm rounded-xl px-4 h-11 placeholder:text-[#444] outline-none focus:ring-1 focus:ring-[#137EFF]"
               />
               <p className="text-xs text-[#555]">Necessário pra gerar a cobrança (Pix ou cartão). Você escolhe a forma de pagamento na próxima tela.</p>
