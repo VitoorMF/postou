@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
+// ⚠️ Os limites REAIS são aplicados em supabase/functions/generate-pack/index.ts
+// (objeto LIMITS). Este array é só o texto exibido — mantenha em sincronia.
 const plans = [
   {
     id: "free",

@@ -286,11 +286,13 @@ Visual style rules:
           prompt: imagePrompt,
           // deno-lint-ignore no-explicit-any
           size: size as any,
+          output_format: "jpeg",
+          output_compression: 90,
           n: 1,
         });
         const item = response.data?.[0];
         if (!item) return null;
-        if (item.b64_json) return `data:image/png;base64,${item.b64_json}`;
+        if (item.b64_json) return `data:image/jpeg;base64,${item.b64_json}`;
         return item.url ?? null;
       }
     }
@@ -301,11 +303,13 @@ Visual style rules:
       prompt: imagePrompt,
       // deno-lint-ignore no-explicit-any
       size: size as any,
+      output_format: "jpeg",
+      output_compression: 90,
       n: 1,
     });
     const item = response.data?.[0];
     if (!item) return null;
-    if (item.b64_json) return `data:image/png;base64,${item.b64_json}`;
+    if (item.b64_json) return `data:image/jpeg;base64,${item.b64_json}`;
     return item.url ?? null;
   } catch (err) {
     console.error("Erro ao gerar imagem:", err);
@@ -327,7 +331,7 @@ async function uploadImage(data: string, path: string): Promise<string | null> {
 
   const { error } = await supabaseAdmin.storage
     .from("packs")
-    .upload(path, buffer, { contentType: "image/png", upsert: true });
+    .upload(path, buffer, { contentType: "image/jpeg", upsert: true });
 
   if (error) { console.error("Erro upload:", error); return null; }
 
@@ -444,6 +448,8 @@ Deno.serve(async (req) => {
   // ─── Cotas por plano ─────────────────────────────────────────────────────
   const isManual = !!(force_type || theme_override);
 
+  // ⚠️ Se mudar os limites aqui, atualize também o texto em
+  // src/app/(app)/settings/plans/PlansClient.tsx (array `plans`)
   const LIMITS: Record<string, { auto: number; manual: number; carrossel: number }> = {
     free:    { auto: 1, manual: 1, carrossel: 0 },
     starter: { auto: 3, manual: 2, carrossel: 1 },
@@ -650,7 +656,7 @@ Deno.serve(async (req) => {
               slideImageUrls[s.order] = null;
               return;
             }
-            slideImageUrls[s.order] = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-${s.order}.png`);
+            slideImageUrls[s.order] = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-${s.order}.jpg`);
           }),
         );
       } else {
@@ -662,7 +668,7 @@ Deno.serve(async (req) => {
           updatePhotoUrls,
         );
         if (imageData) {
-          slideImageUrls[1] = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-1.png`);
+          slideImageUrls[1] = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-1.jpg`);
         }
       }
 

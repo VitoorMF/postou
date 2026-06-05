@@ -4,17 +4,21 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import { getLimits } from "@/lib/plans";
 
 const DAYS = ["S", "T", "Q", "Q", "S", "S", "D"];
 const TIMES = ["06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
 
-function Toggle({ enabled, onChange }: { enabled: boolean; onChange: () => void }) {
+function Toggle({ enabled, onChange, disabled }: { enabled: boolean; onChange: () => void; disabled?: boolean }) {
   return (
     <button
-      onClick={onChange}
-      className={`w-12 h-7 rounded-full transition-colors relative shrink-0 ${enabled ? "bg-[#137EFF]" : "bg-[#3a3a3a]"}`}
+      onClick={() => !disabled && onChange()}
+      disabled={disabled}
+      className={`w-12 h-7 rounded-full transition-colors relative shrink-0 ${
+        disabled ? "bg-[#2a2a2a] cursor-not-allowed" : enabled ? "bg-[#137EFF]" : "bg-[#3a3a3a]"
+      }`}
     >
-      <span className={`absolute top-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${enabled ? "translate-x-[-2px]" : "translate-x-[-22px]"}`} />
+      <span className={`absolute top-0.5 w-6 h-6 rounded-full shadow transition-transform ${disabled ? "bg-[#555]" : "bg-white"} ${enabled ? "translate-x-[-2px]" : "translate-x-[-22px]"}`} />
     </button>
   );
 }
@@ -29,6 +33,8 @@ export default function Settings() {
   const [limitMsg, setLimitMsg] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [plan, setPlan] = useState("free");
+  const [autoCount, setAutoCount] = useState(0);
+  const [carrosselCount, setCarrosselCount] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
@@ -43,7 +49,7 @@ export default function Settings() {
           .maybeSingle(),
         supabase
           .from("users")
-          .select("plan")
+          .select("plan, weekly_auto_count, weekly_carrossel_count")
           .eq("id", user.id)
           .maybeSingle(),
       ]);
@@ -53,10 +59,18 @@ export default function Settings() {
         if (data.active_days?.length) setActiveDays(data.active_days.map(Number));
         if (data.delivery_time) setDeliveryTime(data.delivery_time);
       }
-      if (userData?.plan) setPlan(userData.plan);
+      if (userData) {
+        setPlan(userData.plan ?? "free");
+        setAutoCount(userData.weekly_auto_count ?? 0);
+        setCarrosselCount(userData.weekly_carrossel_count ?? 0);
+      }
       setLoaded(true);
     });
   }, []);
+
+  const limits = getLimits(plan);
+  const carrosselBlocked = carrosselCount >= limits.carrossel; // free → carrossel=0 → sempre true
+  const autoExhausted = autoCount >= limits.auto;
 
   const PLAN_LABELS: Record<string, string> = {
     free: "Plano Free",
@@ -170,19 +184,32 @@ export default function Settings() {
                 { key: "post", label: "Post", sub: "1 imagem de destaque ou conquista" },
                 { key: "story", label: "Story", sub: "1 imagem vertical para stories" },
                 { key: "AI", label: "IA decide", sub: "A IA decide o tipo adequado" },
-              ].map(({ key, label, sub }) => (
-                <div key={key} className="flex items-center justify-between p-4 gap-4">
-                  <div>
-                    <p className="text-base font-medium">{label}</p>
-                    <p className="text-sm text-[#888079]">{sub}</p>
+              ].map(({ key, label, sub }) => {
+                const isCarrossel = key === "carrossel";
+                const disabled = isCarrossel && carrosselBlocked;
+                const carrosselSub = plan === "free"
+                  ? "Disponível nos planos pagos"
+                  : "Limite semanal de carrossel atingido";
+                return (
+                  <div key={key} className="flex items-center justify-between p-4 gap-4">
+                    <div>
+                      <p className={`text-base font-medium ${disabled ? "text-[#666]" : ""}`}>{label}</p>
+                      <p className="text-sm text-[#888079]">{disabled ? carrosselSub : sub}</p>
+                    </div>
+                    <Toggle
+                      enabled={loaded && postTypes.includes(key)}
+                      onChange={() => toggleType(key)}
+                      disabled={disabled}
+                    />
                   </div>
-                  <Toggle
-                    enabled={loaded && postTypes.includes(key)}
-                    onChange={() => toggleType(key)}
-                  />
-                </div>
-              ))}
+                );
+              })}
             </div>
+            {autoExhausted && (
+              <p className="text-xs text-[#888079] px-1">
+                Você já usou suas {limits.auto} {limits.auto === 1 ? "geração automática" : "gerações automáticas"} desta semana. Renova segunda-feira.
+              </p>
+            )}
           </div>
 
           <div className="flex flex-col gap-2">

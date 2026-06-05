@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { getLimits } from "@/lib/plans";
 
 type Format = "post" | "carrossel" | "story";
 type Status = "idle" | "loading" | "success" | "error" | "limit";
@@ -23,6 +24,32 @@ export default function GenerateButton() {
   const [dragY, setDragY] = useState(0);
   const dragStartY = useRef<number | null>(null);
   const router = useRouter();
+
+  // ─── Cotas do usuário ──────────────────────────────────────────────
+  const [plan, setPlan] = useState("free");
+  const [manualCount, setManualCount] = useState(0);
+  const [carrosselCount, setCarrosselCount] = useState(0);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("users")
+        .select("plan, weekly_manual_count, weekly_carrossel_count")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (data) {
+        setPlan(data.plan ?? "free");
+        setManualCount(data.weekly_manual_count ?? 0);
+        setCarrosselCount(data.weekly_carrossel_count ?? 0);
+      }
+    });
+  }, []);
+
+  const limits = getLimits(plan);
+  const manualExhausted = manualCount >= limits.manual;
+  const carrosselBlocked = carrosselCount >= limits.carrossel; // free → carrossel=0 → sempre true
 
   // ─── Swipe-to-dismiss ──────────────────────────────────────────────
   function onDragStart(e: React.PointerEvent) {
@@ -189,20 +216,28 @@ export default function GenerateButton() {
             <div className="flex flex-col gap-2">
               <label className="text-xs font-semibold text-[#555] tracking-widest">FORMATO</label>
               <div className="flex gap-2">
-                {FORMATS.map((f) => (
-                  <button
-                    key={f.key}
-                    onClick={() => setFormat(f.key)}
-                    className={`flex-1 flex flex-col items-center gap-0.5 py-3 rounded-xl border text-sm font-medium transition-all ${
-                      format === f.key
-                        ? "border-[#137EFF] bg-[#137EFF]/10 text-white"
-                        : "border-[#2e2e2e] bg-[#242424] text-[#888079]"
-                    }`}
-                  >
-                    {f.label}
-                    <span className="text-[10px] font-normal opacity-60">{f.sub}</span>
-                  </button>
-                ))}
+                {FORMATS.map((f) => {
+                  const disabled = f.key === "carrossel" && carrosselBlocked;
+                  return (
+                    <button
+                      key={f.key}
+                      onClick={() => !disabled && setFormat(f.key)}
+                      disabled={disabled}
+                      className={`flex-1 flex flex-col items-center gap-0.5 py-3 rounded-xl border text-sm font-medium transition-all ${
+                        disabled
+                          ? "border-[#222] bg-[#1a1a1a] text-[#444] cursor-not-allowed"
+                          : format === f.key
+                          ? "border-[#137EFF] bg-[#137EFF]/10 text-white"
+                          : "border-[#2e2e2e] bg-[#242424] text-[#888079]"
+                      }`}
+                    >
+                      {f.label}
+                      <span className="text-[10px] font-normal opacity-60">
+                        {disabled ? (plan === "free" ? "Plano pago" : "Esgotado") : f.sub}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
@@ -219,11 +254,21 @@ export default function GenerateButton() {
               </div>
             )}
 
+            {/* Aviso de cota manual esgotada */}
+            {manualExhausted && status !== "limit" && (
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl px-4 py-3 flex flex-col gap-1">
+                <p className="text-sm text-amber-400 font-medium">⚠️ Você usou suas {limits.manual} {limits.manual === 1 ? "geração manual" : "gerações manuais"} desta semana.</p>
+                <a href="/settings/plans" className="text-xs text-amber-300 underline underline-offset-2">
+                  Renova segunda · ou faça upgrade →
+                </a>
+              </div>
+            )}
+
             {/* Botão gerar */}
             <button
               onClick={handleGenerate}
-              disabled={status === "loading"}
-              className="w-full h-12 rounded-2xl bg-[#137EFF] text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-opacity"
+              disabled={status === "loading" || manualExhausted}
+              className="w-full h-12 rounded-2xl bg-[#137EFF] text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
             >
               {status === "loading" ? (
                 <>
