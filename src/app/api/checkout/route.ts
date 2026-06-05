@@ -69,6 +69,10 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: invoiceUrl });
   } catch (err) {
     console.error("Erro no checkout Asaas:", err);
-    return NextResponse.json({ error: "Erro ao criar cobrança" }, { status: 500 });
+    // TEMPORÁRIO: expõe o erro real pra debug em sandbox — remover antes de produção
+    return NextResponse.json(
+      { error: "Erro ao criar cobrança", debug: err instanceof Error ? err.message : String(err) },
+      { status: 500 },
+    );
   }
 }
