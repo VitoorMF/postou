@@ -13,13 +13,18 @@ export async function POST(request: Request) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
-  const { plan, cpf } = await request.json();
+  const { plan, cpf, name } = await request.json();
   const planInfo = PLAN_VALUES[plan];
   if (!planInfo) return NextResponse.json({ error: "Plano inválido" }, { status: 400 });
 
   const cleanCpf = String(cpf ?? "").replace(/\D/g, "");
   if (cleanCpf.length !== 11) {
     return NextResponse.json({ error: "CPF inválido" }, { status: 400 });
+  }
+
+  const fullName = String(name ?? "").trim();
+  if (fullName.length < 3) {
+    return NextResponse.json({ error: "Nome inválido" }, { status: 400 });
   }
 
   const admin = createAdminClient();
@@ -35,7 +40,7 @@ export async function POST(request: Request) {
     let customerId = userRow?.asaas_customer_id;
     if (!customerId) {
       const customer = await createCustomer({
-        name: kit?.business_name ?? user.email ?? "Cliente Postou",
+        name: fullName,
         email: user.email ?? "",
         cpfCnpj: cleanCpf,
         mobilePhone: kit?.whatsapp_number ?? undefined,

@@ -56,6 +56,7 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
   const router = useRouter();
   const [selected, setSelected] = useState(currentPlan);
   const [showCpf, setShowCpf] = useState(false);
+  const [fullName, setFullName] = useState("");
   const [cpf, setCpf] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -81,7 +82,7 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ plan: selected, cpf }),
+        body: JSON.stringify({ plan: selected, cpf, name: fullName }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -129,7 +130,7 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
                 onClick={() => setSelected(plan.id)}
                 className={`w-full text-left bg-[#1c1c1c] rounded-2xl p-4 flex flex-col gap-3 border-2 transition-colors ${
                   isCurrent
-                    ? "border-[#137EFF] bg-[#0d1a2e]"
+                    ? "border-emerald-500/50"
                     : isSelected
                     ? "border-[#137EFF]"
                     : "border-transparent"
@@ -196,6 +197,17 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
             </div>
 
             <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-[#555] tracking-widest">NOME COMPLETO</label>
+              <input
+                type="text"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Nome do titular do CPF"
+                className="w-full bg-[#242424] text-white text-sm rounded-xl px-4 h-11 placeholder:text-[#444] outline-none focus:ring-1 focus:ring-[#137EFF]"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
               <label className="text-xs font-semibold text-[#555] tracking-widest">CPF</label>
               <input
                 type="text"
@@ -213,7 +225,7 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
 
             <button
               onClick={handleCheckout}
-              disabled={loading || cpf.replace(/\D/g, "").length !== 11}
+              disabled={loading || cpf.replace(/\D/g, "").length !== 11 || fullName.trim().length < 3}
               className="w-full h-12 rounded-2xl bg-[#137EFF] text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-opacity"
             >
               {loading ? (
