@@ -167,7 +167,7 @@ async function PacksList({ filter, count }: { filter?: string; count: number }) 
       {groups.map(({ label, items }) => (
         <div key={label} className="flex flex-col gap-4">
           <p className="text-xs font-semibold text-[#555] tracking-widest">{label}</p>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
             {items.map((pack) => (
               <PackCard key={pack.id} {...(pack as Pack)} />
             ))}

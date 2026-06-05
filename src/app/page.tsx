@@ -49,7 +49,7 @@ export default function Landing() {
         <section className="hero">
           <div className="wrap hero-grid">
             <div className="hero-load">
-              <div className="eyebrow"><span className="dot"></span> IA treinada para criar conteúdo diariamente</div>
+
               <h1>Sua empresa <span className="hl">postando</span> todos os dias.</h1>
               <p className="hero-sub">O Postou aprende sobre sua marca e transforma novidades do seu negócio em posts prontos para publicar.</p>
               <div className="hero-ctas">
@@ -213,7 +213,7 @@ export default function Landing() {
                   <span className="store-txt"><small>Em breve no</small><b>Google Play</b></span>
                 </a>
               </div>
-              <div className="app-note"><span className="pulse"></span> Enquanto o app não chega, você já pode usar tudo direto pelo navegador.</div>
+              <div className="app-note">Enquanto o app não chega, você já pode usar tudo direto pelo navegador.</div>
             </div>
 
             <div className="app-stage reveal">
