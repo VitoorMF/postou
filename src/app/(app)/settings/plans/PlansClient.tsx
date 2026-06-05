@@ -55,10 +55,37 @@ const plans = [
 export default function PlansClient({ currentPlan }: { currentPlan: string }) {
   const router = useRouter();
   const [selected, setSelected] = useState(currentPlan);
+  const [showCpf, setShowCpf] = useState(false);
+  const [cpf, setCpf] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   const selectedPlan = plans.find((p) => p.id === selected);
   const isPaid = selectedPlan?.priceNum !== null;
   const isCurrentPlan = selected === currentPlan;
+
+  async function handleCheckout() {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan: selected, cpf }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error ?? "Erro ao processar");
+        setLoading(false);
+        return;
+      }
+      // redireciona pra página de pagamento do Asaas (Pix + cartão)
+      window.location.href = data.url;
+    } catch {
+      setError("Erro de conexão");
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="flex flex-col h-full bg-[#141414] text-white font-sans">
@@ -135,6 +162,7 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
 
       <div className="px-4 py-3 shrink-0 max-w-4xl mx-auto w-full">
         <button
+          onClick={() => setShowCpf(true)}
           className="w-full h-14 rounded-full bg-[#137EFF] text-base font-semibold disabled:opacity-40"
           disabled={!isPaid || isCurrentPlan}
         >
@@ -145,6 +173,53 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
             : `Assinar ${selectedPlan?.name} — ${selectedPlan?.price}/mês`}
         </button>
       </div>
+
+      {/* Modal CPF */}
+      {showCpf && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !loading && setShowCpf(false)} />
+          <div className="relative w-full max-w-lg bg-[#1a1a1a] rounded-t-3xl px-5 pt-5 pb-8 flex flex-col gap-5 animate-sheet-up">
+            <div className="w-10 h-1 bg-[#333] rounded-full mx-auto -mt-1 mb-1" />
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-white">Assinar {selectedPlan?.name}</h2>
+              <button onClick={() => !loading && setShowCpf(false)} className="text-[#666] hover:text-white transition-colors text-xl leading-none">✕</button>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-[#555] tracking-widest">CPF</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={cpf}
+                onChange={(e) => setCpf(e.target.value)}
+                placeholder="000.000.000-00"
+                className="w-full bg-[#242424] text-white text-sm rounded-xl px-4 h-11 placeholder:text-[#444] outline-none focus:ring-1 focus:ring-[#137EFF]"
+              />
+              <p className="text-xs text-[#555]">Necessário pra gerar a cobrança (Pix ou cartão). Você escolhe a forma de pagamento na próxima tela.</p>
+            </div>
+
+            {error && <p className="text-sm text-red-400">{error}</p>}
+
+            <button
+              onClick={handleCheckout}
+              disabled={loading || cpf.replace(/\D/g, "").length !== 11}
+              className="w-full h-12 rounded-2xl bg-[#137EFF] text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-opacity"
+            >
+              {loading ? (
+                <>
+                  <svg className="animate-spin" width="16" height="16" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="white" strokeWidth="3" />
+                    <path className="opacity-75" fill="white" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                  Gerando cobrança...
+                </>
+              ) : (
+                `Ir para pagamento — ${selectedPlan?.price}/mês`
+              )}
+            </button>
+          </div>
+        </div>
+      )}
 
     </div>
   );
