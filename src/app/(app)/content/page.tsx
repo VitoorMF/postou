@@ -44,7 +44,8 @@ function PackCard({ id, type, title, caption, cta, created_at, slides }: Pack) {
       {isCarrossel ? (
         <div className="flex gap-2 items-center">
           {preview.map((s, i) => (
-            <div key={s.id} className="relative flex-1 aspect-square rounded-xl bg-[#242424] flex items-end justify-end p-1 overflow-hidden shimmer">
+            <div key={s.id} className="relative flex-1 aspect-square rounded-xl bg-[#242424] flex items-end justify-end p-1 overflow-hidden">
+              <div className="absolute inset-0 shimmer-bg" />
               {s.image_url ? (
                 <img src={s.image_url} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover rounded-xl" />
               ) : null}
@@ -56,7 +57,8 @@ function PackCard({ id, type, title, caption, cta, created_at, slides }: Pack) {
           )}
         </div>
       ) : (
-        <div className="w-full aspect-[4/3] rounded-xl bg-[#242424] relative flex items-end justify-end p-2 overflow-hidden shimmer">
+        <div className="w-full aspect-[4/3] rounded-xl bg-[#242424] relative flex items-end justify-end p-2 overflow-hidden">
+          <div className="absolute inset-0 shimmer-bg" />
           {slides[0]?.image_url ? (
             <img src={slides[0].image_url} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover rounded-xl" />
           ) : null}
