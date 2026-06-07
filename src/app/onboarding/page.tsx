@@ -123,8 +123,23 @@ export default function Onboarding() {
   const canAdvance0 = businessName.trim().length > 0 && description.trim().length > 0;
 
   return (
-    <div className="min-h-screen bg-[#141414] text-white font-sans">
-     <div className="flex flex-col min-h-screen max-w-lg mx-auto px-4 md:justify-center">
+    <div className="min-h-screen bg-[#141414] text-white font-sans flex flex-col md:flex-row">
+
+      {/* Painel esquerdo — branding (só desktop) */}
+      <div className="hidden md:flex md:w-[42%] lg:w-1/2 relative overflow-hidden border-r border-white/5 flex-col justify-between p-12">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#137EFF]/20 via-[#137EFF]/5 to-transparent pointer-events-none" />
+        <span className="relative text-2xl font-bold tracking-tight">postou</span>
+        <div className="relative">
+          <h2 className="text-4xl font-bold leading-[1.1] tracking-tight">Sua empresa<br />postando<br />todos os dias.</h2>
+          <p className="text-[#888079] mt-5 max-w-sm leading-relaxed">
+            A IA aprende sua marca e transforma novidades do seu negócio em posts prontos pro Instagram.
+          </p>
+        </div>
+        <span className="relative text-sm text-[#555]">Configure em 3 passos rápidos.</span>
+      </div>
+
+      {/* Painel direito — formulário */}
+      <div className="flex-1 flex flex-col min-h-screen max-w-lg w-full mx-auto px-4 md:justify-center">
 
       {/* Progress */}
       <div className="pt-12 pb-6 shrink-0">
@@ -155,7 +170,7 @@ export default function Onboarding() {
       </div>
 
       {/* Content */}
-      <div className="flex-1 flex flex-col gap-4 pb-6">
+      <div className="flex-1 md:flex-none flex flex-col gap-4 pb-6">
 
         {/* Step 0 — Sua marca */}
         {step === 0 && (

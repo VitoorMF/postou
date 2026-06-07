@@ -18,7 +18,10 @@ export default function Termos() {
     }}>
       <article style={{ maxWidth: 720, margin: "0 auto" }}>
         <Link href="/" style={{ color: "#6e8df0", fontSize: 14, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 32 }}>
-          ← voltar
+          <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" style={{ display: "inline-block" }}>
+            <path d="M19 12H5M11 18l-6-6 6-6" />
+          </svg>
+          voltar
         </Link>
 
         <h1 style={{ fontSize: 40, fontWeight: 800, letterSpacing: "-0.025em", marginBottom: 8 }}>Termos de Uso</h1>
@@ -106,7 +109,7 @@ export default function Termos() {
         <section>
           <h2 style={{ fontSize: 22, fontWeight: 700, marginBottom: 12 }}>11. Contato</h2>
           <p style={{ color: "#aaa" }}>
-            Dúvidas sobre estes Termos podem ser enviadas para nosso canal de contato indicado no rodapé do site.
+            O Postou é operado por <b>Vitor Freire</b>. Dúvidas sobre estes Termos podem ser enviadas para <a href="mailto:contato@postou.app" style={{ color: "#6e8df0" }}>contato@postou.app</a>.
           </p>
         </section>
       </article>
