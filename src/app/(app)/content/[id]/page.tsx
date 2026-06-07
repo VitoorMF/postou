@@ -72,7 +72,7 @@ async function PackDetail({ id }: { id: string }) {
 
           {/* Coluna esquerda — imagem */}
           <div className="md:w-80 lg:w-96 md:sticky md:top-4 shrink-0">
-            <SlideViewer slides={p.slides} title={p.title} />
+            <SlideViewer slides={p.slides} title={p.title} type={p.type} />
           </div>
 
           {/* Coluna direita — metadados */}

@@ -9,8 +9,11 @@ interface Slide {
   image_url: string | null;
 }
 
-export default function SlideViewer({ slides, title }: { slides: Slide[]; title: string }) {
+export default function SlideViewer({ slides, title, type }: { slides: Slide[]; title: string; type: string }) {
   const [selected, setSelected] = useState(slides[0] ?? null);
+
+  // só carrossel mostra a tira de thumbnails; post/story é imagem única
+  const showThumbs = type === "carrossel" && slides.length > 1;
 
   return (
     <div>
@@ -24,7 +27,7 @@ export default function SlideViewer({ slides, title }: { slides: Slide[]; title:
         </div>
       )}
 
-      {slides.length > 1 && (
+      {showThumbs && (
         <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-none pb-1">
           {slides.map((s) => (
             <button

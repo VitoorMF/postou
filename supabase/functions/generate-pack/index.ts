@@ -636,7 +636,9 @@ Deno.serve(async (req) => {
         .eq("id", pack.id);
 
       const updatePhotoUrls = updates[0]?.photo_urls;
-      const slides = (generated.slides ?? []) as { order: number; role?: string; content: string }[];
+      let slides = (generated.slides ?? []) as { order: number; role?: string; content: string }[];
+      // post/story é imagem única — se o LLM devolver vários slides, mantém só o 1º
+      if (type !== "carrossel") slides = slides.slice(0, 1);
 
       // imagens por slide em paralelo:
       //  - post/story: 1 imagem (cover)
