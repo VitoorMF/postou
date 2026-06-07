@@ -17,6 +17,7 @@ export default function Onboarding() {
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState("");
 
   // Step 0
   const [businessName, setBusinessName] = useState("");
@@ -90,11 +91,12 @@ export default function Onboarding() {
 
   async function finish() {
     setSaving(true);
+    setErr("");
     const supabase = createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setSaving(false); return; }
 
-    await supabase.from("brand_kits").upsert({
+    const { error } = await supabase.from("brand_kits").upsert({
       user_id: user.id,
       business_name: businessName,
       description,
@@ -102,10 +104,17 @@ export default function Onboarding() {
       logo_url: logoUrl,
       palette_hex: palette,
       persona_urls: personas,
-      post_types: ["carrossel", "post"],
-      active_days: ["1", "2", "3", "4", "5"],
+      post_types: ["AI"],
+      active_days: ["2"],
       delivery_time: "08:00",
     }, { onConflict: "user_id" });
+
+    if (error) {
+      console.error("Erro ao salvar brand kit:", error);
+      setErr(error.message);
+      setSaving(false);
+      return;
+    }
 
     setSaving(false);
     router.push("/feed");
@@ -283,6 +292,7 @@ export default function Onboarding() {
 
       {/* Footer buttons */}
       <div className="pb-10 shrink-0 flex flex-col gap-3">
+        {err && <p className="text-sm text-red-400 text-center">{err}</p>}
         {step < STEPS.length - 1 ? (
           <>
             <button

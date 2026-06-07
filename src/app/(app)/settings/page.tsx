@@ -98,14 +98,18 @@ export default function Settings() {
     save({ post_types: next });
   }
 
+  // máximo de dias/semana por plano (deriva do limite de gerações automáticas)
+  const maxDays = Math.min(limits.auto, 7);
+
   function toggleDay(i: number) {
     if (activeDays.includes(i) && activeDays.length === 1) return;
     const next = activeDays.includes(i)
       ? activeDays.filter((d) => d !== i)
       : [...activeDays, i];
 
-    if (activeDays.includes(i) === false && next.length > 3) {
-      setLimitMsg("Máximo de 3 dias no plano atual. Faça upgrade para Pro.");
+    if (activeDays.includes(i) === false && next.length > maxDays) {
+      const plural = maxDays === 1 ? "1 dia" : `${maxDays} dias`;
+      setLimitMsg(`Seu plano permite ${plural} por semana. Faça upgrade para liberar mais.`);
       setTimeout(() => setLimitMsg(""), 3000);
       return;
     }
