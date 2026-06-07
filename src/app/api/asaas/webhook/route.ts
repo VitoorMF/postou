@@ -42,10 +42,28 @@ export async function POST(request: Request) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 32);
 
-    const { error } = await admin
+    // Verifica o plano atual: se MUDOU (upgrade), zera os contadores como brinde.
+    // Se for renovação do mesmo plano, mantém (o reset semanal cuida disso).
+    const { data: current } = await admin
       .from("users")
-      .update({ plan, plan_expires_at: expiresAt.toISOString() })
-      .eq("id", userId);
+      .select("plan")
+      .eq("id", userId)
+      .maybeSingle();
+
+    const isUpgrade = current?.plan !== plan;
+
+    const patch: Record<string, unknown> = {
+      plan,
+      plan_expires_at: expiresAt.toISOString(),
+    };
+    if (isUpgrade) {
+      patch.weekly_auto_count = 0;
+      patch.weekly_manual_count = 0;
+      patch.weekly_carrossel_count = 0;
+      patch.week_start_date = new Date().toISOString().split("T")[0];
+    }
+
+    const { error } = await admin.from("users").update(patch).eq("id", userId);
 
     if (error) console.error("Erro ao ativar plano:", error);
   }

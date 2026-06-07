@@ -8,6 +8,31 @@ const PLAN_VALUES: Record<string, { value: number; label: string }> = {
   pro:     { value: 89, label: "Postou Pro" },
 };
 
+// Valida CPF pelo dígito verificador (não só o tamanho)
+function isValidCpf(cpf: string): boolean {
+  if (cpf.length !== 11) return false;
+  // rejeita sequências iguais (000..., 111..., etc.)
+  if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+  const digits = cpf.split("").map(Number);
+
+  // 1º dígito verificador
+  let sum = 0;
+  for (let i = 0; i < 9; i++) sum += digits[i] * (10 - i);
+  let check = (sum * 10) % 11;
+  if (check === 10) check = 0;
+  if (check !== digits[9]) return false;
+
+  // 2º dígito verificador
+  sum = 0;
+  for (let i = 0; i < 10; i++) sum += digits[i] * (11 - i);
+  check = (sum * 10) % 11;
+  if (check === 10) check = 0;
+  if (check !== digits[10]) return false;
+
+  return true;
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -18,7 +43,7 @@ export async function POST(request: Request) {
   if (!planInfo) return NextResponse.json({ error: "Plano inválido" }, { status: 400 });
 
   const cleanCpf = String(cpf ?? "").replace(/\D/g, "");
-  if (cleanCpf.length !== 11) {
+  if (!isValidCpf(cleanCpf)) {
     return NextResponse.json({ error: "CPF inválido" }, { status: 400 });
   }
 
@@ -74,10 +99,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ url: invoiceUrl });
   } catch (err) {
     console.error("Erro no checkout Asaas:", err);
-    // TEMPORÁRIO: expõe o erro real pra debug em sandbox — remover antes de produção
-    return NextResponse.json(
-      { error: "Erro ao criar cobrança", debug: err instanceof Error ? err.message : String(err) },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "Erro ao criar cobrança" }, { status: 500 });
   }
 }

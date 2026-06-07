@@ -75,6 +75,27 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
       .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
   }
 
+  // Valida CPF pelo dígito verificador
+  function isValidCpf(value: string) {
+    const cpf = value.replace(/\D/g, "");
+    if (cpf.length !== 11) return false;
+    if (/^(\d)\1{10}$/.test(cpf)) return false;
+    const d = cpf.split("").map(Number);
+    let sum = 0;
+    for (let i = 0; i < 9; i++) sum += d[i] * (10 - i);
+    let check = (sum * 10) % 11;
+    if (check === 10) check = 0;
+    if (check !== d[9]) return false;
+    sum = 0;
+    for (let i = 0; i < 10; i++) sum += d[i] * (11 - i);
+    check = (sum * 10) % 11;
+    if (check === 10) check = 0;
+    return check === d[10];
+  }
+
+  const cpfDigits = cpf.replace(/\D/g, "");
+  const cpfInvalid = cpfDigits.length === 11 && !isValidCpf(cpf);
+
   async function handleCheckout() {
     setLoading(true);
     setError("");
@@ -218,14 +239,17 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
                 maxLength={14}
                 className="w-full bg-[#242424] text-white text-sm rounded-xl px-4 h-11 placeholder:text-[#444] outline-none focus:ring-1 focus:ring-[#137EFF]"
               />
-              <p className="text-xs text-[#555]">Necessário pra gerar a cobrança (Pix ou cartão). Você escolhe a forma de pagamento na próxima tela.</p>
+              {cpfInvalid
+                ? <p className="text-xs text-red-400">CPF inválido — confira os números.</p>
+                : <p className="text-xs text-[#555]">Necessário pra gerar a cobrança (Pix ou cartão). Você escolhe a forma de pagamento na próxima tela.</p>
+              }
             </div>
 
             {error && <p className="text-sm text-red-400">{error}</p>}
 
             <button
               onClick={handleCheckout}
-              disabled={loading || cpf.replace(/\D/g, "").length !== 11 || fullName.trim().length < 3}
+              disabled={loading || !isValidCpf(cpf) || fullName.trim().length < 3}
               className="w-full h-12 rounded-2xl bg-[#137EFF] text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-opacity"
             >
               {loading ? (
