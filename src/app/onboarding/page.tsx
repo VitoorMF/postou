@@ -123,10 +123,24 @@ export default function Onboarding() {
   const canAdvance0 = businessName.trim().length > 0 && description.trim().length > 0;
 
   return (
-    <div className="min-h-screen bg-[#141414] text-white font-sans flex flex-col max-w-lg mx-auto px-4">
+    <div className="min-h-screen bg-[#141414] text-white font-sans">
+     <div className="flex flex-col min-h-screen max-w-lg mx-auto px-4 md:justify-center">
 
       {/* Progress */}
       <div className="pt-12 pb-6 shrink-0">
+        {/* Voltar — seta no topo, só a partir do passo 2 */}
+        <button
+          onClick={() => setStep((s) => s - 1)}
+          className={`h-9 w-9 rounded-full bg-[#1c1c1c] flex items-center justify-center mb-4 transition-opacity ${
+            step > 0 ? "opacity-100" : "opacity-0 pointer-events-none"
+          }`}
+          aria-label="Voltar"
+        >
+          <svg width="16" height="16" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M15 18l-6-6 6-6" />
+          </svg>
+        </button>
+
         <div className="flex items-center gap-2 mb-6">
           {STEPS.map((s, i) => (
             <div key={i} className="flex items-center gap-2 flex-1">
@@ -321,7 +335,12 @@ export default function Onboarding() {
               {saving ? (
                 <div className="h-5 w-5 rounded-full border-2 border-white/40 border-t-white animate-spin" />
               ) : (
-                "Começar →"
+                <>
+                  Começar
+                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                    <path d="M5 12h14M13 6l6 6-6 6" />
+                  </svg>
+                </>
               )}
             </button>
             <button
@@ -334,15 +353,8 @@ export default function Onboarding() {
           </>
         )}
 
-        {step > 0 && (
-          <button
-            onClick={() => setStep((s) => s - 1)}
-            className="w-full h-10 text-sm text-[#555]"
-          >
-            ← Voltar
-          </button>
-        )}
       </div>
+     </div>
     </div>
   );
 }
