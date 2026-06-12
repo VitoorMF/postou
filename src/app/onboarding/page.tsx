@@ -117,7 +117,7 @@ export default function Onboarding() {
     }
 
     setSaving(false);
-    router.push("/feed");
+    router.push("/hoje");
   }
 
   const canAdvance0 = businessName.trim().length > 0 && description.trim().length > 0;

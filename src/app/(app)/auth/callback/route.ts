@@ -28,5 +28,5 @@ export async function GET(request: Request) {
   // Usa o host real que o browser mandou (evita 0.0.0.0 quando dev roda em --hostname 0.0.0.0).
   const host = request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "localhost:3000";
   const proto = request.headers.get("x-forwarded-proto") ?? (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
-  return NextResponse.redirect(`${proto}://${host}/feed`);
+  return NextResponse.redirect(`${proto}://${host}/hoje`);
 }

@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
-import GenerateButton from "@/components/GenerateButton";
 import DateFilter from "./DateFilter";
 
 interface Slide {
@@ -238,8 +237,6 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
           <PacksList filter={filter} count={parsedCount} />
         </Suspense>
       </div>
-
-      <GenerateButton />
 
     </div>
   );

@@ -150,42 +150,35 @@ export default function Landing() {
             </div>
             <div className="price-grid stagger">
               <div className="plan reveal">
-                <h3>Começo</h3>
+                <h3>Free</h3>
                 <div className="plan-price"><b>R$0</b><span>/sempre</span></div>
                 <p className="plan-desc">Para testar e descobrir se o Postou cabe na sua rotina.</p>
                 <ul>
-                  <li>3 posts por mês</li>
-                  <li>Modelos básicos</li>
-                  <li>Marca d&apos;água Postou</li>
+                  <li>1 post automatico por semana</li>
+                  <li>1 post manual por semana</li>
                   <li>Download em alta qualidade</li>
                 </ul>
                 <SignInButton className="btn btn-ghost">Criar conta grátis</SignInButton>
               </div>
               <div className="plan featured">
-                <h3>Criador</h3>
+                <h3>Starter</h3>
                 <div className="plan-price"><b>R$39</b><span>/mês</span></div>
                 <p className="plan-desc">Para quem posta toda semana e quer crescer de verdade.</p>
                 <ul>
-                  <li>Criação diária</li>
-                  <li>Identidade da marca personalizada</li>
-                  <li>Agendamento no Instagram</li>
-                  <li>Exportação sem marca d&apos;água</li>
-                  <li>Análise de desempenho</li>
+                  <li>3 posts automatico por semana</li>
+                  <li>2 posts manuais por semana</li>
+                  <li>carrossel</li>
                 </ul>
-                <SignInButton className="btn btn-primary">Começar 7 dias grátis</SignInButton>
               </div>
               <div className="plan reveal">
-                <h3>Estúdio</h3>
-                <div className="plan-price"><b>R$129</b><span>/mês</span></div>
-                <p className="plan-desc">Para agências e times gerenciando várias contas.</p>
+                <h3>Pro</h3>
+                <div className="plan-price"><b>R$89</b><span>/mês</span></div>
+                <p className="plan-desc">Para quem posta todos os dias</p>
                 <ul>
-                  <li>Tudo do plano Criador</li>
-                  <li>Até 10 marcas separadas</li>
-                  <li>Acesso para 5 colaboradores</li>
-                  <li>Aprovação em workflow</li>
+                  <li>Tudo do plano Starter</li>
+                  <li>Sem limitadores</li>
                   <li>Suporte prioritário no WhatsApp</li>
                 </ul>
-                <a href="#" className="btn btn-ghost">Falar com vendas</a>
               </div>
             </div>
           </div>
