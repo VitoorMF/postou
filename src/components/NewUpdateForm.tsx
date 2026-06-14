@@ -69,7 +69,7 @@ export default function NewUpdateForm() {
   }
 
   return (
-    <div className="w-full max-w-4xl bg-[#141414] shrink-0">
+    <div className="w-full  bg-[#141414] shrink-0">
       {images.length > 0 && (
         <div className="flex gap-2 px-3 pt-3 overflow-x-auto scrollbar-none">
           {images.map((img, i) => (

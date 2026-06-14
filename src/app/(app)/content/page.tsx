@@ -34,66 +34,58 @@ function timeAgo(dateStr: string) {
 
 function PackCard({ id, type, title, caption, cta, created_at, slides }: Pack) {
   const isCarrossel = type === "carrossel";
-  const preview = slides.slice(0, 3);
-  const extra = slides.length - 3;
+  const cover = slides.find((s) => s.order === 1)?.image_url ?? slides[0]?.image_url ?? null;
 
   return (
-    <div className="bg-[#1c1c1c] w-full rounded-2xl p-4 flex flex-col gap-3 shrink-0 ">
+    <div className="bg-[#1A1A1C] border border-white/[0.07] w-full rounded-2xl overflow-hidden flex flex-col shrink-0">
 
-      {isCarrossel ? (
-        <div className="flex gap-2 items-center">
-          {preview.map((s, i) => (
-            <div key={s.id} className="relative flex-1 aspect-square rounded-xl bg-[#242424] flex items-end justify-end p-1 overflow-hidden">
-              <div className="absolute inset-0 shimmer-bg" />
-              {s.image_url ? (
-                <img src={s.image_url} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover rounded-xl" />
-              ) : null}
-              <span className="relative text-[10px] text-white/30">{i + 1}</span>
-            </div>
-          ))}
-          {extra > 0 && (
-            <span className="text-sm text-[#888079] shrink-0">+{extra}</span>
+      {/* Preview full-bleed (sem border) */}
+      <div className="relative w-full aspect-[4/3] bg-[#242424]">
+        <div className="absolute inset-0 shimmer-bg" />
+        {cover && (
+          <img src={cover} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover object-top" />
+        )}
+        <span className="absolute bottom-3 right-3 flex items-center gap-1 bg-black/55 backdrop-blur text-white text-xs font-semibold px-2 py-1 rounded-lg">
+          {isCarrossel ? (
+            <>
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="16" rx="2" /><path d="M4 7v10M20 7v10" /></svg>
+              {slides.length}
+            </>
+          ) : (
+            <>
+              <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
+              1
+            </>
           )}
-        </div>
-      ) : (
-        <div className="w-full aspect-[4/3] rounded-xl bg-[#242424] relative flex items-end justify-end p-2 overflow-hidden">
-          <div className="absolute inset-0 shimmer-bg" />
-          {slides[0]?.image_url ? (
-            <img src={slides[0].image_url} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover rounded-xl" />
-          ) : null}
-          <span className="relative text-xs text-white/30">1</span>
-        </div>
-      )}
+        </span>
+      </div>
 
-      <div className="flex flex-col gap-1.5">
+      {/* Conteúdo */}
+      <div className="p-4 flex flex-col gap-1.5">
         <div className="flex items-center gap-2">
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${badgeColors[type]}`}>
-            {type}
-          </span>
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${badgeColors[type]}`}>{type}</span>
           <span className="text-xs text-[#555]">
-            {isCarrossel ? `${slides.length} slides` : "1 imagem"} · {timeAgo(created_at)}
+            {isCarrossel ? `${slides.length} imagens` : "1 imagem"} · {timeAgo(created_at)}
           </span>
         </div>
         <h2 className="text-base font-semibold text-white leading-snug">{title}</h2>
-        {caption && (
-          <p className="text-sm text-[#888079] leading-snug line-clamp-2">{caption}</p>
-        )}
+        {caption && <p className="text-sm text-[#888079] leading-snug line-clamp-2">{caption}</p>}
         {cta && (
-          <div className="flex items-center gap-1.5">
-            <svg width="12" height="12" fill="none" stroke="#137EFF" strokeWidth="2" viewBox="0 0 24 24">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg>
-            <span className="text-xs text-[#137EFF] font-medium">{cta}</span>
+          <div className="flex items-start gap-1.5 mt-0.5">
+            <svg width="13" height="13" fill="none" stroke="#137EFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="shrink-0 mt-0.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+            <span className="text-[13px] text-[#137EFF] font-medium leading-snug">{cta}</span>
           </div>
         )}
       </div>
 
-      <div className="flex gap-2">
-        <Link href={`/content/${id}`} className="flex-1 h-10 rounded-full bg-[#2b2b2b] text-sm font-medium text-white flex items-center justify-center">
-          {isCarrossel ? "ver slides" : "ver"}
+      <div className="flex gap-2 px-4 pb-4 mt-auto">
+        <Link href={`/content/${id}`} className="flex-1 h-10 rounded-xl bg-[#2b2b2b] text-sm font-medium text-white flex items-center justify-center gap-2">
+          <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+          ver
         </Link>
-        <button className="flex-1 h-10 rounded-full bg-[#137EFF] text-sm font-medium text-white">
-          {isCarrossel ? "baixar ZIP" : "baixar"}
+        <button className="flex-1 h-10 rounded-xl bg-[#137EFF] text-sm font-medium text-white flex items-center justify-center gap-2">
+          <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+          {isCarrossel ? "ZIP" : "baixar"}
         </button>
       </div>
 
@@ -220,7 +212,7 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
   const parsedCount = Math.max(PAGE_SIZE, parseInt(count ?? "", 10) || PAGE_SIZE);
 
   return (
-    <div className="flex flex-col h-full bg-[#141414] text-white font-sans">
+    <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans">
 
       <div className="w-full px-4 pt-12 pb-4 shrink-0">
         <div className="flex justify-between items-start">

@@ -14,9 +14,8 @@ function Toggle({ enabled, onChange, disabled }: { enabled: boolean; onChange: (
     <button
       onClick={() => !disabled && onChange()}
       disabled={disabled}
-      className={`w-12 h-7 rounded-full transition-colors relative shrink-0 ${
-        disabled ? "bg-[#2a2a2a] cursor-not-allowed" : enabled ? "bg-[#137EFF]" : "bg-[#3a3a3a]"
-      }`}
+      className={`w-12 h-7 rounded-full transition-colors relative shrink-0 ${disabled ? "bg-[#2a2a2a] cursor-not-allowed" : enabled ? "bg-[#137EFF]" : "bg-[#3a3a3a]"
+        }`}
     >
       <span className={`absolute top-0.5 w-6 h-6 rounded-full shadow transition-transform ${disabled ? "bg-[#555]" : "bg-white"} ${enabled ? "translate-x-[-2px]" : "translate-x-[-22px]"}`} />
     </button>
@@ -131,7 +130,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#141414] text-white font-sans">
+    <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans">
 
       {/* Toast */}
       {limitMsg && (
@@ -187,7 +186,7 @@ export default function Settings() {
                 { key: "carrossel", label: "Carrossel", sub: "Slides sobre o principal evento do dia" },
                 { key: "post", label: "Post", sub: "1 imagem de destaque ou conquista" },
                 { key: "story", label: "Story", sub: "1 imagem vertical para stories" },
-                { key: "AI", label: "IA decide", sub: "A IA decide o tipo adequado" },
+                { key: "AI", label: "IA decide ", sub: "A IA decide o tipo adequado (recomendado)" },
               ].map(({ key, label, sub }) => {
                 const isCarrossel = key === "carrossel";
                 const disabled = isCarrossel && carrosselBlocked;
@@ -254,7 +253,7 @@ export default function Settings() {
                   <button
                     key={i}
                     onClick={() => toggleDay(i)}
-                    className={`h-10 flex-1 rounded-full text-sm font-semibold transition-colors ${activeDays.includes(i) ? "bg-[#137EFF] text-white" : "bg-[#2b2b2b] text-[#888079]"}`}
+                    className={`h-10 flex-1 rounded-2xl text-sm font-semibold transition-colors ${activeDays.includes(i) ? "bg-[#137EFF] text-white" : "bg-[#2b2b2b] text-[#888079]"}`}
                   >
                     {day}
                   </button>

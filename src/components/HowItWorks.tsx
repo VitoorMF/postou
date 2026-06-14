@@ -175,16 +175,14 @@ function NeuralCanvas({ targetIdx }: { targetIdx: number }) {
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
 
-    const stage = canvas.parentElement;
+    // a página inteira dirige o parallax (normaliza pela viewport)
     const onMove = (e: PointerEvent) => {
-      if (!stage) return;
-      const r = stage.getBoundingClientRect();
-      stateRef.current.mx = ((e.clientX - r.left) / r.width - 0.5) * 2;
-      stateRef.current.my = ((e.clientY - r.top) / r.height - 0.5) * 2;
+      stateRef.current.mx = (e.clientX / window.innerWidth - 0.5) * 2;
+      stateRef.current.my = (e.clientY / window.innerHeight - 0.5) * 2;
     };
     const onLeave = () => { stateRef.current.mx = 0; stateRef.current.my = 0; };
-    stage?.addEventListener("pointermove", onMove);
-    stage?.addEventListener("pointerleave", onLeave);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerleave", onLeave);
 
     // pausa quando sai da viewport (otimização opcional — Safari pode falhar aqui)
     let visIO: IntersectionObserver | null = null;
@@ -327,8 +325,8 @@ function NeuralCanvas({ targetIdx }: { targetIdx: number }) {
       cancelAnimationFrame(raf);
       ro.disconnect();
       visIO?.disconnect();
-      stage?.removeEventListener("pointermove", onMove);
-      stage?.removeEventListener("pointerleave", onLeave);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerleave", onLeave);
     };
   }, []);
 
@@ -345,7 +343,7 @@ export default function HowItWorks() {
       if (performance.now() - lastInteractRef.current > 7000) {
         setActive((a) => {
           const next = (a + 1) % CARDS.length;
-          lastInteractRef.current = performance.now() - 5000;
+          lastInteractRef.current = performance.now() - 0;
           return next;
         });
       }

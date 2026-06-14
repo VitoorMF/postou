@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
 import NewUpdateForm from "@/components/NewUpdateForm";
+import ScrollToBottom from "./ScrollToBottom";
 import { type Category, categoryColors } from "@/lib/categories";
 import BrandKitAvatar from "@/components/BrandKitAvatar";
 
@@ -67,7 +68,7 @@ async function UpdatesList() {
   const { data: updates } = await supabase
     .from("updates")
     .select("*")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: true });
 
   if (!updates || updates.length === 0) {
     return <p className="text-sm text-[#555] text-center mt-8">Nenhuma novidade ainda.</p>;
@@ -93,6 +94,7 @@ async function UpdatesList() {
           {items.map((item) => <UpdateCard key={item.id} {...item} />)}
         </div>
       ))}
+      <ScrollToBottom />
     </>
   );
 }
@@ -116,7 +118,7 @@ function UpdatesSkeleton() {
 
 export default function FeedPage() {
   return (
-    <div className="flex flex-col h-full bg-[#141414] text-white font-sans justify-start items-center">
+    <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans justify-start items-center">
 
       <div className="w-full px-4 md:px-8 pt-12 pb-4 shrink-0 mx-auto">
         <div className="flex justify-between items-start">
@@ -128,7 +130,7 @@ export default function FeedPage() {
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto w-full">
+      <div id="feed-scroll" className="flex-1 overflow-y-auto w-full">
         <div className="px-4 md:px-8 flex flex-col gap-4 pb-4 mx-auto w-full max-w-4xl">
           <Suspense fallback={<UpdatesSkeleton />}>
             <UpdatesList />

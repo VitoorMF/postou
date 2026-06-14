@@ -32,7 +32,7 @@ export default async function HojePage() {
 
   const [{ data: userRow }, { data: kit }, { data: packs }] = await Promise.all([
     supabase.from("users").select("plan, weekly_auto_count, weekly_manual_count, weekly_carrossel_count").eq("id", user!.id).maybeSingle(),
-    supabase.from("brand_kits").select("business_name, delivery_time").eq("user_id", user!.id).maybeSingle(),
+    supabase.from("brand_kits").select("business_name, delivery_time, active_days").eq("user_id", user!.id).maybeSingle(),
     supabase
       .from("packs")
       .select("id, type, title, status, created_at, slides(id, order, image_url)")
@@ -45,6 +45,13 @@ export default async function HojePage() {
   const brandName = kit?.business_name ?? "";
   const deliveryTime = kit?.delivery_time ?? null;
 
+  //lista de dias ativos, retornada pelo backend como array de strings (ex: ["0", "5", "2"]) ou null se não configurado. Convertemos para números e ordenamos.
+  const activeDays = kit?.active_days?.map(Number).sort((a: number, b: number) => a - b) ?? [];
+
+  // getDay(): 0=domingo. Os active_days usam 0=segunda (igual ao cron). Converte.
+  const todayWeekday = (spNow().getDay() + 6) % 7;
+  const isTodayActive = activeDays.length === 0 || activeDays.includes(todayWeekday);
+
   const allPacks = (packs ?? []) as Pack[];
   const successPacks = allPacks.filter((p) => p.status === "success");
   const hasPending = allPacks.some((p) => p.status === "pending");
@@ -55,12 +62,18 @@ export default async function HojePage() {
   }));
 
   const meters = [
-    { key: "auto", label: "Automáticas", used: userRow?.weekly_auto_count ?? 0, limit: limits.auto, accent: "#F0871E",
-      icon: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4" /><polyline points="21 3 21 8 16 8" /></svg> },
-    { key: "manual", label: "Manuais", used: userRow?.weekly_manual_count ?? 0, limit: limits.manual, accent: "#2F6BFF",
-      icon: <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5z" /></svg> },
-    { key: "carrossel", label: "Carrossel", used: userRow?.weekly_carrossel_count ?? 0, limit: limits.carrossel, accent: "#2F6BFF",
-      icon: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="16" rx="2" /><path d="M4 7v10M20 7v10" /></svg> },
+    {
+      key: "auto", label: "Automáticas", used: userRow?.weekly_auto_count ?? 0, limit: limits.auto, accent: "#F0871E",
+      icon: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4" /><polyline points="21 3 21 8 16 8" /></svg>
+    },
+    {
+      key: "manual", label: "Manuais", used: userRow?.weekly_manual_count ?? 0, limit: limits.manual, accent: "#2F6BFF",
+      icon: <svg width="18" height="18" fill="currentColor" viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5z" /></svg>
+    },
+    {
+      key: "carrossel", label: "Carrossel", used: userRow?.weekly_carrossel_count ?? 0, limit: limits.carrossel, accent: "#2F6BFF",
+      icon: <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="7" y="4" width="10" height="16" rx="2" /><path d="M4 7v10M20 7v10" /></svg>
+    },
   ].map((m) => {
     const unlimited = m.limit === Infinity;
     const locked = m.limit === 0;
@@ -77,16 +90,34 @@ export default async function HojePage() {
   const monthShort = fmt({ month: "short" }).replace(".", "").toUpperCase();
   const monthLong = fmt({ month: "long" });
 
+  const deliveryHour = deliveryTime ? parseInt(deliveryTime.split(":")[0], 10) : null;
+  // hoje ainda vai gerar (dia ativo + ainda não gerou)
+  const comingToday = !!deliveryTime && isTodayActive && count === 0;
+  // mostra o pill "Chega às" só se o horário ainda não passou
+  const pillUpcoming = comingToday && deliveryHour !== null && deliveryHour > hour;
+
+  // Calcula o rótulo do PRÓXIMO post automático (varre os dias ativos de verdade).
+  // 0=segunda … 6=domingo.
+  const WEEKDAYS = ["segunda", "terça", "quarta", "quinta", "sexta", "sábado", "domingo"];
+  function nextAutoLabel(): string {
+    if (!deliveryTime) return "";
+    const days = activeDays.length ? activeDays : [0, 1, 2, 3, 4, 5, 6];
+    if (days.includes(todayWeekday) && count === 0) return "hoje";
+    for (let off = 1; off <= 7; off++) {
+      const d = (todayWeekday + off) % 7;
+      if (days.includes(d)) return off === 1 ? "amanhã" : WEEKDAYS[d];
+    }
+    return "";
+  }
+  const nextWhen = nextAutoLabel();
+
   const subtitle = count >= 3
     ? "Você arrasou hoje 🔥"
     : count > 0
-    ? "Seu conteúdo do dia está pronto."
-    : deliveryTime
-    ? `Seu primeiro post chega às ${deliveryTime}.`
-    : "";
-
-  const deliveryHour = deliveryTime ? parseInt(deliveryTime.split(":")[0], 10) : null;
-  const nextWhen = deliveryHour !== null && count === 0 && deliveryHour > hour ? "hoje" : "amanhã";
+      ? "Seu conteúdo do dia está pronto."
+      : pillUpcoming
+        ? `Seu primeiro post chega às ${deliveryTime}.`
+        : "";
 
   // ─── Sub-render: estado do "Seu dia" ──────────────────────────────────
   function SeuDiaCards() {
@@ -121,16 +152,29 @@ export default async function HojePage() {
         </div>
       );
     }
-    // agendado / vazio
+    // agendado / vazio — varia conforme hoje é dia ativo
+    const title = !deliveryTime
+      ? "Nenhum post hoje ainda"
+      : comingToday
+        ? "Seu post de hoje está a caminho"
+        : isTodayActive
+          ? "Seu post de hoje está a caminho"
+          : "Hoje não é dia de post automático";
+    const desc = !deliveryTime
+      ? "Crie um agora ou aguarde o automático."
+      : isTodayActive
+        ? "A IA está preparando o conteúdo perfeito pra sua marca."
+        : "Você configurou outros dias da semana. Crie um post manual quando quiser.";
+
     return (
       <div className="flex items-center gap-4 py-2">
         <div className="h-[72px] w-[72px] rounded-[20px] grid place-items-center shrink-0 border border-[#2F6BFF]/30" style={{ background: "linear-gradient(160deg,#1f2b52,#141a36)" }}>
           <svg width="34" height="34" fill="none" stroke="#7da2ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><polyline points="12 7 12 12 15.5 14" /></svg>
         </div>
         <div>
-          <p className="text-[20px] font-extrabold">{deliveryTime ? "Seu post de hoje está a caminho" : "Nenhum post hoje ainda"}</p>
-          <p className="text-[#8A8A8E] text-[15px] mt-1">{deliveryTime ? "A IA está preparando o conteúdo perfeito pra sua marca." : "Crie um agora ou aguarde o automático."}</p>
-          {deliveryTime && (
+          <p className="text-[20px] font-extrabold">{title}</p>
+          <p className="text-[#8A8A8E] text-[15px] mt-1">{desc}</p>
+          {pillUpcoming && (
             <div className="inline-flex items-center gap-2 mt-3 bg-[#2F6BFF]/12 border border-[#2F6BFF]/30 text-[#9bbaff] text-sm font-bold px-3.5 py-2 rounded-full">
               <span className="w-2 h-2 rounded-full bg-[#2F6BFF]" /> Chega às {deliveryTime}
             </div>
@@ -260,7 +304,7 @@ export default async function HojePage() {
               </div>
 
               <div className="flex flex-col gap-3">
-                <p className="text-[15px] font-bold">Suas gerações de hoje</p>
+                <p className="text-[15px] font-bold">Suas gerações da semana</p>
                 <div className="grid grid-cols-3 gap-4">
                   {meters.map((m) => <QuotaCard key={m.key} m={m} big />)}
                 </div>
