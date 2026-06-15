@@ -96,9 +96,14 @@ function NeuralCanvas({ targetIdx }: { targetIdx: number }) {
     blend: 1,
     mx: 0, my: 0,
     running: true,
+    // cursor em coordenadas de página (convertidas pro canvas no draw)
+    clientX: -9999, clientY: -9999,
+    cxN: 0, cyN: 0, cin: false,
     // tint interpolada congelada (quando interrompemos mid-morph)
     frozenTint: null as [number, number, number] | null,
   });
+  // pulsos viajando pelas arestas (sinapses disparando)
+  const pulsesRef = useRef<{ a: number; b: number; t: number; speed: number }[]>([]);
   const statesRef = useRef<State[] | null>(null);
   // estado "frozen" — snapshot do visual atual quando user interrompe um morph em andamento
   const frozenRef = useRef<State | null>(null);
@@ -179,8 +184,13 @@ function NeuralCanvas({ targetIdx }: { targetIdx: number }) {
     const onMove = (e: PointerEvent) => {
       stateRef.current.mx = (e.clientX / window.innerWidth - 0.5) * 2;
       stateRef.current.my = (e.clientY / window.innerHeight - 0.5) * 2;
+      stateRef.current.clientX = e.clientX;
+      stateRef.current.clientY = e.clientY;
     };
-    const onLeave = () => { stateRef.current.mx = 0; stateRef.current.my = 0; };
+    const onLeave = () => {
+      stateRef.current.mx = 0; stateRef.current.my = 0;
+      stateRef.current.clientX = -9999; stateRef.current.clientY = -9999;
+    };
     window.addEventListener("pointermove", onMove);
     window.addEventListener("pointerleave", onLeave);
 
@@ -230,6 +240,15 @@ function NeuralCanvas({ targetIdx }: { targetIdx: number }) {
         proj.push({ x: x * W + px, y: y * H + py, z, size, phase: a.phase });
       }
 
+      // cursor relativo ao canvas
+      const rect = canvas.getBoundingClientRect();
+      st.cxN = (st.clientX - rect.left) / rect.width;
+      st.cyN = (st.clientY - rect.top) / rect.height;
+      st.cin = st.cxN >= -0.05 && st.cxN <= 1.05 && st.cyN >= -0.05 && st.cyN <= 1.05;
+      const cpx = st.cxN * W;
+      const cpy = st.cyN * H;
+      const REACH = Math.min(W, H) * 0.24;
+
       ctx.clearRect(0, 0, W, H);
 
       const edgesA = useFrozen ? frozenRef.current!.edges : states[st.current].edges;
@@ -271,6 +290,24 @@ function NeuralCanvas({ targetIdx }: { targetIdx: number }) {
       ctx.shadowBlur = 0;
       ctx.globalAlpha = 1;
 
+      // linhas que se esticam dos nós próximos até o cursor
+      if (st.cin) {
+        ctx.strokeStyle = `hsl(${tint[0]}, ${tint[1]}%, ${tint[2] + 12}%)`;
+        for (let i = 0; i < proj.length; i++) {
+          const n = proj[i];
+          const d = Math.hypot(n.x - cpx, n.y - cpy);
+          if (d >= REACH) continue;
+          const a = 1 - d / REACH;
+          ctx.globalAlpha = a * a * 0.45;
+          ctx.lineWidth = 0.5 + a * 0.8;
+          ctx.beginPath();
+          ctx.moveTo(n.x, n.y);
+          ctx.lineTo(cpx, cpy);
+          ctx.stroke();
+        }
+        ctx.globalAlpha = 1;
+      }
+
       const order = proj.map((_, i) => i).sort((i, j) => proj[i].z - proj[j].z);
       order.forEach((i) => {
         const n = proj[i];
@@ -285,20 +322,52 @@ function NeuralCanvas({ targetIdx }: { targetIdx: number }) {
         ctx.arc(n.x, n.y, haloR, 0, Math.PI * 2);
         ctx.fill();
 
-        const coreA = 0.55 + z * 0.45;
-        const lightness = tint[2] + z * 18;
+        const near = st.cin ? Math.max(0, 1 - Math.hypot(n.x - cpx, n.y - cpy) / REACH) : 0;
+        const coreA = Math.min(1, 0.55 + z * 0.45 + near * 0.4);
+        const lightness = tint[2] + z * 18 + near * 16;
         ctx.fillStyle = `hsla(${tint[0]}, ${tint[1]}%, ${lightness}%, ${coreA})`;
-        if (z < 0.45) {
-          ctx.shadowColor = `hsla(${tint[0]}, ${tint[1]}%, ${lightness}%, 0.6)`;
-          ctx.shadowBlur = 4 + (0.45 - z) * 16;
+        if (z < 0.45 || near > 0.2) {
+          ctx.shadowColor = `hsla(${tint[0]}, ${tint[1]}%, ${lightness}%, ${0.6 + near * 0.3})`;
+          ctx.shadowBlur = Math.max(0, 4 + (0.45 - z) * 16) + near * 10;
         } else {
           ctx.shadowBlur = 0;
         }
         ctx.beginPath();
-        ctx.arc(n.x, n.y, n.size, 0, Math.PI * 2);
+        ctx.arc(n.x, n.y, n.size * (1 + near * 0.5), 0, Math.PI * 2);
         ctx.fill();
       });
       ctx.shadowBlur = 0;
+
+      // sinapses disparando: pulsos viajando pelas arestas
+      const pulses = pulsesRef.current;
+      const allArr = [...all];
+      if (allArr.length && pulses.length < 14 && Math.random() < 0.09) {
+        const key = allArr[(Math.random() * allArr.length) | 0];
+        const [pa, pb] = key.split("-").map(Number);
+        pulses.push({ a: pa, b: pb, t: 0, speed: 0.005 + Math.random() * 0.007 });
+      }
+      for (let k = pulses.length - 1; k >= 0; k--) {
+        const p = pulses[k];
+        p.t += p.speed;
+        const a = proj[p.a], b = proj[p.b];
+        if (p.t >= 1 || !a || !b) { pulses.splice(k, 1); continue; }
+        const x = lerp(a.x, b.x, p.t);
+        const y = lerp(a.y, b.y, p.t);
+        const env = Math.sin(Math.PI * p.t); // fade nas pontas
+        const r = 0.8 + 2.2 * env;
+        const alpha = 0.9 * env;
+        const pg = ctx.createRadialGradient(x, y, 0, x, y, r * 4);
+        pg.addColorStop(0, `hsla(${tint[0]}, ${tint[1] + 8}%, ${tint[2] + 28}%, ${alpha})`);
+        pg.addColorStop(1, `hsla(${tint[0]}, ${tint[1]}%, ${tint[2] + 28}%, 0)`);
+        ctx.fillStyle = pg;
+        ctx.beginPath();
+        ctx.arc(x, y, r * 4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = `hsla(${tint[0]}, 95%, 95%, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+      }
     };
 
     let raf = 0;
