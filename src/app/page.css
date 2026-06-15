@@ -396,12 +396,32 @@
 .phone-stage::before {
   content: "";
   position: absolute;
-  width: 520px;
-  height: 520px;
+  width: 360px;
+  height: 200px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(65, 105, 225, .35), transparent 60%);
-  filter: blur(20px);
+  background: conic-gradient(rgba(65, 105, 225, 0.38),
+      rgba(120, 80, 255, 0.3),
+      rgba(40, 150, 255, 0.34),
+      rgba(90, 126, 234, 0.3),
+      rgba(65, 105, 225, 0.38));
+  filter: blur(64px);
   z-index: 0;
+  opacity: 0.95;
+  animation: 16s linear infinite aurora;
+}
+
+@keyframes aurora {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  50% {
+    transform: rotate(180deg) scale(1.14);
+  }
+
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
 }
 
 .phone {
@@ -426,6 +446,28 @@
 
   50% {
     transform: translateY(-14px) rotate(.5deg);
+  }
+}
+
+/* Tilt 3D — segue o mouse (vars setadas via JS no .phone-stage) */
+.phone-tilt {
+  position: relative;
+  z-index: 1;
+  display: inline-block;
+  transform: perspective(1100px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+  transform-style: preserve-3d;
+  transition: transform .25s cubic-bezier(.16, 1, .3, 1);
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .phone-stage::before {
+    animation: none;
+  }
+
+  .phone-tilt {
+    transition: none;
   }
 }
 

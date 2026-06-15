@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import PhoneAnimation from "./PhoneAnimation";
 
@@ -9,6 +9,7 @@ const DEMO_VIDEO_SRC = "/videos/demo.mp4"; // grava com QuickTime e bota aqui
 export function HeroPhone() {
   const [open, setOpen] = useState(false);
   const [phoneSize, setPhoneSize] = useState({ width: 360, height: 720 });
+  const stageRef = useRef<HTMLDivElement>(null);
 
   // calcula tamanho do phone expandido respeitando viewport (mantém aspect 1:2)
   useEffect(() => {
@@ -36,6 +37,33 @@ export function HeroPhone() {
     return () => window.removeEventListener("postou:open-demo", onOpen);
   }, []);
 
+  // tilt 3D + parallax dos cards seguindo o mouse (página inteira)
+  useEffect(() => {
+    if (open) return; // sem tilt com o modal aberto
+    let raf = 0;
+    const onMove = (e: MouseEvent) => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const el = stageRef.current;
+        if (!el) return;
+        const nx = (e.clientX - window.innerWidth / 2) / (window.innerWidth / 2);
+        const ny = (e.clientY - window.innerHeight / 2) / (window.innerHeight / 2);
+        el.style.setProperty("--tilt-y", `${(nx * 8).toFixed(2)}deg`);
+        el.style.setProperty("--tilt-x", `${(-ny * 8).toFixed(2)}deg`);
+      });
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => { window.removeEventListener("mousemove", onMove); cancelAnimationFrame(raf); };
+  }, [open]);
+
+  // zera o tilt ao abrir (FLIP do modal parte de um estado neutro)
+  useEffect(() => {
+    if (!open || !stageRef.current) return;
+    const el = stageRef.current;
+    el.style.setProperty("--tilt-x", "0deg");
+    el.style.setProperty("--tilt-y", "0deg");
+  }, [open]);
+
   // ESC fecha
   useEffect(() => {
     if (!open) return;
@@ -56,6 +84,7 @@ export function HeroPhone() {
     <>
       {/* phone na hero (esconde quando aberto, o expandido vira o palco) */}
       <div
+        ref={stageRef}
         className="phone-stage phone-load"
         style={{
           opacity: open ? 0 : 1,
@@ -63,20 +92,22 @@ export function HeroPhone() {
           pointerEvents: open ? "none" : "auto",
         }}
       >
-        <motion.div
-          layoutId="hero-phone"
-          className="phone"
-          style={{
-            animation: open ? "none" : undefined, // pausa o float quando vai abrir
-          }}
-        >
-          <div className="phone-screen">
-            <div className="phone-notch"></div>
-            <div className="carousel-stage" style={{ padding: 0, alignItems: "stretch", justifyContent: "stretch" }}>
-              <PhoneAnimation />
+        <div className="phone-tilt">
+          <motion.div
+            layoutId="hero-phone"
+            className="phone"
+            style={{
+              animation: open ? "none" : undefined, // pausa o float quando vai abrir
+            }}
+          >
+            <div className="phone-screen">
+              <div className="phone-notch"></div>
+              <div className="carousel-stage" style={{ padding: 0, alignItems: "stretch", justifyContent: "stretch" }}>
+                <PhoneAnimation />
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        </div>
       </div>
 
       {/* modal expandido */}
