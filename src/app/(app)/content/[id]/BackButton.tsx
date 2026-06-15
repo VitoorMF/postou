@@ -7,10 +7,11 @@ export default function BackButton() {
   return (
     <button
       onClick={() => router.back()}
-      className="h-9 w-9 rounded-full bg-[#1c1c1c] flex items-center justify-center"
+      aria-label="Voltar"
+      className="h-11 w-11 rounded-[14px] bg-[#1A1A1C] border border-white/[0.07] flex items-center justify-center text-white hover:bg-[#262628] active:scale-95 transition-all"
     >
-      <svg width="16" height="16" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
-        <path d="M15 18l-6-6 6-6" />
+      <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+        <polyline points="15 18 9 12 15 6" />
       </svg>
     </button>
   );

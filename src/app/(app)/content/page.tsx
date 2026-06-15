@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
-import DateFilter from "./DateFilter";
+import TypeFilter, { type TypeCounts } from "./TypeFilter";
 
 interface Slide {
   id: string;
@@ -108,23 +108,14 @@ const PAGE_SIZE = 10;
 async function PacksList({ filter, count }: { filter?: string; count: number }) {
   const supabase = await createClient();
 
-  const now = new Date();
-  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
-
   let query = supabase
     .from("packs")
     .select("id, type, title, caption, cta, created_at, slides(id, order, image_url)")
     .order("created_at", { ascending: false })
     .limit(count + 1); // +1 pra detectar se há mais
 
-  if (filter === "today") {
-    query = query.gte("created_at", startOfDay(now));
-  } else if (filter === "yesterday") {
-    const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
-    query = query.gte("created_at", startOfDay(yesterday)).lt("created_at", startOfDay(now));
-  } else if (filter === "week") {
-    const weekAgo = new Date(now); weekAgo.setDate(now.getDate() - 7);
-    query = query.gte("created_at", startOfDay(weekAgo));
+  if (filter === "post" || filter === "story" || filter === "carrossel") {
+    query = query.eq("type", filter);
   }
 
   const { data: allPacks } = await query;
@@ -207,21 +198,30 @@ function PacksSkeleton() {
   );
 }
 
+async function getCounts(): Promise<TypeCounts> {
+  const supabase = await createClient();
+  const countFor = (t: string) => supabase.from("packs").select("id", { count: "exact", head: true }).eq("type", t);
+  const [pc, sc, cc] = await Promise.all([countFor("post"), countFor("story"), countFor("carrossel")]);
+  return { post: pc.count ?? 0, story: sc.count ?? 0, carrossel: cc.count ?? 0 };
+}
+
 export default async function ContentPage({ searchParams }: { searchParams: Promise<{ filter?: string; count?: string }> }) {
   const { filter, count } = await searchParams;
   const parsedCount = Math.max(PAGE_SIZE, parseInt(count ?? "", 10) || PAGE_SIZE);
+  const counts = await getCounts();
 
   return (
     <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans">
 
-      <div className="w-full px-4 pt-12 pb-4 shrink-0">
+      <div className="w-full px-4 md:px-8 pt-12 pb-4 shrink-0">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl font-semibold">Conteúdo</h1>
             <p className="text-base text-[#888079]">Seus posts gerados</p>
           </div>
-          <DateFilter />
+          <TypeFilter mode="dropdown" counts={counts} className="hidden md:block" />
         </div>
+        <TypeFilter mode="pills" counts={counts} className="md:hidden mt-4" />
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 md:px-8 flex flex-col gap-6 pb-4 ">

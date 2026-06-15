@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import DownloadButton from "./DownloadButton";
 
 interface Slide {
   id: string;
@@ -16,39 +15,35 @@ export default function SlideViewer({ slides, title, type }: { slides: Slide[]; 
   const showThumbs = type === "carrossel" && slides.length > 1;
 
   return (
-    <div>
+    <div className="flex flex-col gap-3.5">
       {selected?.image_url ? (
-        <div className="w-full rounded-2xl overflow-hidden">
+        <div className="w-full rounded-[20px] overflow-hidden bg-[#111] shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
           <img src={selected.image_url} alt={title} className="w-full h-auto" />
         </div>
       ) : (
-        <div className="w-full aspect-[4/5] rounded-2xl bg-[#1c1c1c] flex items-center justify-center">
-          <span className="text-sm text-[#555]">Imagem não gerada</span>
+        <div className="w-full aspect-[4/5] rounded-[20px] bg-[#1A1A1C] flex items-center justify-center">
+          <span className="text-sm text-[#636366]">Imagem não gerada</span>
         </div>
       )}
 
       {showThumbs && (
-        <div className="mt-4 flex gap-2 overflow-x-auto scrollbar-none pb-1">
+        <div className="flex gap-2.5">
           {slides.map((s) => (
             <button
               key={s.id}
               onClick={() => setSelected(s)}
-              className={`relative shrink-0 w-16 aspect-square rounded-xl bg-[#1c1c1c] overflow-hidden flex items-end justify-end p-1 transition-all ${
-                selected?.id === s.id ? "ring-2 ring-white/60" : "opacity-60 hover:opacity-100"
+              className={`relative flex-1 aspect-[1080/1350] rounded-[11px] bg-[#1A1A1C] overflow-hidden border-2 transition-all ${
+                selected?.id === s.id ? "border-[#137EFF] opacity-100" : "border-transparent opacity-60 hover:opacity-90"
               }`}
             >
               {s.image_url ? (
                 <img src={s.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
               ) : null}
-              <span className="relative text-[10px] text-white/40">{s.order}</span>
+              <span className="absolute bottom-1 right-1 w-[17px] h-[17px] rounded-full bg-black/50 text-white text-[11px] font-extrabold flex items-center justify-center">{s.order}</span>
             </button>
           ))}
         </div>
       )}
-
-      <div className="mt-4">
-        <DownloadButton imageUrl={selected?.image_url ?? null} title={title} />
-      </div>
     </div>
   );
 }

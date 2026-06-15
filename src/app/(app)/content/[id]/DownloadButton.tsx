@@ -27,7 +27,7 @@ export default function DownloadButton({ imageUrl, title }: { imageUrl: string |
     <button
       onClick={handleDownload}
       disabled={!imageUrl || downloading}
-      className="w-full h-12 rounded-2xl bg-[#137EFF] text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-opacity"
+      className="w-full h-[58px] rounded-2xl bg-[#1A1A1C] border border-white/[0.07] text-white text-base font-bold flex items-center justify-center gap-2.5 hover:bg-[#262628] active:scale-[0.99] disabled:opacity-50 transition-all"
     >
       {downloading ? (
         <>
@@ -39,7 +39,7 @@ export default function DownloadButton({ imageUrl, title }: { imageUrl: string |
         </>
       ) : (
         <>
-          <svg width="16" height="16" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
+          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M12 5v14M5 19h14M12 19l-5-5M12 19l5-5" />
           </svg>
           Baixar imagem

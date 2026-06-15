@@ -2,9 +2,13 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 import { use } from "react";
 import BackButton from "./BackButton";
-import CopyButton from "./CopyButton";
 import DeleteButton from "./DeleteButton";
 import SlideViewer from "./SlideViewer";
+import DownloadButton from "./DownloadButton";
+import CaptionEditor from "./CaptionEditor";
+import ShareButton from "./ShareButton";
+import PostedButton from "./PostedButton";
+import RatingButtons from "./RatingButtons";
 
 interface Slide {
   id: string;
@@ -19,13 +23,15 @@ interface Pack {
   caption: string | null;
   cta: string | null;
   created_at: string;
+  posted_at: string | null;
+  rating: number | null;
   slides: Slide[];
 }
 
 const badgeColors: Record<string, string> = {
-  carrossel: "bg-[#1a2a4a] text-blue-300",
-  post:      "bg-[#2a1a4a] text-purple-300",
-  story:     "bg-[#1a3a2a] text-emerald-300",
+  carrossel: "bg-[rgba(123,84,255,0.16)] text-[#B9A2FF]",
+  post:      "bg-[rgba(47,107,255,0.16)] text-[#85a8ff]",
+  story:     "bg-[rgba(48,196,107,0.16)] text-[#5fe09a]",
 };
 
 export default function PackPage({ params }: { params: Promise<{ id: string }> }) {
@@ -46,63 +52,72 @@ async function PackDetail({ id }: { id: string }) {
   if (!pack) notFound();
 
   const p = pack as Pack;
+  const ordered = [...p.slides].sort((a, b) => a.order - b.order);
+  const cover = ordered.find((s) => s.order === 1)?.image_url ?? ordered[0]?.image_url ?? null;
+  const shareImages = ordered.map((s) => s.image_url).filter((u): u is string => !!u);
+  const isStory = p.type === "story";
+  const shareText = isStory
+    ? p.title
+    : `${p.title}${p.caption ? `\n\n${p.caption}` : ""}${p.cta ? `\n\n${p.cta}` : ""}`;
 
   return (
-    <div className="flex flex-col h-full bg-[#141414] text-white font-sans">
+    <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans">
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-[1180px] mx-auto px-4 md:px-12 pt-12 pb-16">
 
-      {/* Header */}
-      <div className="w-full px-4 md:px-8 pt-12 pb-4 shrink-0">
-        <div className="flex items-center justify-between">
-          <BackButton />
-          <DeleteButton packId={p.id} />
-        </div>
-        <div className="flex items-center justify-between mt-4">
-          <span className={`text-xs font-medium px-3 py-1 rounded-full ${badgeColors[p.type] ?? badgeColors.post}`}>
-            {p.type}
-          </span>
-          <span className="text-sm text-[#888079]">
-            {new Date(p.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
-          </span>
-        </div>
-      </div>
-
-      {/* Conteúdo — mobile: coluna, desktop: duas colunas */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-8">
-        <div className="flex flex-col md:flex-row gap-6 md:gap-10 md:items-start">
-
-          {/* Coluna esquerda — imagem */}
-          <div className="md:w-80 lg:w-96 md:sticky md:top-4 shrink-0">
-            <SlideViewer slides={p.slides} title={p.title} type={p.type} />
+          {/* nav-row */}
+          <div className="flex items-center justify-between mb-7">
+            <BackButton />
+            <DeleteButton packId={p.id} />
           </div>
 
-          {/* Coluna direita — metadados */}
-          <div className="flex flex-col gap-5 flex-1 pb-4">
+          {/* meta-row */}
+          <div className="flex items-center justify-between mb-5">
+            <span className={`text-[13px] font-bold px-3.5 py-1.5 rounded-[10px] lowercase ${badgeColors[p.type] ?? badgeColors.post}`}>
+              {p.type}
+            </span>
+            <span className="text-base text-[#636366] font-semibold">
+              {new Date(p.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+            </span>
+          </div>
 
-            {/* Título */}
-            <div className="flex flex-col gap-1">
-              <p className="text-xs font-semibold text-[#555] tracking-widest">TÍTULO</p>
-              <p className="text-xl font-semibold text-white leading-snug">{p.title}</p>
+          {/* detail — mobile: coluna, desktop: duas colunas */}
+          <div className="grid md:grid-cols-[minmax(0,430px)_1fr] gap-7 md:gap-12 items-start">
+
+            {/* Coluna esquerda — imagem */}
+            <div className="md:sticky md:top-4">
+              <SlideViewer slides={p.slides} title={p.title} type={p.type} />
             </div>
 
-            {/* Caption + CTA */}
-            {p.caption && (
-              <div className="flex flex-col gap-1.5">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold text-[#555] tracking-widest">LEGENDA</p>
-                  <CopyButton text={p.cta ? `${p.caption}\n\n${p.cta}` : p.caption} />
+            {/* Coluna direita — metadados */}
+            <div className="flex flex-col max-w-[760px] min-w-0">
+
+              {/* Título */}
+              <p className="text-[13px] font-bold tracking-[0.14em] uppercase text-[#636366] mb-3">Título</p>
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-[-0.025em] leading-[1.12] mb-7 text-balance">{p.title}</h1>
+
+              {/* Legenda — copiar / editar / regenerar (story não tem legenda) */}
+              {!isStory && (
+                <div className="mb-7">
+                  <CaptionEditor packId={p.id} caption={p.caption} cta={p.cta} />
                 </div>
-                <p className="text-sm text-[#ccc] leading-relaxed">{p.caption}</p>
-                {p.cta && (
-                  <p className="text-sm text-[#137EFF] font-medium mt-1">{p.cta}</p>
-                )}
+              )}
+
+              {/* Ações */}
+              <div className="flex flex-col gap-3">
+                <ShareButton imageUrls={shareImages} title={p.title} text={shareText} />
+                <DownloadButton imageUrl={cover} title={p.title} />
+                <PostedButton packId={p.id} initialPosted={!!p.posted_at} />
               </div>
-            )}
+
+              {/* Qualidade */}
+              <RatingButtons packId={p.id} initialRating={p.rating ?? null} />
+
+            </div>
 
           </div>
-
         </div>
       </div>
-
     </div>
   );
 }
