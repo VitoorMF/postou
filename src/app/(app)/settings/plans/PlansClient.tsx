@@ -9,46 +9,56 @@ const plans = [
   {
     id: "free",
     name: "Free",
-    price: "Grátis",
+    tag: "Pra experimentar o ritmo.",
+    price: "R$ 39",
     priceNum: null as number | null,
+    note: "Pra sempre, sem cartão.",
     features: [
       "1 geração automática por semana",
       "1 geração manual por semana",
       "Post e story (sem carrossel)",
       "1 brand kit",
     ],
-    highlight: false,
+    featured: false,
     badge: null as string | null,
+    // ordem: mobile mostra Starter primeiro; desktop Free → Starter → Pro
+    order: "order-3 md:order-1",
   },
   {
     id: "starter",
     name: "Starter",
+    tag: "Pra quem posta toda semana.",
     price: "R$ 39",
     priceNum: 39,
+    note: "cobrado mensalmente",
     features: [
       "3 gerações automáticas por semana",
       "2 gerações manuais por semana",
-      "Carrossel 1x por semana",
-      "IA decide o melhor formato",
+      "Carrossel 1× por semana",
+      "A IA decide o melhor formato",
       "1 brand kit",
     ],
-    highlight: true,
-    badge: "MAIS ESCOLHIDO",
+    featured: true,
+    badge: "Mais escolhido",
+    order: "order-1 md:order-2",
   },
   {
     id: "pro",
     name: "Pro",
+    tag: "Pra escalar sem freio.",
     price: "R$ 89",
     priceNum: 89,
+    note: "cobrado mensalmente",
     features: [
       "Gerações ilimitadas",
-      "Todos os dias da semana",
-      "Carrossel sem limite semanal",
+      "Posta todos os dias da semana",
+      "Carrossel sem limite",
       "Geração manual ilimitada",
-      "IA decide o melhor formato",
+      "Suporte prioritário no WhatsApp",
     ],
-    highlight: false,
+    featured: false,
     badge: null as string | null,
+    order: "order-2 md:order-3",
   },
 ];
 
@@ -62,10 +72,7 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
   const [error, setError] = useState("");
 
   const selectedPlan = plans.find((p) => p.id === selected);
-  const isPaid = selectedPlan?.priceNum !== null;
-  const isCurrentPlan = selected === currentPlan;
 
-  // Formata CPF enquanto digita: 000.000.000-00
   function maskCpf(value: string) {
     return value
       .replace(/\D/g, "")
@@ -75,7 +82,6 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
       .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
   }
 
-  // Valida CPF pelo dígito verificador
   function isValidCpf(value: string) {
     const cpf = value.replace(/\D/g, "");
     if (cpf.length !== 11) return false;
@@ -96,6 +102,12 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
   const cpfDigits = cpf.replace(/\D/g, "");
   const cpfInvalid = cpfDigits.length === 11 && !isValidCpf(cpf);
 
+  function openCheckout(planId: string) {
+    setSelected(planId);
+    setError("");
+    setShowCpf(true);
+  }
+
   async function handleCheckout() {
     setLoading(true);
     setError("");
@@ -111,7 +123,6 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
         setLoading(false);
         return;
       }
-      // redireciona pra página de pagamento do Asaas (Pix + cartão)
       window.location.href = data.url;
     } catch {
       setError("Erro de conexão");
@@ -120,90 +131,136 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#141414] text-white font-sans">
+    <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans">
+      <div className="flex-1 overflow-y-auto relative">
+        {/* glow ambiente */}
+        <div className="pointer-events-none absolute top-0 left-1/2 -translate-x-1/2 w-[700px] max-w-full h-[420px] rounded-full -z-0"
+          style={{ background: "radial-gradient(closest-side, rgba(19,126,255,0.15), transparent 70%)" }} />
 
-      <div className="w-full px-4 pt-12 pb-4 shrink-0">
-        <button onClick={() => router.back()} className="h-9 w-9 rounded-full bg-[#1c1c1c] flex items-center justify-center mb-4">
-          <svg width="16" height="16" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M15 18l-6-6 6-6" />
-          </svg>
-        </button>
-        <h1 className="text-3xl font-semibold">Planos</h1>
-        <p className="text-base text-[#888079]">Escolha um plano pra seguir gerando</p>
-      </div>
+        <div className="relative z-10 max-w-[1180px] mx-auto px-4 md:px-14 pt-12 pb-16">
 
-      <div className="flex-1 overflow-y-auto px-4 flex flex-col gap-3 pb-4 max-w-4xl mx-auto w-full">
+          {/* top */}
+          <div className="mb-9">
+            <button onClick={() => router.back()} aria-label="Voltar" className="h-11 w-11 rounded-[13px] bg-[#161618] border border-white/[0.07] flex items-center justify-center text-white hover:bg-[#262628] active:scale-95 transition-all">
+              <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
+            </button>
+          </div>
 
-        {plans.map((plan) => {
-          const isSelected = selected === plan.id;
-          const isCurrent = plan.id === currentPlan;
+          {/* head */}
+          <div className="text-center mb-9">
+            <p className="text-[13px] font-bold tracking-[0.16em] uppercase text-[#137EFF] mb-3">Planos</p>
+            <h1 className="text-3xl md:text-5xl font-extrabold tracking-[-0.04em] leading-none">Poste mais. Pense menos.</h1>
+            <p className="text-[#8A8A8E] text-base md:text-lg font-medium mt-4 max-w-md mx-auto">Escolha um plano e deixe a IA cuidar do seu conteúdo todos os dias.</p>
+          </div>
 
-          return (
-            <div key={plan.id} className="relative">
-              {plan.badge && (
-                <div className="absolute -top-3 left-4 z-10">
-                  <span className="text-[10px] font-bold tracking-widest bg-[#e8d5b7] text-black px-3 py-1 rounded-full">
-                    {plan.badge}
-                  </span>
-                </div>
-              )}
-              <button
-                onClick={() => setSelected(plan.id)}
-                className={`w-full text-left bg-[#1c1c1c] rounded-2xl p-4 flex flex-col gap-3 border-2 transition-colors ${
-                  isCurrent
-                    ? "border-emerald-500/50"
-                    : isSelected
-                    ? "border-[#137EFF]"
-                    : "border-transparent"
-                }`}
-              >
-                <div className="flex justify-between items-baseline">
-                  <div className="flex items-center gap-2">
-                    <span className="text-base font-bold">{plan.name}</span>
+          {/* plans */}
+          <div className="grid md:grid-cols-3 gap-5 items-stretch">
+            {plans.map((plan) => {
+              const isCurrent = plan.id === currentPlan;
+              const isPaid = plan.priceNum !== null;
+              const isFree = !isPaid;
+
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative flex flex-col rounded-[24px] p-7 ${plan.order} ${
+                    plan.featured
+                      ? "border border-[#137EFF]/50 bg-gradient-to-b from-[#137EFF]/[0.08] to-[#161618] shadow-[0_30px_70px_-28px_rgba(19,126,255,0.45)] md:-translate-y-2.5"
+                      : "border border-white/[0.07] bg-[#161618]"
+                  }`}
+                >
+                  {plan.badge && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-gradient-to-b from-[#3b76ff] to-[#137EFF] text-white text-[11.5px] font-extrabold tracking-wide uppercase px-3.5 py-1.5 rounded-full shadow-[0_10px_24px_-8px_rgba(19,126,255,0.7)] whitespace-nowrap">
+                      <svg width="13" height="13" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2 9.91 8.26 3 9l5 4.87L6.18 21 12 17.77 17.82 21 16 13.87 21 9l-6.91-.74Z" /></svg>
+                      {plan.badge}
+                    </div>
+                  )}
+
+                  {/* name */}
+                  <div className="flex items-center gap-2.5 mb-1.5">
+                    <h3 className="text-xl font-extrabold tracking-[-0.02em]">{plan.name}</h3>
                     {isCurrent && (
-                      <span className="text-[10px] font-semibold bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">
-                        plano atual
-                      </span>
+                      <span className="text-[11px] font-bold text-[#30C46B] bg-[#30C46B]/[0.14] border border-[#30C46B]/30 px-2.5 py-0.5 rounded-md whitespace-nowrap">plano atual</span>
                     )}
                   </div>
-                  <span className="text-sm text-[#888079]">
-                    {plan.priceNum === null
-                      ? <span className="text-lg font-bold text-white">Grátis</span>
-                      : <><span className="text-lg font-bold text-white">{plan.price}</span> /mês</>
-                    }
-                  </span>
+                  <p className="text-sm text-[#8A8A8E] font-medium mb-5 min-h-[20px]">{plan.tag}</p>
+
+                  {/* price */}
+                  <div className="flex items-end gap-1.5 mb-1.5">
+                    {isFree ? (
+                      <span className="text-[44px] font-extrabold tracking-[-0.04em] leading-none bg-gradient-to-br from-white to-[#9bb6ff] bg-clip-text text-transparent">Grátis</span>
+                    ) : (
+                      <>
+                        <span className="text-lg font-bold text-[#8A8A8E] mb-1.5">R$</span>
+                        <span className="text-[48px] font-extrabold tracking-[-0.04em] leading-none">{plan.priceNum}</span>
+                        <span className="text-[15px] text-[#636366] font-semibold mb-2">/mês</span>
+                      </>
+                    )}
+                  </div>
+                  <p className="text-[13px] text-[#636366] font-medium mb-6 min-h-[18px]">{plan.note}</p>
+
+                  <div className="h-px bg-white/[0.07] mb-5" />
+
+                  {/* features */}
+                  <ul className="flex flex-col gap-3.5 mb-7 flex-1">
+                    {plan.features.map((f) => (
+                      <li key={f} className="flex items-start gap-3 text-[15px] text-[#D6D6D8] font-medium leading-snug">
+                        <span className="w-[21px] h-[21px] rounded-full bg-[#137EFF]/[0.16] text-[#137EFF] flex items-center justify-center shrink-0 mt-px">
+                          <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                        </span>
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* CTA */}
+                  {isCurrent ? (
+                    <button disabled className="h-[52px] rounded-[14px] border border-white/[0.12] bg-transparent text-[#8A8A8E] text-[15.5px] font-bold flex items-center justify-center cursor-default">
+                      Seu plano atual
+                    </button>
+                  ) : isFree ? (
+                    <button disabled className="h-[52px] rounded-[14px] bg-[#262628] text-[#636366] text-[15.5px] font-bold flex items-center justify-center cursor-default">
+                      Grátis pra sempre
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => openCheckout(plan.id)}
+                      className={`h-[52px] rounded-[14px] text-[15.5px] font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all ${
+                        plan.featured || plan.id === "pro"
+                          ? "bg-[#137EFF] text-white shadow-[0_12px_30px_-10px_rgba(19,126,255,0.7)] hover:bg-[#0f6ae0]"
+                          : "bg-[#262628] text-white hover:bg-[#303033]"
+                      }`}
+                    >
+                      {plan.id === "pro" && (
+                        <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5z" /></svg>
+                      )}
+                      Assinar {plan.name}
+                    </button>
+                  )}
                 </div>
-                <div className="flex flex-col gap-1.5">
-                  {plan.features.map((f) => (
-                    <div key={f} className="flex items-center gap-2">
-                      <svg width="14" height="14" fill="none" stroke="#137EFF" strokeWidth="2.5" viewBox="0 0 24 24">
-                        <path d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-sm text-[#ccc]">{f}</span>
-                    </div>
-                  ))}
-                </div>
-              </button>
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
 
-        <p className="text-center text-xs text-[#555] py-1">cobrado mensalmente · cancele a qualquer hora</p>
+          {/* footer trust */}
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 mt-9 text-sm text-[#636366] font-medium">
+            <span className="flex items-center gap-2">
+              <svg width="15" height="15" fill="none" stroke="#48484A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+              Pagamento seguro
+            </span>
+            <span className="w-1 h-1 rounded-full bg-[#48484A]" />
+            <span className="flex items-center gap-2">
+              <svg width="15" height="15" fill="none" stroke="#48484A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7" /><polyline points="21 4 21 9 16 9" /></svg>
+              Cancele a qualquer hora
+            </span>
+            <span className="w-1 h-1 rounded-full bg-[#48484A]" />
+            <span className="flex items-center gap-2">
+              <svg width="15" height="15" fill="none" stroke="#48484A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4" /><circle cx="12" cy="12" r="9" /></svg>
+              7 dias de reembolso
+            </span>
+          </div>
 
-      </div>
-
-      <div className="px-4 py-3 shrink-0 max-w-4xl mx-auto w-full">
-        <button
-          onClick={() => setShowCpf(true)}
-          className="w-full h-14 rounded-full bg-[#137EFF] text-base font-semibold disabled:opacity-40"
-          disabled={!isPaid || isCurrentPlan}
-        >
-          {isCurrentPlan
-            ? "Você já está neste plano"
-            : !isPaid
-            ? "Você já está no plano gratuito"
-            : `Assinar ${selectedPlan?.name} — ${selectedPlan?.price}/mês`}
-        </button>
+        </div>
       </div>
 
       {/* Modal CPF */}

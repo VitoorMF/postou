@@ -6,47 +6,42 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { getLimits } from "@/lib/plans";
 
-function IconHome({ active }: { active: boolean }) {
-  const c = active ? "white" : "#555";
+function IconHome({ size = 22 }: { size?: number }) {
   return (
-    <svg width="22" height="22" fill="none" stroke={c} strokeWidth="1.8" viewBox="0 0 24 24">
-      <path d="M3 10.5L12 3l9 7.5" />
-      <path d="M5 9.5V20a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V9.5" />
-      <path d="M9 21v-6h6v6" />
+    <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 9.5V21h14V9.5" />
     </svg>
   );
 }
 
-function IconFeed({ active }: { active: boolean }) {
-  const c = active ? "white" : "#555";
+function IconFeed({ size = 22 }: { size?: number }) {
   return (
-    <svg width="22" height="22" fill="none" stroke={c} strokeWidth="1.8" viewBox="0 0 24 24">
-      <path d="M12 20h-7a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v5" />
-      <path d="M16 3v4M8 3v4M3 10h18" />
-      <circle cx="18" cy="18" r="3" />
-      <path d="M18 16v2l1 1" />
+    <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <rect x="3" y="4" width="18" height="18" rx="3" />
+      <line x1="3" y1="9" x2="21" y2="9" />
+      <circle cx="8" cy="14.5" r="1.2" fill="currentColor" stroke="none" />
+      <line x1="11" y1="14.5" x2="17" y2="14.5" />
     </svg>
   );
 }
 
-function IconContent({ active }: { active: boolean }) {
-  const c = active ? "white" : "#555";
+function IconContent({ size = 22 }: { size?: number }) {
   return (
-    <svg width="22" height="22" fill="none" stroke={c} strokeWidth="1.8" viewBox="0 0 24 24">
-      <rect x="3" y="3" width="7" height="7" rx="1.5" />
-      <rect x="14" y="3" width="7" height="7" rx="1.5" />
-      <rect x="3" y="14" width="7" height="7" rx="1.5" />
-      <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <rect x="3" y="3" width="7.5" height="7.5" rx="2" />
+      <rect x="13.5" y="3" width="7.5" height="7.5" rx="2" />
+      <rect x="3" y="13.5" width="7.5" height="7.5" rx="2" />
+      <rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" />
     </svg>
   );
 }
 
-function IconSettings({ active }: { active: boolean }) {
-  const c = active ? "white" : "#555";
+function IconSettings({ size = 22 }: { size?: number }) {
   return (
-    <svg width="22" height="22" fill="none" stroke={c} strokeWidth="1.8" viewBox="0 0 24 24">
-      <circle cx="12" cy="12" r="3" />
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    <svg width={size} height={size} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="3.2" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   );
 }
@@ -93,13 +88,13 @@ export default function Navbar() {
   return (
     <>
       {/* ===== Mobile: bottom bar ===== */}
-      <nav className="md:hidden flex shrink-0 bg-[#1a1a1a] flex-row w-full pt-3 pb-[max(12px,env(safe-area-inset-bottom))] justify-around order-2">
+      <nav className="md:hidden flex shrink-0 flex-row w-full justify-around order-2 bg-[#0C0C0E]/90 backdrop-blur-xl border-t border-white/[0.07] pt-2.5 pb-[max(10px,env(safe-area-inset-bottom))]">
         {tabs.map(({ label, href, Icon }) => {
           const active = pathname === href;
           return (
-            <Link key={href} href={href} className="flex flex-col items-center gap-1 px-4">
-              <Icon active={active} />
-              <span className={`text-xs font-medium ${active ? "text-white" : "text-[#555]"}`}>{label}</span>
+            <Link key={href} href={href} className={`flex flex-1 flex-col items-center gap-1.5 pt-1 ${active ? "text-white" : "text-[#48484A]"}`}>
+              <Icon size={24} />
+              <span className="text-[11px] font-semibold">{label}</span>
             </Link>
           );
         })}
@@ -130,10 +125,10 @@ export default function Navbar() {
               <Link
                 key={href}
                 href={href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-colors ${active ? "bg-[#1c1c1c]" : "hover:bg-white/[0.04]"}`}
+                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-[13px] transition-colors ${active ? "bg-[#262628]" : "hover:bg-white/[0.04]"}`}
               >
-                <Icon active={active} />
-                <span className={`text-[15px] font-medium ${active ? "text-white" : "text-[#8A8A8E]"}`}>{label}</span>
+                <span className={active ? "text-[#137EFF]" : "text-[#8A8A8E]"}><Icon /></span>
+                <span className={`text-[15px] font-semibold ${active ? "text-white" : "text-[#8A8A8E]"}`}>{label}</span>
               </Link>
             );
           })}

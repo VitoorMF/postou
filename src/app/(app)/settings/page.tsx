@@ -14,10 +14,11 @@ function Toggle({ enabled, onChange, disabled }: { enabled: boolean; onChange: (
     <button
       onClick={() => !disabled && onChange()}
       disabled={disabled}
-      className={`w-12 h-7 rounded-full transition-colors relative shrink-0 ${disabled ? "bg-[#2a2a2a] cursor-not-allowed" : enabled ? "bg-[#137EFF]" : "bg-[#3a3a3a]"
-        }`}
+      role="switch"
+      aria-checked={enabled}
+      className={`w-[52px] h-[31px] rounded-full relative shrink-0 border transition-colors ${disabled ? "bg-[#1e1e21] border-white/[0.08] cursor-not-allowed" : enabled ? "bg-[#137EFF] border-transparent" : "bg-[#202022] border-white/[0.12]"}`}
     >
-      <span className={`absolute top-0.5 w-6 h-6 rounded-full shadow transition-transform ${disabled ? "bg-[#555]" : "bg-white"} ${enabled ? "translate-x-[-2px]" : "translate-x-[-22px]"}`} />
+      <span className={`absolute top-[3px] left-[3px] w-[23px] h-[23px] rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.4)] transition-transform ${disabled ? "bg-[#555]" : "bg-white"} ${enabled ? "translate-x-[21px]" : "translate-x-0"}`} />
     </button>
   );
 }
@@ -146,58 +147,68 @@ export default function Settings() {
         </div>
       )}
 
-      <div className="w-full px-4 md:px-8 pt-12 pb-4 shrink-0 mx-auto">
+      <div className="w-full px-4 md:px-10 pt-12 pb-4 shrink-0 max-w-[1020px] mx-auto">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-semibold">Configurar</h1>
-            <p className="text-base text-[#888079]">Escolha o que gerar todo dia</p>
+            <h1 className="text-3xl md:text-[40px] font-extrabold tracking-[-0.035em] leading-none">Configurar</h1>
+            <p className="text-base md:text-lg text-[#8A8A8E] font-medium mt-2">Escolha o que gerar todo dia</p>
           </div>
           {saving && (
-            <span className="text-xs text-[#888079] mt-1.5">Salvando...</span>
+            <span className="text-xs text-[#636366] mt-2 shrink-0">Salvando...</span>
           )}
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto w-full">
-        <div className="px-4 md:px-8 flex flex-col gap-6 pb-4 max-w-4xl mx-auto w-full">
+        <div className="px-4 md:px-10 flex flex-col gap-7 pb-16 max-w-[1020px] mx-auto w-full">
 
-          <div className="flex flex-col gap-2">
+          {/* atalhos */}
+          <div className="flex flex-col gap-3">
             {[
-              { href: "/settings/brand-kit", label: "Brand kit", sub: "Logotipo, paleta, tipografia e tom de voz" },
-              { href: "/settings/plans", label: "Planos", sub: PLAN_LABELS[plan] ?? "Plano Free" },
-              { href: "/settings/whatsapp", label: "WhatsApp", sub: "Configurações do WhatsApp" },
-            ].map(({ href, label, sub }) => (
-              <Link key={href} href={href} className="bg-[#1c1c1c] rounded-2xl p-4 flex items-center justify-between">
-                <div>
-                  <p className="text-base font-medium">{label}</p>
-                  <p className="text-sm text-[#888079]">{sub}</p>
+              {
+                href: "/settings/brand-kit", label: "Brand kit", sub: "Logotipo, paleta, tipografia e tom de voz",
+                icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><circle cx="13.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" /><circle cx="17.5" cy="10.5" r="1.5" fill="currentColor" stroke="none" /><circle cx="8.5" cy="7.5" r="1.5" fill="currentColor" stroke="none" /><circle cx="6.5" cy="12.5" r="1.5" fill="currentColor" stroke="none" /><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.55-.22-1.05-.59-1.41-.36-.36-.58-.86-.58-1.42a2 2 0 0 1 2-2H17a5 5 0 0 0 5-5c0-4.42-4.48-8-10-8z" /></svg>,
+              },
+              {
+                href: "/settings/plans", label: "Planos", sub: PLAN_LABELS[plan] ?? "Plano Free",
+                icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 7h18l-1.5 12.5a2 2 0 0 1-2 1.5H6.5a2 2 0 0 1-2-1.5z" /><path d="M8 7V5a4 4 0 0 1 8 0v2" /></svg>,
+              },
+              {
+                href: "/settings/whatsapp", label: "WhatsApp", sub: "Configurações do WhatsApp",
+                icon: <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M.5 23.5l1.65-6a11.5 11.5 0 1 1 4.32 4.25L.5 23.5zM6.8 19.3l.37.22a9.55 9.55 0 1 0-3.23-3.16l.24.38-.98 3.57 3.6-1.01zM17.6 14.2c-.13-.22-.48-.35-1-.61s-3.06-1.51-3.54-1.68-.82-.26-1.16.26-1.33 1.68-1.63 2.02-.6.39-1.11.13a7.65 7.65 0 0 1-2.25-1.39 8.43 8.43 0 0 1-1.56-1.94c-.16-.28 0-.43.12-.58s.26-.3.39-.46a1.8 1.8 0 0 0 .26-.43.48.48 0 0 0 0-.46c-.07-.13-.58-1.4-.8-1.92s-.43-.43-.58-.44h-.5a.95.95 0 0 0-.69.32 2.9 2.9 0 0 0-.91 2.16 5.02 5.02 0 0 0 1.06 2.68c.13.17 1.82 2.78 4.42 3.9a14.9 14.9 0 0 0 1.48.55 3.55 3.55 0 0 0 1.63.1 2.67 2.67 0 0 0 1.75-1.23 2.16 2.16 0 0 0 .15-1.23z" /></svg>,
+              },
+            ].map(({ href, label, sub, icon }) => (
+              <Link key={href} href={href} className="flex items-center gap-4 bg-[#161618] border border-white/[0.07] rounded-[16px] md:rounded-[18px] p-4 md:px-6 md:py-5 hover:border-white/[0.12] hover:bg-[#1A1A1C] transition-colors">
+                <span className="w-[42px] h-[42px] md:w-[46px] md:h-[46px] rounded-[12px] md:rounded-[13px] bg-[#202022] border border-white/[0.12] flex items-center justify-center text-[#8A8A8E] shrink-0">{icon}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-base md:text-lg font-bold tracking-[-0.01em]">{label}</p>
+                  <p className="text-[13px] md:text-sm text-[#636366] font-medium mt-0.5 truncate">{sub}</p>
                 </div>
-                <svg width="16" height="16" fill="none" stroke="#888079" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M9 18l6-6-6-6" />
-                </svg>
+                <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="text-[#48484A] shrink-0"><polyline points="9 18 15 12 9 6" /></svg>
               </Link>
             ))}
           </div>
 
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-semibold text-[#555] tracking-widest">O QUE GERAR</p>
-            <div className="bg-[#1c1c1c] rounded-2xl divide-y divide-[#2a2a2a]">
+          {/* O que gerar */}
+          <div>
+            <p className="text-[12px] font-bold tracking-[0.14em] uppercase text-[#636366] mb-3 ml-1">O que gerar</p>
+            <div className="bg-[#161618] border border-white/[0.07] rounded-[16px] md:rounded-[18px] overflow-hidden">
               {[
                 { key: "carrossel", label: "Carrossel", sub: "Slides sobre o principal evento do dia" },
                 { key: "post", label: "Post", sub: "1 imagem de destaque ou conquista" },
                 { key: "story", label: "Story", sub: "1 imagem vertical para stories" },
-                { key: "AI", label: "IA decide ", sub: "A IA decide o tipo adequado (recomendado)" },
-              ].map(({ key, label, sub }) => {
+                { key: "AI", label: "IA decide", sub: "A IA decide o tipo adequado (recomendado)" },
+              ].map(({ key, label, sub }, idx) => {
                 const isCarrossel = key === "carrossel";
                 const disabled = isCarrossel && carrosselBlocked;
                 const carrosselSub = plan === "free"
                   ? "Disponível nos planos pagos"
                   : "Limite semanal de carrossel atingido";
                 return (
-                  <div key={key} className="flex items-center justify-between p-4 gap-4">
-                    <div>
-                      <p className={`text-base font-medium ${disabled ? "text-[#666]" : ""}`}>{label}</p>
-                      <p className="text-sm text-[#888079]">{disabled ? carrosselSub : sub}</p>
+                  <div key={key} className={`flex items-center justify-between gap-4 p-4 md:px-6 md:py-5 ${idx > 0 ? "border-t border-white/[0.07]" : ""} ${key === "AI" ? "bg-gradient-to-r from-[#137EFF]/[0.06] to-transparent" : ""}`}>
+                    <div className="min-w-0">
+                      <p className={`text-base md:text-lg font-bold tracking-[-0.01em] ${disabled ? "text-[#666]" : ""}`}>{label}</p>
+                      <p className="text-[12.5px] md:text-sm text-[#636366] font-medium mt-0.5">{disabled ? carrosselSub : sub}</p>
                     </div>
                     <Toggle
                       enabled={loaded && postTypes.includes(key)}
@@ -209,32 +220,33 @@ export default function Settings() {
               })}
             </div>
             {autoExhausted && (
-              <p className="text-xs text-[#888079] px-1">
+              <p className="text-xs text-[#636366] px-1 mt-2.5">
                 Você já usou suas {limits.auto} {limits.auto === 1 ? "geração automática" : "gerações automáticas"} desta semana. Renova segunda-feira.
               </p>
             )}
           </div>
 
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-semibold text-[#555] tracking-widest">HORÁRIO DE ENTREGA</p>
-            <div className="bg-[#1c1c1c] rounded-2xl overflow-hidden">
+          {/* Horário de entrega */}
+          <div>
+            <p className="text-[12px] font-bold tracking-[0.14em] uppercase text-[#636366] mb-3 ml-1">Horário de entrega</p>
+            <div className="bg-[#161618] border border-white/[0.07] rounded-[16px] md:rounded-[18px] overflow-hidden">
               <button
                 onClick={() => setShowTimePicker(!showTimePicker)}
-                className="w-full p-4 flex items-center justify-between"
+                className="w-full p-4 md:px-6 md:py-5 flex items-center justify-between gap-4"
               >
                 <div className="text-left">
-                  <p className="text-base font-medium">Gerar todo dia às</p>
-                  <p className="text-sm text-[#888079]">Você recebe uma notificação quando ficar pronto</p>
+                  <p className="text-base md:text-lg font-bold tracking-[-0.01em]">Gerar todo dia às</p>
+                  <p className="text-[12.5px] md:text-sm text-[#636366] font-medium mt-0.5">Você recebe uma notificação quando ficar pronto</p>
                 </div>
-                <span className="text-2xl font-semibold text-[#137EFF] shrink-0">{deliveryTime}</span>
+                <span className="text-3xl md:text-[36px] font-extrabold tracking-[-0.03em] text-[#137EFF] shrink-0 tabular-nums">{deliveryTime}</span>
               </button>
               {showTimePicker && (
-                <div className="border-t border-[#2a2a2a] flex overflow-x-auto scrollbar-none px-4 pb-4 pt-3 gap-2">
+                <div className="border-t border-white/[0.07] flex overflow-x-auto scrollbar-none px-4 md:px-6 pb-4 pt-3 gap-2">
                   {TIMES.map((t) => (
                     <button
                       key={t}
                       onClick={() => pickTime(t)}
-                      className={`shrink-0 px-4 h-9 rounded-full text-sm font-medium transition-colors ${deliveryTime === t ? "bg-[#137EFF] text-white" : "bg-[#2b2b2b] text-[#888079]"}`}
+                      className={`shrink-0 px-4 h-9 rounded-full text-sm font-semibold transition-colors ${deliveryTime === t ? "bg-[#137EFF] text-white" : "bg-[#202022] border border-white/[0.12] text-[#8A8A8E]"}`}
                     >
                       {t}
                     </button>
@@ -244,16 +256,17 @@ export default function Settings() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
-            <p className="text-xs font-semibold text-[#555] tracking-widest">DIAS DA SEMANA</p>
-            <div className="bg-[#1c1c1c] rounded-2xl p-4 flex flex-col gap-3">
-              <p className="text-sm text-[#888079]">Gerar conteúdo somente nos dias selecionados</p>
-              <div className="flex gap-2">
+          {/* Dias da semana */}
+          <div>
+            <p className="text-[12px] font-bold tracking-[0.14em] uppercase text-[#636366] mb-3 ml-1">Dias da semana</p>
+            <div className="bg-[#161618] border border-white/[0.07] rounded-[16px] md:rounded-[18px] p-4 md:px-6 md:py-5">
+              <p className="text-[13.5px] md:text-[15px] text-[#8A8A8E] font-medium mb-4">Gerar conteúdo somente nos dias selecionados</p>
+              <div className="grid grid-cols-7 gap-2 md:gap-2.5">
                 {DAYS.map((day, i) => (
                   <button
                     key={i}
                     onClick={() => toggleDay(i)}
-                    className={`h-10 flex-1 rounded-2xl text-sm font-semibold transition-colors ${activeDays.includes(i) ? "bg-[#137EFF] text-white" : "bg-[#2b2b2b] text-[#888079]"}`}
+                    className={`h-[46px] md:h-[54px] rounded-[11px] md:rounded-[13px] text-[15px] md:text-[17px] font-bold border transition-all ${activeDays.includes(i) ? "bg-[#137EFF] text-white border-transparent shadow-[0_8px_22px_-8px_rgba(19,126,255,0.6)]" : "bg-[#202022] border-white/[0.12] text-[#8A8A8E] hover:text-white"}`}
                   >
                     {day}
                   </button>
@@ -264,10 +277,10 @@ export default function Settings() {
 
           <button
             onClick={handleLogout}
-            className="w-full h-12 rounded-2xl bg-[#1c1c1c] text-[#888079] text-sm font-medium flex items-center justify-center gap-2 hover:text-red-400 transition-colors shrink-0"
+            className="w-full h-14 rounded-[15px] md:rounded-[16px] bg-[#161618] border border-white/[0.07] text-[#FF6B6B] text-[15px] md:text-base font-bold flex items-center justify-center gap-2.5 hover:bg-[#FF6B6B]/[0.08] hover:border-[#FF6B6B]/30 active:scale-[0.99] transition-all shrink-0"
           >
-            <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
+            <svg width="19" height="19" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" />
             </svg>
             Sair da conta
           </button>

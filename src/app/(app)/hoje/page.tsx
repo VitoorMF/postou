@@ -205,7 +205,7 @@ export default async function HojePage() {
   return (
     <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans">
       <div className="flex-1 overflow-y-auto w-full">
-        <div className="px-5 lg:px-10 pt-12 pb-28 lg:pb-12 max-w-lg lg:max-w-none mx-auto w-full">
+        <div className="px-5 lg:px-10 pt-12 pb-8 lg:pb-12 max-w-lg lg:max-w-none mx-auto w-full">
 
           {/* ===== Header ===== */}
           <div className="flex items-start justify-between gap-4 mb-7">
