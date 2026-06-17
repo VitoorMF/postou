@@ -101,7 +101,8 @@ async function UpdatesList() {
 
 function UpdatesSkeleton() {
   return (
-    <>
+    // mt-auto cola o skeleton no rodapé (feed é estilo chat, de baixo pra cima)
+    <div className="mt-auto flex flex-col gap-4">
       {[1, 2, 3].map((i) => (
         <div key={i} className="bg-[#161618] border border-white/[0.07] w-full rounded-[18px] p-4 md:p-5 flex flex-col gap-3 animate-pulse">
           <div className="flex justify-between">
@@ -112,7 +113,7 @@ function UpdatesSkeleton() {
           <div className="h-4 w-3/4 bg-[#202022] rounded-full" />
         </div>
       ))}
-    </>
+    </div>
   );
 }
 
@@ -126,12 +127,14 @@ export default function FeedPage() {
             <h1 className="text-3xl md:text-[34px] font-extrabold tracking-[-0.03em]">Novidades</h1>
             <p className="text-base text-[#8A8A8E] font-medium mt-1">O que aconteceu hoje?</p>
           </div>
-          <BrandKitAvatar />
+          <div className="md:hidden">
+            <BrandKitAvatar />
+          </div>
         </div>
       </div>
 
       <div id="feed-scroll" className="flex-1 overflow-y-auto w-full">
-        <div className="px-4 md:px-8 flex flex-col gap-4 pb-4 mx-auto w-full max-w-[1100px]">
+        <div className="px-4 md:px-8 flex flex-col gap-4 pb-4 mx-auto w-full max-w-[1100px] min-h-full">
           <Suspense fallback={<UpdatesSkeleton />}>
             <UpdatesList />
           </Suspense>

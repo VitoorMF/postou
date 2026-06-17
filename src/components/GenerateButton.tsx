@@ -20,9 +20,9 @@ function WandIcon({ size = 22, color = "currentColor" }: { size?: number; color?
 }
 
 const FORMATS: { key: Format; label: string; sub: string }[] = [
-  { key: "story",    label: "Story",     sub: "1 imagem vertical" },
-  { key: "post",     label: "Post",      sub: "1 imagem de destaque" },
-  { key: "carrossel",label: "Carrossel", sub: "4–5 slides" },
+  { key: "story", label: "Story", sub: "1 imagem vertical" },
+  { key: "post", label: "Post", sub: "1 imagem de destaque" },
+  { key: "carrossel", label: "Carrossel", sub: "4–5 slides" },
 ];
 
 export default function GenerateButton({ variant = "floating" }: { variant?: "floating" | "inline" | "card" | "panel" | "tile" }) {
@@ -148,16 +148,20 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
         /* Card vertical do rail (desktop) */
         <div
           className={`rounded-[22px] p-5 border ${locked ? "border-[#F0871E]/35" : "border-[#7b54ff]/25"}`}
-          style={{ background: locked
-            ? "linear-gradient(160deg, rgba(240,135,30,0.12), rgba(240,135,30,0.02))"
-            : "linear-gradient(160deg, rgba(123,84,255,0.16), rgba(47,107,255,0.05))" }}
+          style={{
+            background: locked
+              ? "linear-gradient(160deg, rgba(240,135,30,0.12), rgba(240,135,30,0.02))"
+              : "linear-gradient(160deg, rgba(123,84,255,0.16), rgba(47,107,255,0.05))"
+          }}
         >
           <div className="h-12 w-12 rounded-[14px] grid place-items-center mb-4" style={{ background: locked ? "rgba(240,135,30,0.16)" : "linear-gradient(160deg,#7b54ff,#4169e1)", boxShadow: locked ? "none" : "0 8px 20px -6px rgba(123,84,255,.6)" }}>
             <WandIcon size={24} color={locked ? "#F0871E" : "white"} />
           </div>
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-[19px] font-extrabold text-white">{locked ? "Limite manual de hoje" : "Criar post"}</span>
-            <span className="text-[10px] font-bold tracking-wider bg-[#7b54ff]/20 text-[#B9A2FF] px-2 py-0.5 rounded-md">MANUAL</span>
+            <span className="text-[19px] font-extrabold text-white">{locked ? "Limite manual" : "Criar post"}</span>
+            {!locked && (
+              <span className="text-[10px] font-bold tracking-wider bg-[#7b54ff]/20 text-[#B9A2FF] px-2 py-0.5 rounded-md">MANUAL</span>
+            )}
           </div>
           <p className="text-[#8A8A8E] text-[14px] mb-4 leading-snug">
             {locked
@@ -192,18 +196,17 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
         /* Botão grande inline (home) */
         <button
           onClick={() => !locked && setOpen(true)}
-          className={`relative w-full h-[60px] rounded-[19px] flex items-center justify-center gap-3 text-[17px] font-extrabold tracking-tight overflow-hidden transition-transform active:scale-[0.98] ${
-            locked
-              ? "bg-[#262628] text-[#8A8A8E] cursor-not-allowed"
-              : "text-white"
-          }`}
+          className={`relative w-full h-[60px] rounded-[19px] flex items-center justify-center gap-3 text-[17px] font-extrabold tracking-tight overflow-hidden transition-transform active:scale-[0.98] ${locked
+            ? "bg-[#262628] text-[#8A8A8E] cursor-not-allowed"
+            : "text-white"
+            }`}
           style={
             locked
               ? undefined
               : {
-                  background: "linear-gradient(180deg,#3b76ff,#2f6bff)",
-                  boxShadow: "0 14px 34px -10px rgba(47,107,255,.7), inset 0 1px 0 rgba(255,255,255,.25)",
-                }
+                background: "linear-gradient(180deg,#3b76ff,#2f6bff)",
+                boxShadow: "0 14px 34px -10px rgba(47,107,255,.7), inset 0 1px 0 rgba(255,255,255,.25)",
+              }
           }
         >
           {locked ? (
@@ -226,11 +229,10 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
         /* Botão flutuante (outras telas) */
         <button
           onClick={() => setOpen(true)}
-          className={`fixed bottom-24 right-4 z-50 flex items-center gap-2 px-4 h-11 rounded-full shadow-lg text-sm font-medium transition-all ${
-            status === "success" ? "bg-emerald-600 text-white" :
-            status === "limit"   ? "bg-amber-500 text-white" :
-            "bg-[#137EFF] text-white"
-          }`}
+          className={`fixed bottom-24 right-4 z-50 flex items-center gap-2 px-4 h-11 rounded-full shadow-lg text-sm font-medium transition-all ${status === "success" ? "bg-emerald-600 text-white" :
+            status === "limit" ? "bg-amber-500 text-white" :
+              "bg-[#137EFF] text-white"
+            }`}
         >
           {status === "success" ? (
             <>✓ Gerado!</>
@@ -255,9 +257,8 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
 
           {/* Sheet */}
           <div
-            className={`relative w-full max-w-lg bg-[#1a1a1a] rounded-t-3xl px-5 pt-5 pb-8 flex flex-col gap-5 ${
-              dragY > 0 ? "" : closing ? "animate-sheet-down" : "animate-sheet-up"
-            }`}
+            className={`relative w-full max-w-lg bg-[#1a1a1a] rounded-t-3xl px-5 pt-5 pb-8 flex flex-col gap-5 ${dragY > 0 ? "" : closing ? "animate-sheet-down" : "animate-sheet-up"
+              }`}
             style={dragY > 0 ? { transform: `translateY(${dragY}px)`, transition: "none" } : { transition: "transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)" }}
           >
 
@@ -302,13 +303,12 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
                       key={f.key}
                       onClick={() => !disabled && setFormat(f.key)}
                       disabled={disabled}
-                      className={`flex-1 flex flex-col items-center gap-0.5 py-3 rounded-xl border text-sm font-medium transition-all ${
-                        disabled
-                          ? "border-[#222] bg-[#1a1a1a] text-[#444] cursor-not-allowed"
-                          : format === f.key
+                      className={`flex-1 flex flex-col items-center gap-0.5 py-3 rounded-xl border text-sm font-medium transition-all ${disabled
+                        ? "border-[#222] bg-[#1a1a1a] text-[#444] cursor-not-allowed"
+                        : format === f.key
                           ? "border-[#137EFF] bg-[#137EFF]/10 text-white"
                           : "border-[#2e2e2e] bg-[#242424] text-[#888079]"
-                      }`}
+                        }`}
                     >
                       {f.label}
                       <span className="text-[10px] font-normal opacity-60">

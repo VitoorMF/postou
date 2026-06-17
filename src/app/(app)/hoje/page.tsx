@@ -128,9 +128,7 @@ export default async function HojePage() {
             <Link key={c.id} href={`/content/${c.id}`} className="shrink-0 w-[180px]">
               <div className="relative w-[180px] aspect-square rounded-[16px] overflow-hidden bg-[#242424] mb-2.5">
                 {c.cover && <img src={c.cover} alt="" className="absolute inset-0 w-full h-full object-cover" />}
-                <span className="absolute bottom-2.5 right-2.5 h-7 w-7 rounded-full grid place-items-center" style={{ background: typeDot[c.type] ?? "#2F6BFF" }}>
-                  <span className="h-2.5 w-3.5 rounded-[3px] bg-white/90" />
-                </span>
+
               </div>
               <p className="text-[14px] font-bold truncate">{c.title}</p>
             </Link>
