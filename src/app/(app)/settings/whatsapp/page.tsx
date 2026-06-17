@@ -152,8 +152,8 @@ export default function WhatsAppSettings() {
               <WaIcon size={34} />
             </div>
             <div>
-              <h1 className="text-3xl md:text-[40px] font-extrabold tracking-[-0.035em] leading-none">WhatsApp</h1>
-              <p className="text-[#8A8A8E] text-base font-medium mt-2">Receba seus posts direto no chat.</p>
+              <h1 className="text-3xl md:text-[42px] font-extrabold tracking-[-0.035em] leading-none">WhatsApp</h1>
+              <p className="text-[#8A8A8E] text-base md:text-lg font-medium mt-2">Receba seus posts direto no chat.</p>
             </div>
           </div>
 

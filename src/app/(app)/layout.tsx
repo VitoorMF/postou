@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import Navbar from "@/components/Navbar";
+import GenerationProvider from "@/components/GenerationProvider";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -26,13 +27,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .then(() => {}, (err) => console.error("Erro ao atualizar last_active_at:", err));
 
   return (
-    <div className="flex flex-col md:flex-row h-[100dvh] bg-[#0e0e0e]">
-      <main className="flex-1 min-h-0 overflow-y-auto md:order-2">
-        <div className="mx-auto  h-full flex flex-col">
-          {children}
-        </div>
-      </main>
-      <Navbar />
-    </div>
+    <GenerationProvider>
+      <div className="flex flex-col md:flex-row h-[100dvh] bg-[#0e0e0e]">
+        <main className="flex-1 min-h-0 overflow-y-auto md:order-2">
+          <div className="mx-auto  h-full flex flex-col">
+            {children}
+          </div>
+        </main>
+        <Navbar />
+      </div>
+    </GenerationProvider>
   );
 }

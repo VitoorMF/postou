@@ -20,9 +20,9 @@ interface Pack {
 }
 
 const badgeColors: Record<Pack["type"], string> = {
-  carrossel: "bg-[#1a2a4a] text-blue-300",
-  post: "bg-[#2a1a4a] text-purple-300",
-  story: "bg-[#1a3a2a] text-emerald-300",
+  carrossel: "bg-[rgba(123,84,255,0.16)] text-[#B9A2FF]",
+  post: "bg-[rgba(47,107,255,0.16)] text-[#85a8ff]",
+  story: "bg-[rgba(48,196,107,0.16)] text-[#5fe09a]",
 };
 
 function timeAgo(dateStr: string) {
@@ -37,10 +37,10 @@ function PackCard({ id, type, title, caption, cta, created_at, slides }: Pack) {
   const cover = slides.find((s) => s.order === 1)?.image_url ?? slides[0]?.image_url ?? null;
 
   return (
-    <div className="bg-[#1A1A1C] border border-white/[0.07] w-full rounded-2xl overflow-hidden flex flex-col shrink-0">
+    <div className="bg-[#1A1A1C] border border-white/[0.07] w-full rounded-[22px] overflow-hidden flex flex-col shrink-0 hover:border-white/[0.12] transition-colors">
 
       {/* Preview full-bleed (sem border) */}
-      <div className="relative w-full aspect-[4/3] bg-[#242424]">
+      <div className="relative w-full aspect-[4/3] bg-[#202022]">
         <div className="absolute inset-0 shimmer-bg" />
         {cover && (
           <img src={cover} alt="" loading="lazy" decoding="async" className="absolute inset-0 w-full h-full object-cover object-top" />
@@ -63,13 +63,13 @@ function PackCard({ id, type, title, caption, cta, created_at, slides }: Pack) {
       {/* Conteúdo */}
       <div className="p-4 flex flex-col gap-1.5">
         <div className="flex items-center gap-2">
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${badgeColors[type]}`}>{type}</span>
-          <span className="text-xs text-[#555]">
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md lowercase ${badgeColors[type]}`}>{type}</span>
+          <span className="text-xs text-[#636366]">
             {isCarrossel ? `${slides.length} imagens` : "1 imagem"} · {timeAgo(created_at)}
           </span>
         </div>
         <h2 className="text-base font-semibold text-white leading-snug">{title}</h2>
-        {caption && <p className="text-sm text-[#888079] leading-snug line-clamp-2">{caption}</p>}
+        {caption && <p className="text-sm text-[#8A8A8E] leading-snug line-clamp-2">{caption}</p>}
         {cta && (
           <div className="flex items-start gap-1.5 mt-0.5">
             <svg width="13" height="13" fill="none" stroke="#137EFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="shrink-0 mt-0.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
@@ -79,7 +79,7 @@ function PackCard({ id, type, title, caption, cta, created_at, slides }: Pack) {
       </div>
 
       <div className="flex gap-2 px-4 pb-4 mt-auto">
-        <Link href={`/content/${id}`} className="flex-1 h-10 rounded-xl bg-[#2b2b2b] text-sm font-medium text-white flex items-center justify-center gap-2">
+        <Link href={`/content/${id}`} className="flex-1 h-10 rounded-xl bg-[#262628] text-sm font-medium text-white flex items-center justify-center gap-2">
           <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
           ver
         </Link>
@@ -122,7 +122,7 @@ async function PacksList({ filter, count }: { filter?: string; count: number }) 
 
   if (!allPacks || allPacks.length === 0) {
     return (
-      <p className="text-sm text-[#555] text-center mt-8">Nenhum conteúdo gerado ainda.</p>
+      <p className="text-sm text-[#636366] text-center mt-8">Nenhum conteúdo gerado ainda.</p>
     );
   }
 
@@ -148,7 +148,7 @@ async function PacksList({ filter, count }: { filter?: string; count: number }) 
     <>
       {groups.map(({ label, items }) => (
         <div key={label} className="flex flex-col gap-4">
-          <p className="text-xs font-semibold text-[#555] tracking-widest">{label}</p>
+          <p className="text-xs font-bold text-[#636366] tracking-[0.12em] uppercase">{label}</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
             {items.map((pack) => (
               <PackCard key={pack.id} {...(pack as Pack)} />
@@ -161,7 +161,7 @@ async function PacksList({ filter, count }: { filter?: string; count: number }) 
         <Link
           href={`/content?${nextParams.toString()}`}
           scroll={false}
-          className="self-center mt-2 flex items-center gap-2 px-5 h-10 rounded-full bg-[#1c1c1c] text-sm font-medium text-[#ccc] hover:bg-[#242424] transition-colors"
+          className="self-center mt-2 flex items-center gap-2 px-5 h-10 rounded-full bg-[#161618] border border-white/[0.07] text-sm font-medium text-[#ccc] hover:bg-[#1A1A1C] transition-colors"
         >
           Carregar mais
           <svg width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -175,26 +175,25 @@ async function PacksList({ filter, count }: { filter?: string; count: number }) 
 
 function PacksSkeleton() {
   return (
-    <>
-      {[1, 2].map((i) => (
-        <div key={i} className="bg-[#1c1c1c] w-full rounded-2xl p-4 flex flex-col gap-3 animate-pulse">
-          <div className="flex gap-2">
-            {[1, 2, 3].map((j) => (
-              <div key={j} className="flex-1 aspect-square rounded-xl bg-[#2b2b2b]" />
-            ))}
+    <div className="flex flex-col gap-4">
+      <div className="h-3 w-16 bg-[#202022] rounded-full animate-pulse" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
+        {[1, 2, 3, 4, 5, 6].map((i) => (
+          <div key={i} className="bg-[#161618] border border-white/[0.07] w-full rounded-[22px] overflow-hidden flex flex-col animate-pulse">
+            <div className="w-full aspect-[4/3] bg-[#202022]" />
+            <div className="p-4 flex flex-col gap-2">
+              <div className="h-4 w-24 bg-[#202022] rounded-full" />
+              <div className="h-4 w-3/4 bg-[#202022] rounded-full" />
+              <div className="h-3 w-1/2 bg-[#202022] rounded-full" />
+            </div>
+            <div className="flex gap-2 px-4 pb-4">
+              <div className="flex-1 h-10 bg-[#202022] rounded-xl" />
+              <div className="flex-1 h-10 bg-[#202022] rounded-xl" />
+            </div>
           </div>
-          <div className="flex flex-col gap-2">
-            <div className="h-5 w-20 bg-[#2b2b2b] rounded-full" />
-            <div className="h-4 w-3/4 bg-[#2b2b2b] rounded-full" />
-            <div className="h-3 w-1/2 bg-[#2b2b2b] rounded-full" />
-          </div>
-          <div className="flex gap-2">
-            <div className="flex-1 h-10 bg-[#2b2b2b] rounded-full" />
-            <div className="flex-1 h-10 bg-[#2b2b2b] rounded-full" />
-          </div>
-        </div>
-      ))}
-    </>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -213,18 +212,18 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
   return (
     <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans">
 
-      <div className="w-full px-4 md:px-8 pt-12 pb-4 shrink-0">
+      <div className="w-full px-4 md:px-8 pt-12 pb-4 shrink-0 max-w-[1100px] mx-auto">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-semibold">Conteúdo</h1>
-            <p className="text-base text-[#888079]">Seus posts gerados</p>
+            <h1 className="text-3xl md:text-[34px] font-extrabold tracking-[-0.03em]">Conteúdo</h1>
+            <p className="text-base text-[#8A8A8E] font-medium mt-1">Seus posts gerados</p>
           </div>
           <TypeFilter mode="dropdown" counts={counts} className="hidden md:block" />
         </div>
         <TypeFilter mode="pills" counts={counts} className="md:hidden mt-4" />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 md:px-8 flex flex-col gap-6 pb-4 ">
+      <div className="flex-1 overflow-y-auto px-4 md:px-8 flex flex-col gap-6 pb-4 max-w-[1100px] mx-auto w-full">
         <Suspense fallback={<PacksSkeleton />}>
           <PacksList filter={filter} count={parsedCount} />
         </Suspense>

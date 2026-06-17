@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { createClient } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { getLimits } from "@/lib/plans";
+import { useGeneration } from "@/components/GenerationProvider";
 
 type Format = "post" | "carrossel" | "story";
 type Status = "idle" | "loading" | "success" | "error" | "limit";
@@ -34,6 +35,7 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
   const [dragY, setDragY] = useState(0);
   const dragStartY = useRef<number | null>(null);
   const router = useRouter();
+  const { generate } = useGeneration();
 
   // ─── Cotas do usuário ──────────────────────────────────────────────
   const [plan, setPlan] = useState("free");
@@ -86,53 +88,17 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
     }
   }
 
-  async function handleGenerate() {
-    if (status === "loading") return;
-    setStatus("loading");
-    setMessage("");
-
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setStatus("error"); setMessage("Não autenticado"); return; }
-
-    const { data: kit } = await supabase
-      .from("brand_kits")
-      .select("id")
-      .eq("user_id", user.id)
-      .maybeSingle();
-
-    if (!kit) { setStatus("error"); setMessage("Brand kit não encontrado"); return; }
-
-    const { data: { session } } = await supabase.auth.getSession();
-
-    const body: Record<string, string> = { brand_kit_id: kit.id, force_type: format };
-    if (theme.trim()) body.theme_override = theme.trim();
-
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-pack`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session?.access_token}`,
-        },
-        body: JSON.stringify(body),
-      }
-    );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      setStatus(res.status === 429 || res.status === 403 ? "limit" : "error");
-      setMessage(data.error ?? "Erro desconhecido");
-      return;
-    }
-
-    setStatus("success");
-    dismiss();
+  function handleGenerate() {
+    if (manualExhausted) return;
+    // dispara a geração no provider (banner global, sobrevive à navegação)
+    generate({ format, theme });
+    // fecha o modal e leva pra Hoje, onde o banner mostra "gerando…"
+    const onHoje = window.location.pathname === "/hoje";
     setTheme("");
-    router.refresh();
-    setTimeout(() => setStatus("idle"), 3000);
+    setStatus("idle");
+    setMessage("");
+    dismiss();
+    if (!onHoje) router.push("/hoje");
   }
 
   // Anima a saída antes de desmontar

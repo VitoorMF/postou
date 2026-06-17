@@ -102,17 +102,30 @@ export default function Settings() {
   const maxDays = Math.min(limits.auto, 7);
 
   function toggleDay(i: number) {
+    // não permite desmarcar o último dia (precisa de ao menos 1 ativo)
     if (activeDays.includes(i) && activeDays.length === 1) return;
-    const next = activeDays.includes(i)
-      ? activeDays.filter((d) => d !== i)
-      : [...activeDays, i];
 
-    if (activeDays.includes(i) === false && next.length > maxDays) {
-      const plural = maxDays === 1 ? "1 dia" : `${maxDays} dias`;
+    const isAdding = !activeDays.includes(i);
+
+    // adicionar estouraria o limite do plano
+    if (isAdding && activeDays.length >= maxDays) {
+      // limite de 1 dia → comporta como rádio: troca o dia em vez de bloquear
+      if (maxDays === 1) {
+        const next = [i];
+        setLimitMsg("");
+        setActiveDays(next);
+        save({ active_days: next.map(String) });
+        return;
+      }
+      const plural = `${maxDays} dias`;
       setLimitMsg(`Seu plano permite ${plural} por semana. Faça upgrade para liberar mais.`);
       setTimeout(() => setLimitMsg(""), 3000);
       return;
     }
+
+    const next = activeDays.includes(i)
+      ? activeDays.filter((d) => d !== i)
+      : [...activeDays, i];
     setLimitMsg("");
     setActiveDays(next);
     save({ active_days: next.map(String) });
@@ -147,10 +160,10 @@ export default function Settings() {
         </div>
       )}
 
-      <div className="w-full px-4 md:px-10 pt-12 pb-4 shrink-0 max-w-[1020px] mx-auto">
+      <div className="w-full px-4 md:px-8 pt-12 pb-4 shrink-0 max-w-[1100px] mx-auto">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl md:text-[40px] font-extrabold tracking-[-0.035em] leading-none">Configurar</h1>
+            <h1 className="text-3xl md:text-[42px] font-extrabold tracking-[-0.035em] leading-none">Configurar</h1>
             <p className="text-base md:text-lg text-[#8A8A8E] font-medium mt-2">Escolha o que gerar todo dia</p>
           </div>
           {saving && (
@@ -160,7 +173,7 @@ export default function Settings() {
       </div>
 
       <div className="flex-1 overflow-y-auto w-full">
-        <div className="px-4 md:px-10 flex flex-col gap-7 pb-16 max-w-[1020px] mx-auto w-full">
+        <div className="px-4 md:px-8 flex flex-col gap-7 pb-16 max-w-[1100px] mx-auto w-full">
 
           {/* atalhos */}
           <div className="flex flex-col gap-3">
@@ -175,7 +188,7 @@ export default function Settings() {
               },
               {
                 href: "/settings/whatsapp", label: "WhatsApp", sub: "Configurações do WhatsApp",
-                icon: <svg width="22" height="22" fill="currentColor" viewBox="0 0 24 24"><path d="M.5 23.5l1.65-6a11.5 11.5 0 1 1 4.32 4.25L.5 23.5zM6.8 19.3l.37.22a9.55 9.55 0 1 0-3.23-3.16l.24.38-.98 3.57 3.6-1.01zM17.6 14.2c-.13-.22-.48-.35-1-.61s-3.06-1.51-3.54-1.68-.82-.26-1.16.26-1.33 1.68-1.63 2.02-.6.39-1.11.13a7.65 7.65 0 0 1-2.25-1.39 8.43 8.43 0 0 1-1.56-1.94c-.16-.28 0-.43.12-.58s.26-.3.39-.46a1.8 1.8 0 0 0 .26-.43.48.48 0 0 0 0-.46c-.07-.13-.58-1.4-.8-1.92s-.43-.43-.58-.44h-.5a.95.95 0 0 0-.69.32 2.9 2.9 0 0 0-.91 2.16 5.02 5.02 0 0 0 1.06 2.68c.13.17 1.82 2.78 4.42 3.9a14.9 14.9 0 0 0 1.48.55 3.55 3.55 0 0 0 1.63.1 2.67 2.67 0 0 0 1.75-1.23 2.16 2.16 0 0 0 .15-1.23z" /></svg>,
+                icon: <svg width="22" height="22" fill="currentColor" viewBox="0 0 512 512"><path d="M317.12 285.93c-9.69 3.96-15.88 19.13-22.16 26.88-3.22 3.97-7.06 4.59-12.01 2.6-36.37-14.49-64.25-38.76-84.32-72.23-3.4-5.19-2.79-9.29 1.31-14.11 6.06-7.14 13.68-15.25 15.32-24.87 3.64-21.28-24.18-87.29-60.92-57.38C48.62 232.97 330.7 461.46 381.61 337.88c14.4-35.03-48.43-58.53-64.49-51.95zM256 467.28c-37.39 0-74.18-9.94-106.39-28.76-5.17-3.03-11.42-3.83-17.2-2.26l-69.99 19.21 24.38-53.71a22.34 22.34 0 0 0-2.22-22.32C58.5 343.29 44.71 300.61 44.71 256c0-116.51 94.78-211.29 211.29-211.29S467.28 139.49 467.28 256c0 116.5-94.78 211.28-211.28 211.28zM256 0C114.84 0 0 114.84 0 256c0 49.66 14.1 97.35 40.89 138.74L2 480.39a22.37 22.37 0 0 0 3.34 23.76A22.403 22.403 0 0 0 22.36 512c14.42 0 93.05-24.71 113.06-30.2C172.41 501.59 213.9 512 256 512c141.15 0 256-114.85 256-256C512 114.84 397.15 0 256 0z" /></svg>,
               },
             ].map(({ href, label, sub, icon }) => (
               <Link key={href} href={href} className="flex items-center gap-4 bg-[#161618] border border-white/[0.07] rounded-[16px] md:rounded-[18px] p-4 md:px-6 md:py-5 hover:border-white/[0.12] hover:bg-[#1A1A1C] transition-colors">

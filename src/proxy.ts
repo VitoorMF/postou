@@ -23,9 +23,11 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  const { data: { session } } = await supabase.auth.getSession();
+  // getUser() revalida o token no servidor de auth e renova quando expirado,
+  // gravando os cookies atualizados na response (Server Components não conseguem).
+  const { data: { user } } = await supabase.auth.getUser();
 
-  if (!session) {
+  if (!user) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
@@ -33,5 +35,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/feed/:path*", "/content/:path*", "/settings/:path*"],
+  matcher: ["/hoje/:path*", "/feed/:path*", "/content/:path*", "/settings/:path*", "/onboarding/:path*"],
 };

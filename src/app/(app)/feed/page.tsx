@@ -32,10 +32,10 @@ function UpdateCard({ id, content, category, photo_urls, created_at }: Update) {
   const badgeColor = categoryColors[category as Category] ?? categoryColors.geral;
 
   return (
-    <Link href={`/feed/${id}`} className="bg-[#242424] w-full rounded-xl p-4 flex flex-col gap-3 shrink-0">
+    <Link href={`/feed/${id}`} className="bg-[#161618] border border-white/[0.07] w-full rounded-[18px] p-4 md:p-5 flex flex-col gap-3 shrink-0 hover:border-white/[0.12] transition-colors">
       <div className="flex justify-between items-center">
-        <span className="text-sm text-[#888079]">{formatDate(created_at)}</span>
-        <span className={`text-xs font-medium px-3 py-1 rounded-full ${badgeColor}`}>
+        <span className="text-sm text-[#636366] font-medium">{formatDate(created_at)}</span>
+        <span className={`text-xs font-bold px-3 py-1 rounded-lg lowercase ${badgeColor}`}>
           {category}
         </span>
       </div>
@@ -71,7 +71,7 @@ async function UpdatesList() {
     .order("created_at", { ascending: true });
 
   if (!updates || updates.length === 0) {
-    return <p className="text-sm text-[#555] text-center mt-8">Nenhuma novidade ainda.</p>;
+    return <p className="text-sm text-[#636366] text-center mt-8">Nenhuma novidade ainda.</p>;
   }
 
   // Agrupa por dia
@@ -90,7 +90,7 @@ async function UpdatesList() {
     <>
       {groups.map(({ label, items }) => (
         <div key={label} className="flex flex-col gap-3">
-          <p className="text-xs font-semibold text-[#555] tracking-widest">{label}</p>
+          <p className="text-xs font-bold text-[#636366] tracking-[0.13em] uppercase">{label}</p>
           {items.map((item) => <UpdateCard key={item.id} {...item} />)}
         </div>
       ))}
@@ -103,13 +103,13 @@ function UpdatesSkeleton() {
   return (
     <>
       {[1, 2, 3].map((i) => (
-        <div key={i} className="bg-[#242424] w-full rounded-xl p-4 flex flex-col gap-3 animate-pulse">
+        <div key={i} className="bg-[#161618] border border-white/[0.07] w-full rounded-[18px] p-4 md:p-5 flex flex-col gap-3 animate-pulse">
           <div className="flex justify-between">
-            <div className="h-4 w-24 bg-[#2e2e2e] rounded-full" />
-            <div className="h-6 w-16 bg-[#2e2e2e] rounded-full" />
+            <div className="h-4 w-24 bg-[#202022] rounded-full" />
+            <div className="h-6 w-16 bg-[#202022] rounded-full" />
           </div>
-          <div className="h-4 w-full bg-[#2e2e2e] rounded-full" />
-          <div className="h-4 w-3/4 bg-[#2e2e2e] rounded-full" />
+          <div className="h-4 w-full bg-[#202022] rounded-full" />
+          <div className="h-4 w-3/4 bg-[#202022] rounded-full" />
         </div>
       ))}
     </>
@@ -120,18 +120,18 @@ export default function FeedPage() {
   return (
     <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans justify-start items-center">
 
-      <div className="w-full px-4 md:px-8 pt-12 pb-4 shrink-0 mx-auto">
+      <div className="w-full px-4 md:px-8 pt-12 pb-4 shrink-0 mx-auto max-w-[1100px]">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-semibold">Novidades</h1>
-            <p className="text-base text-[#888079]">O que aconteceu hoje?</p>
+            <h1 className="text-3xl md:text-[34px] font-extrabold tracking-[-0.03em]">Novidades</h1>
+            <p className="text-base text-[#8A8A8E] font-medium mt-1">O que aconteceu hoje?</p>
           </div>
           <BrandKitAvatar />
         </div>
       </div>
 
       <div id="feed-scroll" className="flex-1 overflow-y-auto w-full">
-        <div className="px-4 md:px-8 flex flex-col gap-4 pb-4 mx-auto w-full max-w-4xl">
+        <div className="px-4 md:px-8 flex flex-col gap-4 pb-4 mx-auto w-full max-w-[1100px]">
           <Suspense fallback={<UpdatesSkeleton />}>
             <UpdatesList />
           </Suspense>
