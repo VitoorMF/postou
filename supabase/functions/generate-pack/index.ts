@@ -12,6 +12,40 @@ const supabaseAdmin = createClient(
 // Janela em que um update temporal ainda conta como "novidade".
 const FRESHNESS_DAYS = 7;
 
+// Datas comemorativas universais. Móveis (Carnaval, Páscoa, Mães, Pais, Black Friday)
+// guardadas com a data real do ano — RE-CURAR 1×/ano (atualizar para o ano vigente).
+const COMMEMORATIVE_DATES: { date: string; name: string; leadDays: number }[] = [
+  { date: "2026-01-01", name: "Ano Novo", leadDays: 3 },
+  { date: "2026-02-17", name: "Carnaval", leadDays: 5 },
+  { date: "2026-03-15", name: "Dia do Consumidor", leadDays: 3 },
+  { date: "2026-04-05", name: "Páscoa", leadDays: 7 },
+  { date: "2026-05-10", name: "Dia das Mães", leadDays: 7 },
+  { date: "2026-06-12", name: "Dia dos Namorados", leadDays: 7 },
+  { date: "2026-06-24", name: "São João / Festas Juninas", leadDays: 7 },
+  { date: "2026-08-09", name: "Dia dos Pais", leadDays: 7 },
+  { date: "2026-09-15", name: "Dia do Cliente", leadDays: 3 },
+  { date: "2026-10-12", name: "Dia das Crianças", leadDays: 5 },
+  { date: "2026-11-27", name: "Black Friday", leadDays: 7 },
+  { date: "2026-12-25", name: "Natal", leadDays: 7 },
+];
+
+// Retorna uma dica de data comemorativa próxima (dentro da antecedência), ou "".
+function upcomingCommemorativeHint(): string {
+  const sp = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+  const today = new Date(sp.getFullYear(), sp.getMonth(), sp.getDate());
+  for (const d of COMMEMORATIVE_DATES) {
+    const [y, m, dd] = d.date.split("-").map(Number);
+    const target = new Date(y, m - 1, dd);
+    const days = Math.round((target.getTime() - today.getTime()) / 86_400_000);
+    if (days >= 0 && days <= d.leadDays) {
+      return days === 0
+        ? `Hoje é ${d.name}. Se combinar com a marca, use como tema do post — a não ser que haja um acontecimento mais relevante nos updates.`
+        : `Faltam ${days} dia(s) para ${d.name}. Considere usar como tema, a não ser que haja um acontecimento mais relevante nos updates.`;
+    }
+  }
+  return "";
+}
+
 type Mode = "evento" | "evergreen";
 
 type UpdateRow = {
@@ -31,6 +65,8 @@ async function planTheme(
   hasPersona: boolean,
   mode: Mode,
   aiDecideType: boolean,
+  carrosselAvailable: boolean,
+  dateHint: string,
 ): Promise<{ theme: string; use_persona: boolean; type?: string }> {
   const samplesText = samples.map((u) => `- ${u.category}: ${u.content.slice(0, 80)}`).join("\n");
 
@@ -51,9 +87,11 @@ async function planTheme(
 Você também deve decidir o FORMATO ideal para este conteúdo seguindo esta hierarquia obrigatória:
 - "story" é o padrão — use sempre que o conteúdo for simples, cotidiano ou evergreen
 - "post" apenas quando houver uma conquista ou novidade relevante que justifique destaque
-- "carrossel" apenas quando o conteúdo for rico o suficiente para uma série de slides (ex: evento importante, lançamento, conteúdo educativo extenso) — use com parcimônia
+${carrosselAvailable
+        ? `- "carrossel" quando o tema pedir explicação em série — arquétipos educativos como explicador ("o que é X"), passo a passo, mito × verdade ou dúvidas frequentes. Também para evento importante ou lançamento. Use com parcimônia.`
+        : `- "carrossel" NÃO está disponível agora — escolha apenas entre "story" e "post".`}
 
-Adicione "type": "story" | "post" | "carrossel" no JSON de resposta.`
+Adicione "type": ${carrosselAvailable ? `"story" | "post" | "carrossel"` : `"story" | "post"`} no JSON de resposta.`
     : "";
 
   const res = await openai.chat.completions.create({
@@ -71,10 +109,11 @@ ${samplesText}
 ${avoidText}
 
 ${modeInstruction}
+${dateHint ? `\n[DATA COMEMORATIVA]\n${dateHint}\n` : ""}
 ${personaInstruction}
 ${typeInstruction}
 
-Responda APENAS em JSON: {"theme": "tema em 1 frase curta", "use_persona": true ou false${aiDecideType ? `, "type": "story" | "post" | "carrossel"` : ""}}`,
+Responda APENAS em JSON: {"theme": "tema em 1 frase curta", "use_persona": true ou false${aiDecideType ? `, "type": ${carrosselAvailable ? `"story" | "post" | "carrossel"` : `"story" | "post"`}` : ""}}`,
     }],
   });
 
@@ -162,6 +201,16 @@ ${brandKit.do_not_do ?? "Nenhuma restrição cadastrada."}
 
 [TAREFA]
 ${taskBlock}
+
+[ARQUÉTIPO DE CONTEÚDO]
+Quando for conteúdo de valor (educativo/dica, não um anúncio de novidade), escolha o ARQUÉTIPO que melhor encaixa no tema e na área da marca, e estruture o conteúdo de acordo com ele:
+- Explicador ("o que é X"): define um conceito ou termo da área de forma clara.
+- Mito × Verdade: derruba uma crença comum do público.
+- Dúvidas frequentes: responde perguntas reais que o público tem.
+- Passo a passo / Lista: prático e acionável ("3 erros…", "como fazer X").
+- Bastidor / rotina: mostra os bastidores do dia a dia, humaniza a marca.
+- Reflexão / posicionamento: opinião ou visão da marca sobre um tema da área.
+Para CARROSSEL, prefira os arquétipos educativos (explicador, mito × verdade, passo a passo, dúvidas) — funcionam melhor em série de slides. Escolha UM arquétipo, não misture.
 
 Responda APENAS em JSON, sem markdown.
 
@@ -405,6 +454,9 @@ Deno.serve(async (req) => {
     theme_override?: string;     // se vier, pula planner e usa esse tema direto
     force_type?: "post" | "carrossel" | "story"; // se vier, gera só esse formato
   };
+  // Tipo "efetivo" da geração — pode ser rebaixado em runtime (ex: carrossel
+  // esgotado no Starter vira "post"). force_type fica imutável só pra isManual.
+  let effectiveType: "post" | "carrossel" | "story" | undefined = force_type;
   if (!brand_kit_id) return new Response(JSON.stringify({ error: "brand_kit_id obrigatório" }), { status: 400 });
 
   // ─── Auth: server-to-server (internal secret) OU user JWT com ownership ──
@@ -469,24 +521,16 @@ Deno.serve(async (req) => {
   const carrosselCount = userRow?.weekly_carrossel_count ?? 0;
 
   // Verifica limite de carrossel
-  if (force_type === "carrossel" || (!isManual && (brandKit.post_types as string[])?.includes("carrossel"))) {
+  if (effectiveType === "carrossel" || (!isManual && (brandKit.post_types as string[])?.includes("carrossel"))) {
     if (carrosselCount >= limits.carrossel) {
       if (limits.carrossel === 0) {
-        // Free: carrossel bloqueado
+        // Free: carrossel bloqueado. O cliente trata o aviso (banner/Ver planos).
         const limitMsg = "Carrossel não está disponível no plano gratuito. Faça upgrade para o Starter.";
-        if (brandKit.whatsapp_verified && brandKit.whatsapp_number) {
-          await sendText(brandKit.whatsapp_number as string, `⚠️ ${limitMsg}`);
-        }
         return new Response(JSON.stringify({ error: limitMsg, code: "carrossel_blocked" }), { status: 403 });
       }
-      // Starter: carrossel esgotado → cai para IA decide (não bloqueia)
-      if (force_type === "carrossel") {
-        const limitMsg = "Limite de carrosseis da semana atingido. Gerando outro formato automaticamente.";
-        if (brandKit.whatsapp_verified && brandKit.whatsapp_number) {
-          await sendText(brandKit.whatsapp_number as string, `ℹ️ ${limitMsg}`);
-        }
-        // Remove force_type de carrossel — vai cair no fluxo normal com IA decide
-        (body as Record<string, unknown>).force_type = undefined;
+      // Starter: carrossel esgotado → rebaixa pra "post" (não bloqueia a geração).
+      if (effectiveType === "carrossel") {
+        effectiveType = "post";
       }
     }
   }
@@ -494,10 +538,8 @@ Deno.serve(async (req) => {
   // Verifica limite semanal (auto ou manual)
   if (isManual) {
     if (manualCount >= limits.manual) {
+      // O cliente trata o aviso de limite (banner). Aqui só retorna o status.
       const limitMsg = `Limite de ${limits.manual} geração${limits.manual > 1 ? "ões" : ""} manual${limits.manual > 1 ? "is" : ""} por semana atingido.`;
-      if (brandKit.whatsapp_verified && brandKit.whatsapp_number) {
-        await sendText(brandKit.whatsapp_number as string, `⚠️ ${limitMsg} Seu limite renova todo domingo.`);
-      }
       return new Response(JSON.stringify({ error: limitMsg, code: "manual_limit" }), { status: 429 });
     }
   } else {
@@ -576,10 +618,13 @@ Deno.serve(async (req) => {
     }
   }
 
-  const aiDecideType = !force_type && (brandKit.post_types as string[] | null)?.includes("AI") === true;
+  const aiDecideType = !effectiveType && (brandKit.post_types as string[] | null)?.includes("AI") === true;
   let aiChosenType: string | undefined;
 
   if (updates.length > 0) {
+    // dica de data comemorativa só no automático (manual já tem tema do usuário)
+    const dateHint = theme_override ? "" : upcomingCommemorativeHint();
+
     const plan = await planTheme(
       brandKit,
       updates.map((u) => ({ category: u.category, content: u.content })),
@@ -587,6 +632,8 @@ Deno.serve(async (req) => {
       hasPersona,
       mode,
       aiDecideType,
+      carrosselCount < limits.carrossel, // carrosselAvailable
+      dateHint,
     );
     usePersona = plan.use_persona;
     if (aiDecideType) aiChosenType = plan.type;
@@ -607,12 +654,20 @@ Deno.serve(async (req) => {
     if (refined.length > 0) updates = refined;
   }
 
-  // força um tipo específico se vier no body, senão usa ia_decide ou post_types do brand_kit
-  const postTypes: string[] = force_type
-    ? [force_type]
+  // força um tipo específico (effectiveType, já com eventual rebaixamento),
+  // senão usa ia_decide ou post_types do brand_kit
+  let postTypes: string[] = effectiveType
+    ? [effectiveType]
     : aiDecideType
     ? [aiChosenType ?? "story"]
     : (brandKit.post_types ?? ["carrossel", "post"]);
+
+  // Guard final: nunca gerar carrossel acima da cota — cobre IA-decide,
+  // post_types literal e o caso da IA ignorar a instrução. Rebaixa → post e dedupa.
+  if (carrosselCount >= limits.carrossel) {
+    postTypes = [...new Set(postTypes.map((t) => (t === "carrossel" ? "post" : t)))];
+  }
+
   const results: { type: string; pack_id: string }[] = [];
 
   for (const type of postTypes) {
