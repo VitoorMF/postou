@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
 import TypeFilter, { type TypeCounts } from "./TypeFilter";
+import ShareButton from "@/components/ShareButton";
 
 interface Slide {
   id: string;
@@ -79,14 +80,16 @@ function PackCard({ id, type, title, caption, cta, created_at, slides }: Pack) {
       </div>
 
       <div className="flex gap-2 px-4 pb-4 mt-auto">
-        <Link href={`/content/${id}`} className="flex-1 h-10 rounded-xl bg-[#262628] text-sm font-medium text-white flex items-center justify-center gap-2">
+        <Link href={`/content/${id}`} className="flex-[3] h-10 rounded-xl bg-[#262628] text-sm font-medium text-white flex items-center justify-center gap-2">
           <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
           ver
         </Link>
-        <button className="flex-1 h-10 rounded-xl bg-[#137EFF] text-sm font-medium text-white flex items-center justify-center gap-2">
-          <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
-          {isCarrossel ? "ZIP" : "baixar"}
-        </button>
+        <ShareButton
+          imageUrls={[...slides].sort((a, b) => a.order - b.order).map((s) => s.image_url).filter((u): u is string => !!u)}
+          title={title}
+          text={`${title}${caption ? `\n\n${caption}` : ""}${cta ? `\n\n${cta}` : ""}`}
+          className="flex-[7] h-10 rounded-xl bg-[#137EFF] text-sm font-medium text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+        />
       </div>
 
     </div>
@@ -223,10 +226,12 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
         <TypeFilter mode="pills" counts={counts} className="md:hidden mt-4" />
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 md:px-8 flex flex-col gap-6 pb-4 max-w-[1100px] mx-auto w-full">
-        <Suspense fallback={<PacksSkeleton />}>
-          <PacksList filter={filter} count={parsedCount} />
-        </Suspense>
+      <div className="flex-1 overflow-y-auto w-full">
+        <div className="max-w-[1100px] mx-auto px-4 md:px-8 flex flex-col gap-6 pb-4">
+          <Suspense fallback={<PacksSkeleton />}>
+            <PacksList filter={filter} count={parsedCount} />
+          </Suspense>
+        </div>
       </div>
 
     </div>

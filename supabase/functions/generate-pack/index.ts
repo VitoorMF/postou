@@ -250,11 +250,24 @@ Exemplo para carrossel:
 
 // ─── Image ──────────────────────────────────────────────────────────────────
 
+// Converte uma imagem (data URL base64 OU url http) num File pro images.edit.
+async function imageToFile(data: string, name: string, type: string) {
+  let buffer: ArrayBuffer;
+  if (data.startsWith("data:")) {
+    buffer = decodeBase64(data.split(",")[1]).buffer;
+  } else {
+    const res = await fetch(data);
+    buffer = await res.arrayBuffer();
+  }
+  return toFile(buffer, name, { type });
+}
+
 async function generateCoverImage(
   pack: { title: string; caption: string; type: string; role?: string },
   brandKit: Record<string, unknown>,
   usePersona: boolean,
-  updatePhotoUrls?: string[] | null
+  updatePhotoUrls?: string[] | null,
+  styleRefData?: string | null, // imagem do slide 1 (hook) — âncora visual do carrossel
 ) {
   const paletteHint = (brandKit.palette_hex as string[] | null)?.length
     ? `Use esta paleta de cores: ${(brandKit.palette_hex as string[]).slice(0, 3).join(", ")}.`
@@ -276,24 +289,32 @@ Reproduce their exact facial features, skin tone, hair, and likeness as accurate
 Do NOT create a generic, stock-photo, or AI-looking person. Use the real person's face.`
     : `IMPORTANT: Do NOT include any person or human figure in this image. Focus on design, typography, brand elements, or the update subject.`;
 
-  const roleInstruction = pack.role === "hook"
-    ? `Slide role: HOOK (slide 1). Bold, attention-grabbing layout. Large impactful typography. Strong visual that stops the scroll. This is the cover of the carousel.`
-    : pack.role === "cta"
-    ? `Slide role: CTA (last slide). Action-oriented layout. Clear call to action. Encourage engagement: comment, save, or contact. Can include contact info or brand handle.`
-    : pack.role === "body"
-    ? `Slide role: BODY (content slide). Clean, readable layout. Focused on one specific point. Informative and concise. Less decorative than the hook.`
+  const isCarousel = pack.type === "carrossel";
+  // Composição por role (Nível 1): título só na capa; rodapé de contato só no CTA.
+  const roleInstruction = !isCarousel ? "" :
+    pack.role === "hook"
+      ? `Papel do slide: CAPA (slide 1). Título grande e impactante, identidade de marca forte. Para o scroll. Esta é a capa do carrossel.`
+      : pack.role === "cta"
+        ? `Papel do slide: CTA (último slide). Foco em ação/engajamento (comentar, salvar, contatar). Inclua AQUI o rodapé de contato da marca (endereço, telefone, e-mail).`
+        : `Papel do slide: CORPO (conteúdo). Layout limpo e legível, foco SÓ na mensagem deste slide. NÃO repita o título principal do carrossel. NÃO inclua rodapé de contato neste slide.`;
+
+  // Âncora visual (Nível 2): replica o estilo do slide 1.
+  const styleSection = styleRefData
+    ? `TEMPLATE VISUAL: a PRIMEIRA imagem de referência é o slide 1 DESTE MESMO carrossel. Replique o sistema visual dela — mesma paleta, mesmo estilo de fundo, mesma posição e tamanho do logo, mesmas fontes e elementos decorativos. Mantenha o carrossel visualmente consistente; mude APENAS o texto/conteúdo para a mensagem deste slide.`
     : "";
 
-  const imagePrompt = `Create an organic Instagram carousel slide for the brand "${brandKit.business_name ?? "empresa"}".
+  const imagePrompt = `Create an organic Instagram ${isCarousel ? "carousel slide" : pack.type} for the brand "${brandKit.business_name ?? "empresa"}".
 Brand context: ${brandKit.description ?? ""}
 ${paletteHint}
 Post theme: ${pack.title}
 Slide message: ${pack.caption}
 ${roleInstruction}
+${styleSection}
 
 Reference images provided (in order):
-${personaUrls.length ? "- First image(s): photos of the brand's real people — use their likeness naturally if relevant" : ""}
-${updatePhotos.length ? "- Next image(s): real photos from this specific brand update — use as the main visual subject" : ""}
+${styleRefData ? "- First image: slide 1 of THIS carousel — the VISUAL TEMPLATE to replicate." : ""}
+${personaUrls.length ? "- photos of the brand's real people — use their likeness naturally if relevant" : ""}
+${updatePhotos.length ? "- real photos from this specific brand update — use as the main visual subject" : ""}
 - Last image: the brand logo — include subtly as brand identity
 
 ${personSection}
@@ -309,7 +330,9 @@ Visual style rules:
   ];
 
   try {
-    if (allReferenceUrls.length > 0 || brandKit.logo_url) {
+    const styleRefFile = styleRefData ? await imageToFile(styleRefData, "template.jpg", "image/jpeg") : null;
+
+    if (allReferenceUrls.length > 0 || brandKit.logo_url || styleRefFile) {
       const referenceFiles = await Promise.all(
         allReferenceUrls.map(async ({ url, name, type }) => {
           const res = await fetch(url);
@@ -325,7 +348,12 @@ Visual style rules:
         logoFile = await toFile(buffer, "logo.png", { type: "image/png" });
       }
 
-      const imageFiles = logoFile ? [...referenceFiles, logoFile] : referenceFiles;
+      // ordem: [template do hook] → [persona/update] → [logo]
+      const imageFiles = [
+        ...(styleRefFile ? [styleRefFile] : []),
+        ...referenceFiles,
+        ...(logoFile ? [logoFile] : []),
+      ];
 
       if (imageFiles.length > 0) {
         const response = await openai.images.edit({
@@ -701,19 +729,33 @@ Deno.serve(async (req) => {
       const slideImageUrls: Record<number, string | null> = {};
 
       if (type === "carrossel" && slides.length > 0) {
+        // 1) Gera o HOOK primeiro — ele vira a âncora visual dos demais slides.
+        const hookSlide = slides.find((s) => s.role === "hook") ?? slides[0];
+        const hookData = await generateCoverImage(
+          { title: generated.title, caption: hookSlide.content, type, role: "hook" },
+          brandKit,
+          usePersona,
+          updatePhotoUrls,
+        );
+        slideImageUrls[hookSlide.order] = hookData
+          ? await uploadImage(hookData, `${brandKit.user_id}/${pack.id}/slide-${hookSlide.order}.jpg`)
+          : null;
+
+        // 2) Demais slides em paralelo, ancorados no estilo do hook (Nível 2).
+        //    Se o hook falhou (hookData null), geram sem âncora (degrada bem).
+        const restSlides = slides.filter((s) => s.order !== hookSlide.order);
         await Promise.all(
-          slides.map(async (s) => {
+          restSlides.map(async (s) => {
             const imageData = await generateCoverImage(
-              { title: generated.title, caption: s.content, type, role: s.role },
+              { title: generated.title, caption: s.content, type, role: s.role ?? "body" },
               brandKit,
               usePersona,
               updatePhotoUrls,
+              hookData, // âncora visual
             );
-            if (!imageData) {
-              slideImageUrls[s.order] = null;
-              return;
-            }
-            slideImageUrls[s.order] = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-${s.order}.jpg`);
+            slideImageUrls[s.order] = imageData
+              ? await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-${s.order}.jpg`)
+              : null;
           }),
         );
       } else {

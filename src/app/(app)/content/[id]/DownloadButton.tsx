@@ -2,22 +2,27 @@
 
 import { useState } from "react";
 
-export default function DownloadButton({ imageUrl, title }: { imageUrl: string | null; title: string }) {
+export default function DownloadButton({ imageUrls, title }: { imageUrls: string[]; title: string }) {
   const [downloading, setDownloading] = useState(false);
+  const multiple = imageUrls.length > 1;
 
   async function handleDownload() {
-    if (!imageUrl || downloading) return;
+    if (!imageUrls.length || downloading) return;
     setDownloading(true);
-
     try {
-      const res = await fetch(imageUrl);
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${title.toLowerCase().replace(/\s+/g, "-")}.png`;
-      a.click();
-      URL.revokeObjectURL(url);
+      const slug = title.toLowerCase().replace(/\s+/g, "-");
+      for (let i = 0; i < imageUrls.length; i++) {
+        const res = await fetch(imageUrls[i]);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = multiple ? `${slug}-${i + 1}.png` : `${slug}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+        // espaça os downloads pro navegador aceitar múltiplos arquivos
+        if (multiple && i < imageUrls.length - 1) await new Promise((r) => setTimeout(r, 400));
+      }
     } finally {
       setDownloading(false);
     }
@@ -26,7 +31,7 @@ export default function DownloadButton({ imageUrl, title }: { imageUrl: string |
   return (
     <button
       onClick={handleDownload}
-      disabled={!imageUrl || downloading}
+      disabled={!imageUrls.length || downloading}
       className="w-full h-[58px] rounded-2xl bg-[#1A1A1C] border border-white/[0.07] text-white text-base font-bold flex items-center justify-center gap-2.5 hover:bg-[#262628] active:scale-[0.99] disabled:opacity-50 transition-all"
     >
       {downloading ? (
@@ -42,7 +47,7 @@ export default function DownloadButton({ imageUrl, title }: { imageUrl: string |
           <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M12 5v14M5 19h14M12 19l-5-5M12 19l5-5" />
           </svg>
-          Baixar imagem
+          {multiple ? "Baixar todas" : "Baixar imagem"}
         </>
       )}
     </button>

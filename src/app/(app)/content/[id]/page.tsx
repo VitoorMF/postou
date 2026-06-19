@@ -53,7 +53,6 @@ async function PackDetail({ id }: { id: string }) {
 
   const p = pack as Pack;
   const ordered = [...p.slides].sort((a, b) => a.order - b.order);
-  const cover = ordered.find((s) => s.order === 1)?.image_url ?? ordered[0]?.image_url ?? null;
   const shareImages = ordered.map((s) => s.image_url).filter((u): u is string => !!u);
   const isStory = p.type === "story";
   const shareText = isStory
@@ -106,7 +105,7 @@ async function PackDetail({ id }: { id: string }) {
               {/* Ações */}
               <div className="flex flex-col gap-3">
                 <ShareButton imageUrls={shareImages} title={p.title} text={shareText} />
-                <DownloadButton imageUrl={cover} title={p.title} />
+                <DownloadButton imageUrls={shareImages} title={p.title} />
                 <PostedButton packId={p.id} initialPosted={!!p.posted_at} />
               </div>
 

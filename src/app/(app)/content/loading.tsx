@@ -19,8 +19,8 @@ export default function Loading() {
       </div>
 
       {/* grid de cards (skeleton) */}
-      <div className="flex-1 overflow-y-auto px-4 md:px-8 pb-4 max-w-[1100px] mx-auto w-full">
-        <div className="flex flex-col gap-4">
+      <div className="flex-1 overflow-y-auto w-full">
+        <div className="max-w-[1100px] mx-auto px-4 md:px-8 pb-4 flex flex-col gap-4">
           <div className="h-3 w-16 bg-[#202022] rounded-full animate-pulse" />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
             {[1, 2, 3, 4, 5, 6].map((i) => (
