@@ -177,7 +177,6 @@ export default function Landing() {
                 <ul>
                   <li>Tudo do plano Starter</li>
                   <li>Posta todos os dias da semana</li>
-                  <li>Suporte prioritário no WhatsApp</li>
                 </ul>
               </div>
             </div>

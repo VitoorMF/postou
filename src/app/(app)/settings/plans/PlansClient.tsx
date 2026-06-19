@@ -54,7 +54,6 @@ const plans = [
       "14 gerações manuais por semana",
       "4 carrosséis por semana",
       "A IA decide o melhor formato",
-      "Suporte prioritário no WhatsApp",
     ],
     featured: false,
     badge: null as string | null,
@@ -193,11 +192,10 @@ export default function PlansClient({ currentPlan, planExpiresAt }: { currentPla
               return (
                 <div
                   key={plan.id}
-                  className={`relative flex flex-col rounded-[24px] p-7 ${plan.order} ${
-                    plan.featured
+                  className={`relative flex flex-col rounded-[24px] p-7 ${plan.order} ${plan.featured
                       ? "border border-[#137EFF]/50 bg-gradient-to-b from-[#137EFF]/[0.08] to-[#161618] shadow-[0_30px_70px_-28px_rgba(19,126,255,0.45)] md:-translate-y-2.5"
                       : "border border-white/[0.07] bg-[#161618]"
-                  }`}
+                    }`}
                 >
                   {plan.badge && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-gradient-to-b from-[#3b76ff] to-[#137EFF] text-white text-[11.5px] font-extrabold tracking-wide uppercase px-3.5 py-1.5 rounded-full shadow-[0_10px_24px_-8px_rgba(19,126,255,0.7)] whitespace-nowrap">
@@ -275,11 +273,10 @@ export default function PlansClient({ currentPlan, planExpiresAt }: { currentPla
                   ) : (
                     <button
                       onClick={() => openCheckout(plan.id)}
-                      className={`h-[52px] rounded-[14px] text-[15.5px] font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all ${
-                        plan.featured || plan.id === "pro"
+                      className={`h-[52px] rounded-[14px] text-[15.5px] font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all ${plan.featured || plan.id === "pro"
                           ? "bg-[#137EFF] text-white shadow-[0_12px_30px_-10px_rgba(19,126,255,0.7)] hover:bg-[#0f6ae0]"
                           : "bg-[#262628] text-white hover:bg-[#303033]"
-                      }`}
+                        }`}
                     >
                       {plan.id === "pro" && (
                         <svg width="17" height="17" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5z" /></svg>
