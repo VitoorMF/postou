@@ -14,19 +14,26 @@ export async function GET(request: Request) {
 
   // OAuth devolveu erro (ex: usuário cancelou) ou veio sem code → volta pra landing.
   if (oauthError || !code) {
+    if (oauthError) console.error("[auth/callback] OAuth retornou erro:", oauthError);
     return NextResponse.redirect(`${base}/?auth_error=1`);
   }
 
   const cookieStore = await cookies();
+
+  // IMPORTANTE: cria a response do redirect ANTES e grava os cookies de sessão
+  // DIRETO nela. Gravar no cookieStore + retornar um redirect separado faz o
+  // Set-Cookie se perder de forma intermitente → "precisa logar duas vezes".
+  const response = NextResponse.redirect(`${base}/hoje`);
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        getAll() { return cookieStore.getAll(); },
+        getAll() { return cookieStore.getAll(); }, // lê o code-verifier (PKCE)
         setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value, options }) =>
-            cookieStore.set(name, value, options)
+            response.cookies.set(name, value, options) // escreve na response do redirect
           );
         },
       },
@@ -36,8 +43,9 @@ export async function GET(request: Request) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     // troca falhou (code reusado, PKCE ausente) → não manda pro /hoje sem sessão
+    console.error("[auth/callback] exchangeCodeForSession falhou:", error.message);
     return NextResponse.redirect(`${base}/?auth_error=1`);
   }
 
-  return NextResponse.redirect(`${base}/hoje`);
+  return response;
 }
