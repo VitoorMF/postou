@@ -13,7 +13,8 @@ export interface PlanLimits {
 export const LIMITS: Record<PlanId, PlanLimits> = {
   free:    { auto: 1, manual: 1, carrossel: 0 },
   starter: { auto: 3, manual: 2, carrossel: 1 },
-  pro:     { auto: Infinity, manual: Infinity, carrossel: Infinity },
+  // Pro finito: cobre "postar todos os dias" mas capa o carrossel (driver de custo).
+  pro:     { auto: 7, manual: 14, carrossel: 4 },
 };
 
 export function getLimits(plan: string | null | undefined): PlanLimits {

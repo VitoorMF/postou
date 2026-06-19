@@ -50,10 +50,10 @@ const plans = [
     priceNum: 89,
     note: "cobrado mensalmente",
     features: [
-      "Gerações ilimitadas",
       "Posta todos os dias da semana",
-      "Carrossel sem limite",
-      "Geração manual ilimitada",
+      "14 gerações manuais por semana",
+      "4 carrosséis por semana",
+      "A IA decide o melhor formato",
       "Suporte prioritário no WhatsApp",
     ],
     featured: false,
@@ -62,7 +62,7 @@ const plans = [
   },
 ];
 
-export default function PlansClient({ currentPlan }: { currentPlan: string }) {
+export default function PlansClient({ currentPlan, planExpiresAt }: { currentPlan: string; planExpiresAt?: string | null }) {
   const router = useRouter();
   const [selected, setSelected] = useState(currentPlan);
   const [showCpf, setShowCpf] = useState(false);
@@ -70,6 +70,36 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
   const [cpf, setCpf] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  // cancelamento de assinatura (modal)
+  const [showCancel, setShowCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelError, setCancelError] = useState("");
+  const [cancelledUntil, setCancelledUntil] = useState<string | null>(null);
+
+  const currentPlanName = plans.find((p) => p.id === currentPlan)?.name ?? "seu plano";
+
+  async function handleCancel() {
+    if (cancelling) return;
+    setCancelling(true);
+    setCancelError("");
+    try {
+      const res = await fetch("/api/cancel-subscription", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        setCancelledUntil(data.plan_expires_at ?? planExpiresAt ?? null);
+      } else {
+        setCancelError(data.error ?? "Não foi possível cancelar.");
+      }
+    } catch {
+      setCancelError("Erro de conexão.");
+    } finally {
+      setCancelling(false);
+    }
+  }
+
+  const fmtDate = (iso?: string | null) =>
+    iso ? new Date(iso).toLocaleDateString("pt-BR", { day: "2-digit", month: "long" }) : "";
 
   const selectedPlan = plans.find((p) => p.id === selected);
 
@@ -215,13 +245,33 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
 
                   {/* CTA */}
                   {isCurrent ? (
-                    <button disabled className="h-[52px] rounded-[14px] border border-white/[0.12] bg-transparent text-[#8A8A8E] text-[15.5px] font-bold flex items-center justify-center cursor-default">
-                      Seu plano atual
-                    </button>
+                    <div className="flex flex-col items-center gap-2.5">
+                      <button disabled className="w-full h-[52px] rounded-[14px] border border-white/[0.12] bg-transparent text-[#8A8A8E] text-[15.5px] font-bold flex items-center justify-center cursor-default">
+                        Seu plano atual
+                      </button>
+                      {/* link de cancelar só no plano pago atual */}
+                      {!isFree && (cancelledUntil ? (
+                        <span className="text-[12.5px] text-[#30C46B] font-semibold">Cancelada · ativa até {fmtDate(cancelledUntil)}</span>
+                      ) : (
+                        <button onClick={() => { setCancelError(""); setShowCancel(true); }} className="text-[13px] text-[#636366] hover:text-[#FF6B6B] font-semibold transition-colors">
+                          Cancelar assinatura
+                        </button>
+                      ))}
+                    </div>
                   ) : isFree ? (
-                    <button disabled className="h-[52px] rounded-[14px] bg-[#262628] text-[#636366] text-[15.5px] font-bold flex items-center justify-center cursor-default">
-                      Grátis pra sempre
-                    </button>
+                    // Card Free com usuário num plano pago → voltar ao free (= cancelar)
+                    cancelledUntil ? (
+                      <div className="h-[52px] rounded-[14px] bg-[#30C46B]/[0.12] border border-[#30C46B]/30 text-[#30C46B] text-[13px] font-semibold flex items-center justify-center text-center px-3 leading-tight">
+                        Cancelada · ativa até {fmtDate(cancelledUntil)}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setCancelError(""); setShowCancel(true); }}
+                        className="h-[52px] rounded-[14px] bg-[#262628] text-white text-[15.5px] font-bold flex items-center justify-center hover:bg-[#303033] active:scale-[0.98] transition-all"
+                      >
+                        Voltar ao Free
+                      </button>
+                    )
                   ) : (
                     <button
                       onClick={() => openCheckout(plan.id)}
@@ -321,6 +371,75 @@ export default function PlansClient({ currentPlan }: { currentPlan: string }) {
                 `Ir para pagamento — ${selectedPlan?.price}/mês`
               )}
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Cancelamento */}
+      {showCancel && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !cancelling && setShowCancel(false)} />
+          <div className="relative w-full max-w-lg bg-[#1a1a1a] rounded-t-3xl px-5 pt-5 pb-8 flex flex-col gap-5 animate-sheet-up">
+            <div className="w-10 h-1 bg-[#333] rounded-full mx-auto -mt-1 mb-1" />
+
+            {cancelledUntil ? (
+              // ─── Sucesso ───
+              <>
+                <div className="flex flex-col items-center gap-3 text-center py-2">
+                  <span className="h-14 w-14 rounded-full bg-[#30C46B]/15 grid place-items-center">
+                    <svg width="28" height="28" fill="none" stroke="#30C46B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                  </span>
+                  <h2 className="text-lg font-bold text-white">Assinatura cancelada</h2>
+                  <p className="text-sm text-[#8A8A8E] leading-relaxed">
+                    Você continua no <b className="text-white">{currentPlanName}</b> até <b className="text-white">{fmtDate(cancelledUntil)}</b>. Depois disso, sua conta volta para o plano Free.
+                  </p>
+                </div>
+                <button onClick={() => setShowCancel(false)} className="w-full h-12 rounded-2xl bg-[#137EFF] text-white text-sm font-semibold">
+                  Entendi
+                </button>
+              </>
+            ) : (
+              // ─── Confirmação ───
+              <>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-white">Cancelar assinatura?</h2>
+                  <button onClick={() => !cancelling && setShowCancel(false)} className="text-[#666] hover:text-white transition-colors text-xl leading-none">✕</button>
+                </div>
+
+                <div className="bg-[#202022] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-2.5 text-sm text-[#aaa] leading-snug">
+                  <p>• Você <b className="text-white">continua com o {currentPlanName}</b>{planExpiresAt ? <> até <b className="text-white">{fmtDate(planExpiresAt)}</b></> : ""} — nada muda até lá.</p>
+                  <p>• A cobrança <b className="text-white">não será renovada</b>.</p>
+                  <p>• No vencimento, sua conta volta para o <b className="text-white">plano Free</b> (1 post automático e 1 manual por semana, sem carrossel).</p>
+                </div>
+
+                {cancelError && <p className="text-sm text-red-400">{cancelError}</p>}
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowCancel(false)}
+                    disabled={cancelling}
+                    className="flex-1 h-12 rounded-2xl bg-[#262628] text-white text-sm font-semibold hover:bg-[#303033] disabled:opacity-50 transition-colors"
+                  >
+                    Manter assinatura
+                  </button>
+                  <button
+                    onClick={handleCancel}
+                    disabled={cancelling}
+                    className="flex-1 h-12 rounded-2xl bg-[#FF6B6B]/[0.14] border border-[#FF6B6B]/40 text-[#FF6B6B] text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#FF6B6B]/[0.22] disabled:opacity-50 transition-colors"
+                  >
+                    {cancelling ? (
+                      <>
+                        <svg className="animate-spin" width="16" height="16" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        </svg>
+                        Cancelando…
+                      </>
+                    ) : "Sim, cancelar"}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

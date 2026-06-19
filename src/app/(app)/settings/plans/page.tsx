@@ -7,11 +7,11 @@ export default async function PlansPage() {
 
   const { data: userData } = await supabase
     .from("users")
-    .select("plan")
+    .select("plan, plan_expires_at")
     .eq("id", user!.id)
     .single();
 
   const currentPlan = userData?.plan ?? "free";
 
-  return <PlansClient currentPlan={currentPlan} />;
+  return <PlansClient currentPlan={currentPlan} planExpiresAt={userData?.plan_expires_at ?? null} />;
 }

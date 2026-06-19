@@ -273,12 +273,15 @@ async function generateCoverImage(
     ? `Use esta paleta de cores: ${(brandKit.palette_hex as string[]).slice(0, 3).join(", ")}.`
     : "";
 
+  // 4:5 (post/carrossel) e 9:16 (story). gpt-image-2 exige W e H divisíveis por 16.
+  // 1408x1760: ~30% acima do que o feed do IG mostra (~1080) — crocância no zoom/download —
+  // mas ~53% mais barato que 2048x2560, que vira 1080 no feed de qualquer jeito.
   const sizeMap: Record<string, string> = {
-    post: "2048x2560",
-    carrossel: "2048x2560",
+    post: "1408x1760",
+    carrossel: "1408x1760",
     story: "1152x2048",
   };
-  const size = sizeMap[pack.type] ?? "2048x2560";
+  const size = sizeMap[pack.type] ?? "1408x1760";
 
   const personaUrls = usePersona ? ((brandKit.persona_urls as string[] | null)?.filter(Boolean) ?? []) : [];
   const updatePhotos = updatePhotoUrls?.filter(Boolean) ?? [];
@@ -533,7 +536,9 @@ Deno.serve(async (req) => {
   const LIMITS: Record<string, { auto: number; manual: number; carrossel: number }> = {
     free:    { auto: 1, manual: 1, carrossel: 0 },
     starter: { auto: 3, manual: 2, carrossel: 1 },
-    pro:     { auto: Infinity, manual: Infinity, carrossel: Infinity },
+    // Pro: teto alto o suficiente pra "postar todos os dias", mas finito —
+    // carrossel é o driver de custo (4-5 imagens), por isso fica capado.
+    pro:     { auto: 7, manual: 14, carrossel: 4 },
   };
 
   const { data: userRow } = await supabaseAdmin

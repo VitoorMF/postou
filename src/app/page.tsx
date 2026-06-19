@@ -51,7 +51,7 @@ export default function Landing() {
             <div className="hero-load">
 
               <h1>Sua empresa <span className="hl">postando</span> todos os dias.</h1>
-              <p className="hero-sub">O Postou aprende sobre sua marca e transforma novidades do seu negócio em posts prontos para publicar.</p>
+              <p className="hero-sub">O Postou aprende sobre sua marca, cria os posts e entrega prontos no seu <b>WhatsApp</b>. Você só publica.</p>
               <div className="hero-ctas">
                 <SignInButton className="btn btn-primary btn-lg">Criar meu primeiro post grátis</SignInButton>
                 <DemoTrigger className="btn btn-ghost btn-lg">
@@ -61,7 +61,7 @@ export default function Landing() {
               </div>
               <div className="hero-meta">
                 <div className="avatars"><span></span><span></span><span></span><span></span></div>
-                <div>+1.400 posts criados</div>
+                <div>Grátis para começar · sem cartão</div>
               </div>
             </div>
 
@@ -129,10 +129,10 @@ export default function Landing() {
               </div>
               <div className="feature">
                 <div className="feat-icon">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9z" /></svg>
+                  <svg viewBox="0 0 512 512" fill="currentColor"><path d="M317.12 285.93c-9.69 3.96-15.88 19.13-22.16 26.88-3.22 3.97-7.06 4.59-12.01 2.6-36.37-14.49-64.25-38.76-84.32-72.23-3.4-5.19-2.79-9.29 1.31-14.11 6.06-7.14 13.68-15.25 15.32-24.87 3.64-21.28-24.18-87.29-60.92-57.38C48.62 232.97 330.7 461.46 381.61 337.88c14.4-35.03-48.43-58.53-64.49-51.95zM256 467.28c-37.39 0-74.18-9.94-106.39-28.76-5.17-3.03-11.42-3.83-17.2-2.26l-69.99 19.21 24.38-53.71a22.34 22.34 0 0 0-2.22-22.32C58.5 343.29 44.71 300.61 44.71 256c0-116.51 94.78-211.29 211.29-211.29S467.28 139.49 467.28 256c0 116.5-94.78 211.28-211.28 211.28zM256 0C114.84 0 0 114.84 0 256c0 49.66 14.1 97.35 40.89 138.74L2 480.39a22.37 22.37 0 0 0 3.34 23.76A22.403 22.403 0 0 0 22.36 512c14.42 0 93.05-24.71 113.06-30.2C172.41 501.59 213.9 512 256 512c141.15 0 256-114.85 256-256C512 114.84 397.15 0 256 0z" /></svg>
                 </div>
-                <h3>Distribuição contínua</h3>
-                <p>Stories, posts e carrosséis gerados automaticamente prontos para publicar diariamente.</p>
+                <h3>Chega no seu WhatsApp</h3>
+                <p>O post pronto — imagem e legenda — chega todo dia no seu WhatsApp. É só publicar.</p>
               </div>
             </div>
           </div>
@@ -154,9 +154,9 @@ export default function Landing() {
                 <div className="plan-price"><b>R$0</b><span>/sempre</span></div>
                 <p className="plan-desc">Para testar e descobrir se o Postou cabe na sua rotina.</p>
                 <ul>
-                  <li>1 post automatico por semana</li>
+                  <li>1 post automático por semana</li>
                   <li>1 post manual por semana</li>
-                  <li>Download em alta qualidade</li>
+                  <li>Entrega no WhatsApp</li>
                 </ul>
                 <SignInButton className="btn btn-ghost">Criar conta grátis</SignInButton>
               </div>
@@ -165,9 +165,9 @@ export default function Landing() {
                 <div className="plan-price"><b>R$39</b><span>/mês</span></div>
                 <p className="plan-desc">Para quem posta toda semana e quer crescer de verdade.</p>
                 <ul>
-                  <li>3 posts automatico por semana</li>
+                  <li>3 posts automáticos por semana</li>
                   <li>2 posts manuais por semana</li>
-                  <li>carrossel</li>
+                  <li>1 carrossel por semana</li>
                 </ul>
               </div>
               <div className="plan reveal">
@@ -176,7 +176,7 @@ export default function Landing() {
                 <p className="plan-desc">Para quem posta todos os dias</p>
                 <ul>
                   <li>Tudo do plano Starter</li>
-                  <li>Sem limitadores</li>
+                  <li>Posta todos os dias da semana</li>
                   <li>Suporte prioritário no WhatsApp</li>
                 </ul>
               </div>
@@ -232,8 +232,40 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* FAQ */}
+        <section id="faq">
+          <div className="wrap">
+            <div className="sec-head reveal">
+              <span className="sec-tag">Dúvidas</span>
+              <h2>Perguntas frequentes</h2>
+            </div>
+            <div className="faq-list reveal">
+              <details className="faq-item">
+                <summary>Preciso saber design ou escrever bem?<span className="faq-ic">+</span></summary>
+                <p>Não. Você só conta o que aconteceu no seu negócio e a IA cria o post — imagem e legenda — já na identidade da sua marca.</p>
+              </details>
+              <details className="faq-item">
+                <summary>O Postou posta sozinho no meu Instagram?<span className="faq-ic">+</span></summary>
+                <p>Ele gera e entrega o post pronto no seu WhatsApp. A publicação final é sua — você confere, dá o último toque e posta quando quiser.</p>
+              </details>
+              <details className="faq-item">
+                <summary>Funciona para o meu tipo de negócio?<span className="faq-ic">+</span></summary>
+                <p>Sim. Seja restaurante, advogado, nutricionista, loja ou prestador de serviço, o Postou aprende o seu nicho e gera conteúdo relevante para ele.</p>
+              </details>
+              <details className="faq-item">
+                <summary>E se eu não gostar do post?<span className="faq-ic">+</span></summary>
+                <p>Você gera outro na hora ou edita a legenda direto no app. Nada é publicado sem você aprovar.</p>
+              </details>
+              <details className="faq-item">
+                <summary>Preciso de cartão para usar o plano grátis?<span className="faq-ic">+</span></summary>
+                <p>Não. O plano Free é gratuito para sempre, sem cartão. Você só assina se quiser mais gerações por semana.</p>
+              </details>
+            </div>
+          </div>
+        </section>
+
         {/* CTA */}
-        <section className="cta-sec" id="faq">
+        <section className="cta-sec" id="comecar">
           <div className="wrap">
             <div className="cta-inner reveal">
               <h2>Sua próxima postagem está a <span style={{ color: "var(--blue)" }}>um clique</span> daqui.</h2>
@@ -271,7 +303,7 @@ export default function Landing() {
                 <ul>
                   <li><a href="/sobre">Sobre</a></li>
                   <li><a href="/blog">Blog</a></li>
-                  <li><a href="mailto:contato@postou.com.br">Contato</a></li>
+                  <li><a href="mailto:contato@postou.app">Contato</a></li>
                 </ul>
               </div>
               <div className="foot-col">
