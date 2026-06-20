@@ -124,8 +124,8 @@ export default function FeedPage() {
       <div className="w-full px-4 md:px-8 pt-12 pb-4 shrink-0 mx-auto max-w-[1100px]">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl md:text-[34px] font-extrabold tracking-[-0.03em]">Novidades</h1>
-            <p className="text-base text-[#8A8A8E] font-medium mt-1">O que aconteceu hoje?</p>
+            <h1 className="text-3xl md:text-[34px] font-extrabold tracking-[-0.03em]">Anotações</h1>
+            <p className="text-base text-[#8A8A8E] font-medium mt-1">Anote qualquer coisa do seu negócio — a IA usa pra criar seus posts.</p>
           </div>
           <div className="md:hidden">
             <BrandKitAvatar />

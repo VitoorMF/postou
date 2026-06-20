@@ -48,7 +48,7 @@ function IconSettings({ size = 22 }: { size?: number }) {
 
 const tabs = [
   { label: "Hoje", href: "/hoje", Icon: IconHome },
-  { label: "Novidades", href: "/feed", Icon: IconFeed },
+  { label: "Anotações", href: "/feed", Icon: IconFeed },
   { label: "Conteúdo", href: "/content", Icon: IconContent },
   { label: "Configurar", href: "/settings", Icon: IconSettings },
 ];

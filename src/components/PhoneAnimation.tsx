@@ -104,7 +104,7 @@ function PostouAvatar({ size = 30 }: { size?: number }) {
 function BottomNav({ active }: { active: 0 | 1 | 2 | 3 | null }) {
   const items = [
     { label: "Hoje", Icon: IconHome },
-    { label: "Novidades", Icon: IconFeed },
+    { label: "Anotações", Icon: IconFeed },
     { label: "Conteúdo", Icon: IconContent },
     { label: "Config", Icon: IconSettings },
   ];
@@ -318,8 +318,8 @@ function NovidadesScreen({ step }: { step: number }) {
       style={{ position: "absolute", inset: 0, padding: "34px 14px 54px", display: "flex", flexDirection: "column", gap: 9, overflow: "hidden" }}
     >
       <div>
-        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#fff", margin: 0 }}>Novidades</h3>
-        <p style={{ fontSize: 9, color: "#888", margin: "2px 0 0" }}>O que aconteceu hoje?</p>
+        <h3 style={{ fontSize: 18, fontWeight: 800, color: "#fff", margin: 0 }}>Anotações</h3>
+        <p style={{ fontSize: 9, color: "#888", margin: "2px 0 0" }}>Anote o que rola no negócio</p>
       </div>
 
       <p style={{ fontSize: 7, color: "#555", fontWeight: 700, letterSpacing: 1, margin: "2px 0 0" }}>HOJE</p>
@@ -336,7 +336,7 @@ function NovidadesScreen({ step }: { step: number }) {
 
       {/* input */}
       <div style={{ position: "absolute", left: 14, right: 14, bottom: 56, display: "flex", alignItems: "center", gap: 6 }}>
-        <div style={{ flex: 1, background: "#1F1F1F", borderRadius: 12, padding: "8px 12px", fontSize: 9, color: "#666" }}>O que aconteceu hoje?</div>
+        <div style={{ flex: 1, background: "#1F1F1F", borderRadius: 12, padding: "8px 12px", fontSize: 9, color: "#666" }}>Um detalhe do negócio...</div>
         <div style={{ width: 28, height: 28, borderRadius: 9, background: "#2B2B2B", display: "grid", placeItems: "center" }}>
           <svg width="12" height="12" fill="none" stroke="#888" strokeWidth="1.5" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
         </div>
