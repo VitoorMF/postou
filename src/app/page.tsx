@@ -31,7 +31,7 @@ export default function Landing() {
             </nav>
             <div className="nav-cta">
               <SignInButton className="btn btn-ghost">Entrar</SignInButton>
-              <SignInButton className="btn btn-primary nav-link-text">Começar grátis</SignInButton>
+              <SignInButton mode="signup" className="btn btn-primary nav-link-text">Começar grátis</SignInButton>
               <button className="hamburger" id="hamburger" aria-label="Abrir menu"><span></span></button>
             </div>
           </div>
@@ -42,7 +42,7 @@ export default function Landing() {
           <a href="#como-funciona">Como funciona</a>
           <a href="#precos">Preços</a>
           <a href="#app">App</a>
-          <SignInButton className="btn btn-primary btn-lg">Começar grátis</SignInButton>
+          <SignInButton mode="signup" className="btn btn-primary btn-lg">Começar grátis</SignInButton>
         </div>
 
         {/* Hero */}
@@ -53,7 +53,7 @@ export default function Landing() {
               <h1>Sua empresa <span className="hl">postando</span> todos os dias.</h1>
               <p className="hero-sub">O Postou aprende sobre sua marca, cria os posts e entrega prontos no seu <b>WhatsApp</b>. Você só publica.</p>
               <div className="hero-ctas">
-                <SignInButton className="btn btn-primary btn-lg">Criar meu primeiro post grátis</SignInButton>
+                <SignInButton mode="signup" className="btn btn-primary btn-lg">Criar meu primeiro post grátis</SignInButton>
                 <DemoTrigger className="btn btn-ghost btn-lg">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><polygon points="5 3 19 12 5 21 5 3" /></svg>
                   Ver demonstração
@@ -158,7 +158,7 @@ export default function Landing() {
                   <li>1 post manual por semana</li>
                   <li>Entrega no WhatsApp</li>
                 </ul>
-                <SignInButton className="btn btn-ghost">Criar conta grátis</SignInButton>
+                <SignInButton mode="signup" className="btn btn-ghost">Criar conta grátis</SignInButton>
               </div>
               <div className="plan featured">
                 <h3>Starter</h3>

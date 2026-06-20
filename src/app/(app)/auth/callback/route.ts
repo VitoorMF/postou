@@ -1,10 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import type { EmailOtpType } from "@supabase/supabase-js";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const code = searchParams.get("code");
+  const code = searchParams.get("code");                 // OAuth (Google) + magic link PKCE
+  const tokenHash = searchParams.get("token_hash");      // magic link via template token_hash
+  const type = (searchParams.get("type") ?? "email") as EmailOtpType;
   const oauthError = searchParams.get("error");
 
   // Host real que o browser mandou (evita 0.0.0.0 quando dev roda em --hostname 0.0.0.0).
@@ -12,8 +15,8 @@ export async function GET(request: Request) {
   const proto = request.headers.get("x-forwarded-proto") ?? (host.startsWith("localhost") || host.startsWith("127.") ? "http" : "https");
   const base = `${proto}://${host}`;
 
-  // OAuth devolveu erro (ex: usuário cancelou) ou veio sem code → volta pra landing.
-  if (oauthError || !code) {
+  // OAuth devolveu erro (ex: usuário cancelou) ou link inválido → volta pra landing.
+  if (oauthError || (!code && !tokenHash)) {
     if (oauthError) console.error("[auth/callback] OAuth retornou erro:", oauthError);
     return NextResponse.redirect(`${base}/?auth_error=1`);
   }
@@ -40,10 +43,14 @@ export async function GET(request: Request) {
     }
   );
 
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  // token_hash (template) é stateless → funciona cross-browser (abrir o email em outro app).
+  // code (PKCE) precisa do verifier cookie → funciona no mesmo browser que pediu.
+  const { error } = tokenHash
+    ? await supabase.auth.verifyOtp({ type, token_hash: tokenHash })
+    : await supabase.auth.exchangeCodeForSession(code!);
+
   if (error) {
-    // troca falhou (code reusado, PKCE ausente) → não manda pro /hoje sem sessão
-    console.error("[auth/callback] exchangeCodeForSession falhou:", error.message);
+    console.error("[auth/callback] falha ao validar login:", error.message);
     return NextResponse.redirect(`${base}/?auth_error=1`);
   }
 
