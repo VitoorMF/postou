@@ -357,7 +357,7 @@ Do NOT create a generic, stock-photo, or AI-looking person. Use the real person'
     pack.role === "hook"
       ? `Papel do slide: CAPA (slide 1). Título grande e impactante, identidade de marca forte. Para o scroll. Esta é a capa do carrossel.`
       : pack.role === "cta"
-        ? `Papel do slide: CTA (último slide). Foco em ação/engajamento (comentar, salvar, contatar). Inclua AQUI o rodapé de contato da marca (endereço, telefone, e-mail).`
+        ? `Papel do slide: CTA (último slide). Foco em ação/engajamento (comentar, salvar, compartilhar). Rodapé APENAS com o logo e o nome da marca. NÃO inclua endereço, telefone, e-mail ou site — esses dados NÃO foram fornecidos; é PROIBIDO inventar contato.`
         : `Papel do slide: CORPO (conteúdo). Layout limpo e legível, foco SÓ na mensagem deste slide. NÃO repita o título principal do carrossel. NÃO inclua rodapé de contato neste slide.`;
 
   // Âncora visual (Nível 2): replica o estilo do slide 1.
@@ -384,7 +384,8 @@ ${personSection}
 Visual style rules:
 - NO "before/after" charts or infographics
 - Looks like an authentic organic brand post, NOT an advertisement
-- One clear focal point: the update photo or person if provided`;
+- One clear focal point: the update photo or person if provided
+- NEVER invent contact info (address, phone, email, website, @handle) or any text/number that wasn't provided. If a detail wasn't given, omit it entirely.`;
 
   const allReferenceUrls = [
     ...personaUrls.slice(0, 2).map((url: string, i: number) => ({ url, name: `persona-${i}.jpg`, type: "image/jpeg" })),
