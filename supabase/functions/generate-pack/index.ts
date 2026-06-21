@@ -6,7 +6,7 @@ const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
 
 // Modelo da COPY (planner + conteúdo + legenda — o que o cliente lê).
 // Ponto único de troca: suba aqui pra elevar a qualidade da copy. Texto é barato perto da imagem.
-const COPY_MODEL = "gpt-4o-mini";
+const COPY_MODEL = "gpt-4.1";
 
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL")!,
@@ -239,6 +239,8 @@ Para carrossel, retorne entre 4 e 5 slides seguindo esta estrutura obrigatória:
 - Slide 1: role "hook" — frase de impacto que para o scroll, apresenta o tema
 - Slides intermediários: role "body" — cada um desenvolve um ponto específico, conteúdo informativo e conciso
 - Último slide: role "cta" — chamada para ação clara, encoraja comentário, salvamento ou contato
+
+NÚMERO COERENTE: se o título/capa prometer uma quantidade ("N dicas", "N erros", "N passos"), N DEVE ser EXATAMENTE o número de slides de CORPO (body) — NÃO conte a capa nem o CTA. Com 5 slides (1 capa + 3 corpo + 1 CTA) → o número é 3. Com 4 slides (1 capa + 2 corpo + 1 CTA) → é 2. Cada slide de corpo entrega UM item. NUNCA prometa mais itens do que há slides de corpo.
 
 Exemplo para carrossel:
 { "order": 1, "role": "hook", "content": "texto do hook" }
