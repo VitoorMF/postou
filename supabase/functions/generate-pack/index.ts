@@ -210,7 +210,11 @@ Quando for conteúdo de valor (educativo/dica, não um anúncio de novidade), es
 - Passo a passo / Lista: prático e acionável ("3 erros…", "como fazer X").
 - Bastidor / rotina: mostra os bastidores do dia a dia, humaniza a marca.
 - Reflexão / posicionamento: opinião ou visão da marca sobre um tema da área.
-Para CARROSSEL, prefira os arquétipos educativos (explicador, mito × verdade, passo a passo, dúvidas) — funcionam melhor em série de slides. Escolha UM arquétipo, não misture.
+Escolha UM arquétipo, não misture. E respeite o FORMATO:
+- CARROSSEL: prefira os arquétipos educativos em série — explicador, mito × verdade, passo a passo / lista, dúvidas frequentes (um ponto por slide).
+- POST e STORY (imagem ÚNICA): EVITE listas e passo a passo ("5 dicas", "3 erros", "como fazer em N passos") — eles precisam de vários slides; numa imagem só viram capa sem entregar nada. Use arquétipos que se resolvem em UMA imagem: uma dica forte e completa, mito × verdade, reflexão/posicionamento ou bastidor.
+
+A LEGENDA (caption) deve COMPLEMENTAR a imagem, NUNCA repetir o texto que vai nela (os slides). A arte já mostra o conceito visualmente; a legenda acrescenta contexto, história, exemplo ou provocação e puxa engajamento. Se a legenda só reescreve o que está na imagem, está errada.
 
 Responda APENAS em JSON, sem markdown.
 
@@ -783,6 +787,7 @@ Deno.serve(async (req) => {
           slides.map((s) => ({
             pack_id: pack.id,
             order: s.order,
+            content: s.content,            // texto da arte — usado pela regeneração de legenda
             image_url: slideImageUrls[s.order] ?? null,
           })),
         );

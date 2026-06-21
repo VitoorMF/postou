@@ -30,6 +30,17 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     .eq("user_id", user.id)
     .maybeSingle();
 
+  // Texto que está NA arte — pra legenda complementar, não repetir
+  const { data: slidesData } = await admin
+    .from("slides")
+    .select("content")
+    .eq("pack_id", id)
+    .order("order");
+  const imageText = (slidesData ?? [])
+    .map((s) => (s as { content: string | null }).content)
+    .filter(Boolean)
+    .join("\n");
+
   const prompt = `Você escreve legendas de Instagram para a marca abaixo.
 
 [MARCA]
@@ -43,9 +54,11 @@ ${kit?.do_not_do ?? "Nenhuma restrição."}
 [POST]
 Tipo: ${pack.type}
 Tema/título: ${pack.title}
+Texto que JÁ está na imagem (a legenda deve COMPLEMENTAR, NUNCA repetir isto): ${imageText || "—"}
 Legenda atual (gere algo DIFERENTE desta): ${pack.caption ?? "—"}
 
 Escreva uma NOVA legenda criativa e um CTA curto, em português, no tom da marca.
+A legenda deve COMPLEMENTAR a arte (que já mostra o conceito visualmente) — acrescente contexto, história ou provocação e puxe engajamento; não descreva nem repita o que já está na imagem.
 Responda APENAS em JSON, sem markdown: {"caption":"...","cta":"..."}`;
 
   let caption = "";
