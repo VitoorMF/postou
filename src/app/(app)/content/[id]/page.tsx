@@ -4,10 +4,8 @@ import { use } from "react";
 import BackButton from "./BackButton";
 import DeleteButton from "./DeleteButton";
 import SlideViewer from "./SlideViewer";
-import DownloadButton from "./DownloadButton";
 import CaptionEditor from "./CaptionEditor";
-import ShareButton from "./ShareButton";
-import PostedButton from "./PostedButton";
+import ContentActions from "./ContentActions";
 import RatingButtons from "./RatingButtons";
 
 interface Slide {
@@ -103,11 +101,7 @@ async function PackDetail({ id }: { id: string }) {
               )}
 
               {/* Ações */}
-              <div className="flex flex-col gap-3">
-                <ShareButton imageUrls={shareImages} title={p.title} text={shareText} />
-                <DownloadButton imageUrls={shareImages} title={p.title} />
-                <PostedButton packId={p.id} initialPosted={!!p.posted_at} />
-              </div>
+              <ContentActions packId={p.id} imageUrls={shareImages} title={p.title} text={shareText} initialPosted={!!p.posted_at} />
 
               {/* Qualidade */}
               <RatingButtons packId={p.id} initialRating={p.rating ?? null} />

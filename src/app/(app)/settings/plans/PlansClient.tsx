@@ -292,8 +292,8 @@ export default function PlansClient({ currentPlan, planExpiresAt, planChange }: 
                         Voltar ao Free
                       </button>
                     )
-                  ) : (plan.id === "starter" && currentPlan === "pro") ? (
-                    // Pro vendo o card Starter → downgrade (não é checkout novo)
+                  ) : (plan.id === "starter" && currentPlan === "pro" && !cancelledUntil) ? (
+                    // Pro ATIVO vendo o card Starter → downgrade (se já cancelou, cai no checkout normal)
                     downgraded ? (
                       <div className="h-[52px] rounded-[14px] bg-[#30C46B]/[0.12] border border-[#30C46B]/30 text-[#30C46B] text-[12.5px] font-semibold flex items-center justify-center text-center px-3 leading-tight">
                         Downgrade agendado{planExpiresAt ? ` · Starter a partir de ${fmtDate(planExpiresAt)}` : ""}
@@ -342,6 +342,12 @@ export default function PlansClient({ currentPlan, planExpiresAt, planChange }: 
               7 dias de reembolso
             </span>
           </div>
+
+          {/* suporte — pra quem fica em dúvida na hora de decidir/cancelar */}
+          <p className="text-center text-sm text-[#636366] mt-5">
+            Dúvidas sobre cobrança ou planos?{" "}
+            <a href="mailto:suporte@postou.app" className="text-[#137EFF] font-semibold hover:underline">Fale com o suporte</a>
+          </p>
 
         </div>
       </div>

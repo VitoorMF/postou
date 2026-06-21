@@ -303,6 +303,7 @@ export default function Landing() {
                   <li><a href="/sobre">Sobre</a></li>
                   <li><a href="/blog">Blog</a></li>
                   <li><a href="mailto:contato@postou.app">Contato</a></li>
+                  <li><a href="mailto:suporte@postou.app">Suporte</a></li>
                 </ul>
               </div>
               <div className="foot-col">

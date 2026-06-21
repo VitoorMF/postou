@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
 import TypeFilter, { type TypeCounts } from "./TypeFilter";
-import ShareButton from "@/components/ShareButton";
+import PackCardBody from "./PackCardBody";
 
 interface Slide {
   id: string;
@@ -17,6 +17,7 @@ interface Pack {
   caption: string | null;
   cta: string | null;
   created_at: string;
+  posted_at: string | null;
   slides: Slide[];
 }
 
@@ -33,7 +34,7 @@ function timeAgo(dateStr: string) {
   return `gerado há ${Math.floor(h / 24)}d`;
 }
 
-function PackCard({ id, type, title, caption, cta, created_at, slides }: Pack) {
+function PackCard({ id, type, title, caption, cta, created_at, posted_at, slides }: Pack) {
   const isCarrossel = type === "carrossel";
   const cover = slides.find((s) => s.order === 1)?.image_url ?? slides[0]?.image_url ?? null;
 
@@ -61,36 +62,18 @@ function PackCard({ id, type, title, caption, cta, created_at, slides }: Pack) {
         </span>
       </div>
 
-      {/* Conteúdo */}
-      <div className="p-4 flex flex-col gap-1.5">
-        <div className="flex items-center gap-2">
-          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md lowercase ${badgeColors[type]}`}>{type}</span>
-          <span className="text-xs text-[#636366]">
-            {isCarrossel ? `${slides.length} imagens` : "1 imagem"} · {timeAgo(created_at)}
-          </span>
-        </div>
-        <h2 className="text-base font-semibold text-white leading-snug">{title}</h2>
-        {caption && <p className="text-sm text-[#8A8A8E] leading-snug line-clamp-2">{caption}</p>}
-        {cta && (
-          <div className="flex items-start gap-1.5 mt-0.5">
-            <svg width="13" height="13" fill="none" stroke="#137EFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="shrink-0 mt-0.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
-            <span className="text-[13px] text-[#137EFF] font-medium leading-snug">{cta}</span>
-          </div>
-        )}
-      </div>
-
-      <div className="flex gap-2 px-4 pb-4 mt-auto">
-        <Link href={`/content/${id}`} className="flex-[3] h-10 rounded-xl bg-[#262628] text-sm font-medium text-white flex items-center justify-center gap-2">
-          <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
-          ver
-        </Link>
-        <ShareButton
-          imageUrls={[...slides].sort((a, b) => a.order - b.order).map((s) => s.image_url).filter((u): u is string => !!u)}
-          title={title}
-          text={`${title}${caption ? `\n\n${caption}` : ""}${cta ? `\n\n${cta}` : ""}`}
-          className="flex-[7] h-10 rounded-xl bg-[#137EFF] text-sm font-medium text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
-        />
-      </div>
+      <PackCardBody
+        id={id}
+        type={type}
+        badgeClass={badgeColors[type]}
+        timeLabel={timeAgo(created_at)}
+        isCarrossel={isCarrossel}
+        title={title}
+        caption={caption}
+        cta={cta}
+        postedAt={posted_at}
+        slides={slides}
+      />
 
     </div>
   );
@@ -113,7 +96,7 @@ async function PacksList({ filter, count }: { filter?: string; count: number }) 
 
   let query = supabase
     .from("packs")
-    .select("id, type, title, caption, cta, created_at, slides(id, order, image_url)")
+    .select("id, type, title, caption, cta, created_at, posted_at, slides(id, order, image_url)")
     .order("created_at", { ascending: false })
     .limit(count + 1); // +1 pra detectar se há mais
 

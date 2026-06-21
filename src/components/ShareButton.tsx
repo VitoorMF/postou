@@ -5,13 +5,24 @@ import { useState } from "react";
 const DEFAULT_CLASS =
   "w-full h-[58px] rounded-2xl bg-[#137EFF] text-white text-base font-bold flex items-center justify-center gap-2.5 shadow-[0_14px_32px_-10px_rgba(19,126,255,0.6)] hover:bg-[#0f6ae0] active:scale-[0.99] disabled:opacity-50 transition-all";
 
-export default function ShareButton({ imageUrls, title, text, className, iconOnly }: { imageUrls: string[]; title: string; text: string; className?: string; iconOnly?: boolean }) {
+export default function ShareButton({ imageUrls, title, text, className, iconOnly, onShared }: { imageUrls: string[]; title: string; text: string; className?: string; iconOnly?: boolean; onShared?: () => void }) {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
 
   async function handleShare() {
     if (busy) return;
     setBusy(true);
+
+    // Copia a legenda (título + caption + cta) pro clipboard já no clique —
+    // pronto pra colar no Instagram depois de compartilhar a imagem.
+    let didCopy = false;
+    try {
+      await navigator.clipboard.writeText(text);
+      didCopy = true;
+    } catch {
+      /* sem permissão de clipboard — segue pro share mesmo assim */
+    }
+
     try {
       const slug = title.toLowerCase().replace(/\s+/g, "-");
       // baixa todas as imagens (carrossel manda todas; post/story só 1)
@@ -30,19 +41,27 @@ export default function ShareButton({ imageUrls, title, text, className, iconOnl
 
       const nav = navigator as Navigator & { canShare?: (d?: ShareData) => boolean };
 
+      let shared = false;
       if (files.length && nav.canShare?.({ files })) {
         await nav.share({ files, text });
+        shared = true;
       } else if (nav.share) {
         await nav.share({ title, text });
-      } else {
+        shared = true;
+      } else if (!didCopy) {
         await navigator.clipboard.writeText(text);
+        didCopy = true;
+      }
+      // compartilhou de verdade (share nativo) → avisa o pai (ex: marcar como postado)
+      if (shared) onShared?.();
+    } catch {
+      /* usuário cancelou — ignora (legenda já está copiada) */
+    } finally {
+      setBusy(false);
+      if (didCopy) {
         setCopied(true);
         setTimeout(() => setCopied(false), 2500);
       }
-    } catch {
-      /* usuário cancelou — ignora */
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -56,7 +75,7 @@ export default function ShareButton({ imageUrls, title, text, className, iconOnl
       ) : copied ? (
         <>
           <svg width="16" height="16" fill="none" stroke="white" strokeWidth="2.5" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" /></svg>
-          {!iconOnly && "Copiado!"}
+          {!iconOnly && "Legenda copiada"}
         </>
       ) : (
         <>
