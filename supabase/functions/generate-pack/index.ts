@@ -4,6 +4,10 @@ import { decodeBase64 } from "jsr:@std/encoding/base64";
 
 const openai = new OpenAI({ apiKey: Deno.env.get("OPENAI_API_KEY") });
 
+// Modelo da COPY (planner + conteúdo + legenda — o que o cliente lê).
+// Ponto único de troca: suba aqui pra elevar a qualidade da copy. Texto é barato perto da imagem.
+const COPY_MODEL = "gpt-4o-mini";
+
 const supabaseAdmin = createClient(
   Deno.env.get("SUPABASE_URL")!,
   Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
@@ -95,7 +99,7 @@ Adicione "type": ${carrosselAvailable ? `"story" | "post" | "carrossel"` : `"sto
     : "";
 
   const res = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: COPY_MODEL,
     temperature: mode === "evergreen" ? 0.9 : 0.7,
     messages: [{
       role: "user",
@@ -184,6 +188,23 @@ Regras obrigatórias:
 - Use a DESCRIPTION e BRAND MEMORY para ajustar o tom e a voz`;
   }
 
+  const isCarrossel = type === "carrossel";
+  const archetypeBlock = isCarrossel
+    ? `[ARQUÉTIPO DE CONTEÚDO]
+Quando for conteúdo de valor (educativo/dica, não anúncio), escolha UM arquétipo educativo que funcione em SÉRIE de slides (um ponto por slide) e estruture o conteúdo nele:
+- Explicador ("o que é X"): define um conceito ou termo da área.
+- Mito × Verdade: derruba uma crença comum do público.
+- Dúvidas frequentes: responde perguntas reais do público.
+- Passo a passo / Lista: prático e acionável ("3 erros…", "como fazer X").
+Escolha UM, não misture.`
+    : `[ARQUÉTIPO DE CONTEÚDO]
+Quando for conteúdo de valor (educativo/dica, não anúncio), escolha UM arquétipo que se resolva em UMA imagem e estruture o conteúdo nele:
+- Uma dica forte e completa (UMA ideia acionável — NÃO uma lista).
+- Mito × Verdade: derruba uma crença comum do público.
+- Reflexão / posicionamento: opinião ou visão da marca sobre um tema da área.
+- Bastidor / rotina: humaniza a marca.
+PROIBIDO listas e passo a passo ("5 dicas", "3 erros", "como fazer em N passos") — isto é imagem ÚNICA e lista vira capa vazia. Escolha UM, não misture.`;
+
   const prompt = `Você é um especialista em marketing de conteúdo para Instagram.
 
 [DESCRIPTION]
@@ -202,26 +223,12 @@ ${brandKit.do_not_do ?? "Nenhuma restrição cadastrada."}
 [TAREFA]
 ${taskBlock}
 
-[ARQUÉTIPO DE CONTEÚDO]
-Quando for conteúdo de valor (educativo/dica, não um anúncio de novidade), escolha o ARQUÉTIPO que melhor encaixa no tema e na área da marca, e estruture o conteúdo de acordo com ele:
-- Explicador ("o que é X"): define um conceito ou termo da área de forma clara.
-- Mito × Verdade: derruba uma crença comum do público.
-- Dúvidas frequentes: responde perguntas reais que o público tem.
-- Passo a passo / Lista: prático e acionável ("3 erros…", "como fazer X").
-- Bastidor / rotina: mostra os bastidores do dia a dia, humaniza a marca.
-- Reflexão / posicionamento: opinião ou visão da marca sobre um tema da área.
-Escolha UM arquétipo, não misture. E respeite o FORMATO:
-- CARROSSEL: prefira os arquétipos educativos em série — explicador, mito × verdade, passo a passo / lista, dúvidas frequentes (um ponto por slide).
-- POST e STORY (imagem ÚNICA): EVITE listas e passo a passo ("5 dicas", "3 erros", "como fazer em N passos") — eles precisam de vários slides; numa imagem só viram capa sem entregar nada. Use arquétipos que se resolvem em UMA imagem: uma dica forte e completa, mito × verdade, reflexão/posicionamento ou bastidor.
-
-A LEGENDA (caption) deve COMPLEMENTAR a imagem, NUNCA repetir o texto que vai nela (os slides). A arte já mostra o conceito visualmente; a legenda acrescenta contexto, história, exemplo ou provocação e puxa engajamento. Se a legenda só reescreve o que está na imagem, está errada.
+${archetypeBlock}
 
 Responda APENAS em JSON, sem markdown.
 
 {
   "title": "título do pack",
-  "caption": "legenda para o post",
-  "cta": "call to action",
   "slides": [
     { "order": 1, "content": "texto do slide 1" }
   ]
@@ -239,7 +246,7 @@ Exemplo para carrossel:
 { "order": 5, "role": "cta", "content": "texto do cta" }`;
 
   const response = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: COPY_MODEL,
     temperature: 0.7,
     messages: [{ role: "user", content: prompt }],
   });
@@ -249,6 +256,52 @@ Exemplo para carrossel:
     return JSON.parse(raw);
   } catch {
     return null;
+  }
+}
+
+// Gera a LEGENDA num passo separado, lendo o texto que JÁ vai na arte (slides) —
+// assim a legenda complementa a imagem por construção, em vez de repetir.
+async function generateCaption(
+  type: string,
+  title: string,
+  slides: { content: string }[],
+  brandKit: Record<string, unknown>,
+): Promise<{ caption: string; cta: string | null }> {
+  const imageText = slides.map((s) => s.content).filter(Boolean).join("\n");
+
+  const prompt = `Você escreve legendas de Instagram para a marca abaixo.
+
+[MARCA]
+Descrição: ${brandKit.description ?? "—"}
+Tom de voz: ${brandKit.voice_tone ?? "neutro"}
+
+[DO NOT DO]
+${brandKit.do_not_do ?? "Nenhuma restrição."}
+
+[POST]
+Tipo: ${type}
+Título: ${title}
+Texto que JÁ está na ARTE (a legenda deve COMPLEMENTAR, NUNCA repetir isto):
+${imageText || "—"}
+
+Escreva a LEGENDA do Instagram + um CTA curto, em português, no tom da marca.
+A legenda COMPLEMENTA a arte — acrescenta contexto, história, exemplo ou provocação e puxa engajamento. NÃO descreva nem repita o que já está na imagem.
+Responda APENAS em JSON, sem markdown: {"caption":"...","cta":"..."}`;
+
+  try {
+    const res = await openai.chat.completions.create({
+      model: COPY_MODEL,
+      temperature: 0.8,
+      messages: [{ role: "user", content: prompt }],
+    });
+    const parsed = JSON.parse((res.choices[0].message.content ?? "{}").replace(/```json|```/g, "").trim());
+    return {
+      caption: String(parsed.caption ?? "").trim(),
+      cta: parsed.cta ? String(parsed.cta).trim() : null,
+    };
+  } catch (err) {
+    console.error("Erro ao gerar legenda:", err);
+    return { caption: "", cta: null };
   }
 }
 
@@ -721,16 +774,14 @@ Deno.serve(async (req) => {
       const generated = await generatePack(type, brandKit, updates, mode, theme_override);
       if (!generated) throw new Error("generatePack retornou null");
 
-      // Atualiza título/caption agora que temos o conteúdo gerado
-      await supabaseAdmin
-        .from("packs")
-        .update({ title: generated.title, caption: generated.caption, cta: generated.cta })
-        .eq("id", pack.id);
-
       const updatePhotoUrls = updates[0]?.photo_urls;
       let slides = (generated.slides ?? []) as { order: number; role?: string; content: string }[];
       // post/story é imagem única — se o LLM devolver vários slides, mantém só o 1º
       if (type !== "carrossel") slides = slides.slice(0, 1);
+
+      // Salva o título já. A LEGENDA roda em PARALELO com as imagens (só precisa do texto dos slides).
+      await supabaseAdmin.from("packs").update({ title: generated.title }).eq("id", pack.id);
+      const captionPromise = generateCaption(type, generated.title, slides, brandKit);
 
       // imagens por slide em paralelo:
       //  - post/story: 1 imagem (cover)
@@ -772,7 +823,7 @@ Deno.serve(async (req) => {
         // Renderiza o TEXTO DO SLIDE na arte (não a legenda) — assim a legenda
         // complementa a imagem em vez de repetir o que já está nela.
         const imageData = await generateCoverImage(
-          { title: generated.title, caption: slides[0]?.content ?? generated.caption, type },
+          { title: generated.title, caption: slides[0]?.content ?? generated.title, type },
           brandKit,
           usePersona,
           updatePhotoUrls,
@@ -781,6 +832,10 @@ Deno.serve(async (req) => {
           slideImageUrls[1] = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-1.jpg`);
         }
       }
+
+      // Legenda (rodou em paralelo às imagens) — salva agora.
+      const { caption, cta } = await captionPromise;
+      await supabaseAdmin.from("packs").update({ caption, cta }).eq("id", pack.id);
 
       const coverImageUrl = slideImageUrls[1] ?? null;
 
@@ -822,7 +877,7 @@ Deno.serve(async (req) => {
       ) {
         await sendWhatsAppPack(
           brandKit.whatsapp_number as string,
-          { title: generated.title, caption: generated.caption, cta: generated.cta, type },
+          { title: generated.title, caption, cta, type },
           coverImageUrl,
         );
       }
