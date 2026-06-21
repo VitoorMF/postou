@@ -768,9 +768,11 @@ Deno.serve(async (req) => {
           }),
         );
       } else {
-        // post/story: só uma imagem (cover do slide 1)
+        // post/story: só uma imagem (cover do slide 1).
+        // Renderiza o TEXTO DO SLIDE na arte (não a legenda) — assim a legenda
+        // complementa a imagem em vez de repetir o que já está nela.
         const imageData = await generateCoverImage(
-          { title: generated.title, caption: generated.caption, type },
+          { title: generated.title, caption: slides[0]?.content ?? generated.caption, type },
           brandKit,
           usePersona,
           updatePhotoUrls,
