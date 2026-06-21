@@ -767,7 +767,7 @@ Deno.serve(async (req) => {
     // Insere o pack como pending imediatamente — permite retry se falhar
     const { data: pack, error: packError } = await supabaseAdmin
       .from("packs")
-      .insert({ brand_kit_id, user_id: brandKit.user_id, type, status: "pending" })
+      .insert({ brand_kit_id, user_id: brandKit.user_id, type, status: "pending", is_auto: !isManual })
       .select("id")
       .single();
 

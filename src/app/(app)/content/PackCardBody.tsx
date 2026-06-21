@@ -32,6 +32,7 @@ export default function PackCardBody({
 }) {
   const [posted, setPosted] = useState(!!postedAt);
   const [busy, setBusy] = useState(false);
+  const isStory = type === "story"; // story não tem legenda
 
   async function markPosted(next: boolean) {
     if (busy) return;
@@ -63,8 +64,8 @@ export default function PackCardBody({
           <CardPostedToggle posted={posted} busy={busy} onToggle={() => markPosted(!posted)} />
         </div>
         <h2 className="text-base font-semibold text-white leading-snug">{title}</h2>
-        {caption && <p className="text-sm text-[#8A8A8E] leading-snug line-clamp-2">{caption}</p>}
-        {cta && (
+        {!isStory && caption && <p className="text-sm text-[#8A8A8E] leading-snug line-clamp-2">{caption}</p>}
+        {!isStory && cta && (
           <div className="flex items-start gap-1.5 mt-0.5">
             <svg width="13" height="13" fill="none" stroke="#137EFF" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24" className="shrink-0 mt-0.5"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
             <span className="text-[13px] text-[#137EFF] font-medium leading-snug">{cta}</span>
@@ -80,7 +81,7 @@ export default function PackCardBody({
         <ShareButton
           imageUrls={[...slides].sort((a, b) => a.order - b.order).map((s) => s.image_url).filter((u): u is string => !!u)}
           title={title}
-          text={`${title}${caption ? `\n\n${caption}` : ""}${cta ? `\n\n${cta}` : ""}`}
+          text={isStory ? title : `${title}${caption ? `\n\n${caption}` : ""}${cta ? `\n\n${cta}` : ""}`}
           onShared={() => { if (!posted) markPosted(true); }}
           className="flex-[7] h-10 rounded-xl bg-[#137EFF] text-sm font-medium text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
         />
