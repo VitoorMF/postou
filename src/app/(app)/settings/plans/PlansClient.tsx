@@ -61,7 +61,7 @@ const plans = [
   },
 ];
 
-export default function PlansClient({ currentPlan, planExpiresAt }: { currentPlan: string; planExpiresAt?: string | null }) {
+export default function PlansClient({ currentPlan, planExpiresAt, planChange }: { currentPlan: string; planExpiresAt?: string | null; planChange?: string | null }) {
   const router = useRouter();
   const [selected, setSelected] = useState(currentPlan);
   const [showCpf, setShowCpf] = useState(false);
@@ -74,7 +74,13 @@ export default function PlansClient({ currentPlan, planExpiresAt }: { currentPla
   const [showCancel, setShowCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [cancelError, setCancelError] = useState("");
-  const [cancelledUntil, setCancelledUntil] = useState<string | null>(null);
+  const [cancelledUntil, setCancelledUntil] = useState<string | null>(planChange === "cancel" ? (planExpiresAt ?? null) : null);
+
+  // downgrade Pro → Starter (modal)
+  const [showDowngrade, setShowDowngrade] = useState(false);
+  const [downgrading, setDowngrading] = useState(false);
+  const [downgradeError, setDowngradeError] = useState("");
+  const [downgraded, setDowngraded] = useState(planChange === "downgrade");
 
   const currentPlanName = plans.find((p) => p.id === currentPlan)?.name ?? "seu plano";
 
@@ -94,6 +100,22 @@ export default function PlansClient({ currentPlan, planExpiresAt }: { currentPla
       setCancelError("Erro de conexão.");
     } finally {
       setCancelling(false);
+    }
+  }
+
+  async function handleDowngrade() {
+    if (downgrading) return;
+    setDowngrading(true);
+    setDowngradeError("");
+    try {
+      const res = await fetch("/api/downgrade-subscription", { method: "POST" });
+      const data = await res.json();
+      if (res.ok) setDowngraded(true);
+      else setDowngradeError(data.error ?? "Não foi possível fazer o downgrade.");
+    } catch {
+      setDowngradeError("Erro de conexão.");
+    } finally {
+      setDowngrading(false);
     }
   }
 
@@ -193,8 +215,8 @@ export default function PlansClient({ currentPlan, planExpiresAt }: { currentPla
                 <div
                   key={plan.id}
                   className={`relative flex flex-col rounded-[24px] p-7 ${plan.order} ${plan.featured
-                      ? "border border-[#137EFF]/50 bg-gradient-to-b from-[#137EFF]/[0.08] to-[#161618] shadow-[0_30px_70px_-28px_rgba(19,126,255,0.45)] md:-translate-y-2.5"
-                      : "border border-white/[0.07] bg-[#161618]"
+                    ? "border border-[#137EFF]/50 bg-gradient-to-b from-[#137EFF]/[0.08] to-[#161618] shadow-[0_30px_70px_-28px_rgba(19,126,255,0.45)] md:-translate-y-2.5"
+                    : "border border-white/[0.07] bg-[#161618]"
                     }`}
                 >
                   {plan.badge && (
@@ -270,12 +292,26 @@ export default function PlansClient({ currentPlan, planExpiresAt }: { currentPla
                         Voltar ao Free
                       </button>
                     )
+                  ) : (plan.id === "starter" && currentPlan === "pro") ? (
+                    // Pro vendo o card Starter → downgrade (não é checkout novo)
+                    downgraded ? (
+                      <div className="h-[52px] rounded-[14px] bg-[#30C46B]/[0.12] border border-[#30C46B]/30 text-[#30C46B] text-[12.5px] font-semibold flex items-center justify-center text-center px-3 leading-tight">
+                        Downgrade agendado{planExpiresAt ? ` · Starter a partir de ${fmtDate(planExpiresAt)}` : ""}
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => { setDowngradeError(""); setShowDowngrade(true); }}
+                        className="h-[52px] rounded-[14px] bg-[#262628] text-white text-[15.5px] font-bold flex items-center justify-center hover:bg-[#303033] active:scale-[0.98] transition-all"
+                      >
+                        Mudar para Starter
+                      </button>
+                    )
                   ) : (
                     <button
                       onClick={() => openCheckout(plan.id)}
                       className={`h-[52px] rounded-[14px] text-[15.5px] font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-all ${plan.featured || plan.id === "pro"
-                          ? "bg-[#137EFF] text-white shadow-[0_12px_30px_-10px_rgba(19,126,255,0.7)] hover:bg-[#0f6ae0]"
-                          : "bg-[#262628] text-white hover:bg-[#303033]"
+                        ? "bg-[#137EFF] text-white shadow-[0_12px_30px_-10px_rgba(19,126,255,0.7)] hover:bg-[#0f6ae0]"
+                        : "bg-[#262628] text-white hover:bg-[#303033]"
                         }`}
                     >
                       {plan.id === "pro" && (
@@ -433,6 +469,73 @@ export default function PlansClient({ currentPlan, planExpiresAt }: { currentPla
                         Cancelando…
                       </>
                     ) : "Sim, cancelar"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal Downgrade Pro → Starter */}
+      {showDowngrade && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => !downgrading && setShowDowngrade(false)} />
+          <div className="relative w-full max-w-lg bg-[#1a1a1a] rounded-t-3xl px-5 pt-5 pb-8 flex flex-col gap-5 animate-sheet-up">
+            <div className="w-10 h-1 bg-[#333] rounded-full mx-auto -mt-1 mb-1" />
+
+            {downgraded ? (
+              <>
+                <div className="flex flex-col items-center gap-3 text-center py-2">
+                  <span className="h-14 w-14 rounded-full bg-[#30C46B]/15 grid place-items-center">
+                    <svg width="28" height="28" fill="none" stroke="#30C46B" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12" /></svg>
+                  </span>
+                  <h2 className="text-lg font-bold text-white">Downgrade agendado</h2>
+                  <p className="text-sm text-[#8A8A8E] leading-relaxed">
+                    Você continua no <b className="text-white">Pro</b>{planExpiresAt ? <> até <b className="text-white">{fmtDate(planExpiresAt)}</b></> : ""}. Depois, sua assinatura passa a ser <b className="text-white">Starter (R$39/mês)</b>.
+                  </p>
+                </div>
+                <button onClick={() => setShowDowngrade(false)} className="w-full h-12 rounded-2xl bg-[#137EFF] text-white text-sm font-semibold">
+                  Entendi
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-white">Mudar para o Starter?</h2>
+                  <button onClick={() => !downgrading && setShowDowngrade(false)} className="text-[#666] hover:text-white transition-colors text-xl leading-none">✕</button>
+                </div>
+
+                <div className="bg-[#202022] border border-white/[0.08] rounded-2xl p-4 flex flex-col gap-2.5 text-sm text-[#aaa] leading-snug">
+                  <p>• Você <b className="text-white">continua com o Pro</b>{planExpiresAt ? <> até <b className="text-white">{fmtDate(planExpiresAt)}</b></> : ""} — nada muda até lá.</p>
+                  <p>• Na próxima cobrança, o valor passa a ser <b className="text-white">R$39 (Starter)</b>.</p>
+                  <p>• No Starter você tem <b className="text-white">3 posts automáticos, 2 manuais e 1 carrossel por semana</b>.</p>
+                </div>
+
+                {downgradeError && <p className="text-sm text-red-400">{downgradeError}</p>}
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowDowngrade(false)}
+                    disabled={downgrading}
+                    className="flex-1 h-12 rounded-2xl bg-[#262628] text-white text-sm font-semibold hover:bg-[#303033] disabled:opacity-50 transition-colors"
+                  >
+                    Manter o Pro
+                  </button>
+                  <button
+                    onClick={handleDowngrade}
+                    disabled={downgrading}
+                    className="flex-1 h-12 rounded-2xl bg-[#137EFF] text-white text-sm font-semibold flex items-center justify-center gap-2 hover:bg-[#0f6ae0] disabled:opacity-50 transition-colors"
+                  >
+                    {downgrading ? (
+                      <>
+                        <svg className="animate-spin" width="16" height="16" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                        </svg>
+                        Mudando…
+                      </>
+                    ) : "Sim, mudar"}
                   </button>
                 </div>
               </>

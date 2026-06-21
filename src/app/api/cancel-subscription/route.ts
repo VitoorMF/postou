@@ -28,5 +28,8 @@ export async function POST() {
     return NextResponse.json({ error: "Não foi possível cancelar agora. Tente de novo." }, { status: 502 });
   }
 
+  // marca o estado pra UI lembrar do cancelamento após reload (limpo no próximo pagamento)
+  await admin.from("users").update({ plan_change: "cancel" }).eq("id", user.id);
+
   return NextResponse.json({ ok: true, plan_expires_at: row.plan_expires_at });
 }

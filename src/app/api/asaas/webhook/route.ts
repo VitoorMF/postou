@@ -55,6 +55,7 @@ export async function POST(request: Request) {
     const patch: Record<string, unknown> = {
       plan,
       plan_expires_at: expiresAt.toISOString(),
+      plan_change: null, // pagamento confirmou → mudança pendente (cancel/downgrade) foi aplicada/renovada
     };
     if (isUpgrade) {
       patch.weekly_auto_count = 0;

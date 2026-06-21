@@ -89,3 +89,13 @@ export async function getSubscriptionPayments(subscriptionId: string): Promise<A
 export async function cancelSubscription(subscriptionId: string): Promise<void> {
   await call(`/subscriptions/${subscriptionId}`, { method: "DELETE" });
 }
+
+// Atualiza o valor mensal da assinatura (usado no downgrade Pro→Starter).
+// updatePendingPayments: true → a próxima cobrança já sai no novo valor; o webhook
+// (VALUE_TO_PLAN) então rebaixa o plano sozinho quando esse pagamento confirma.
+export async function updateSubscriptionValue(subscriptionId: string, value: number): Promise<void> {
+  await call(`/subscriptions/${subscriptionId}`, {
+    method: "POST",
+    body: { value, updatePendingPayments: true },
+  });
+}
