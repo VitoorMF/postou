@@ -21,43 +21,75 @@ export async function classify(content: string): Promise<Category> {
   return categories.includes(raw as Category) ? (raw as Category) : "geral";
 }
 
-export type Intent = "update" | "rating" | "question" | "other";
+// ─── Agente do WhatsApp ───────────────────────────────────────────────────────
 
-// Roteia a mensagem que o dono manda no WhatsApp: anotar / avaliar o post / dúvida.
-export async function classifyIntent(
-  message: string,
-): Promise<{ intent: Intent; sentiment?: "positive" | "negative" }> {
+export type WaIntent = "update" | "rating" | "generate" | "question" | "smalltalk" | "clarify";
+
+export interface WaAgentResult {
+  intent: WaIntent;
+  reply: string;
+  sentiment?: "positive" | "negative";
+  theme?: string;
+  category?: Category;
+}
+
+const WA_AGENT_PROMPT = `Você é o assistente do Postou no WhatsApp. Tom: simpático, brasileiro, direto e com leveza — emoji com moderação. Respostas CURTAS (é WhatsApp).
+
+[O QUE É O POSTOU]
+Uma IA que aprende a marca do negócio e gera posts, stories e carrosséis pro Instagram automaticamente — e entrega aqui no WhatsApp, prontos pra publicar. O dono só publica.
+
+[O QUE O DONO PODE FAZER AQUI NO WHATSAPP]
+- Contar uma NOVIDADE/fato do negócio → vira conteúdo.
+- AVALIAR o último post que recebeu (gostei / não curti).
+- PEDIR um post na hora: ex. "Gerar agora <tema>" ou "faz um post sobre X".
+
+[NO APP (postou.app) — use isto pra responder "como faço…"]
+- Configurar: horário de entrega, dias da semana, formato (deixar a IA escolher ou fixar post/story/carrossel), conectar/verificar o WhatsApp, e o Brand Kit (logo, cores, fotos da marca, tom de voz, "sobre a marca").
+- Anotações: adicionar novidades e contexto da marca (também dá pra mandar por aqui).
+- Conteúdo: ver, compartilhar, baixar, marcar como postado e avaliar 👍/👎 os posts gerados.
+- Planos: Free (1 post automático + 1 manual por semana), Starter (3 automáticos, 2 manuais, 1 carrossel/semana), Pro (posta todo dia, 14 manuais, 4 carrosséis/semana) — muda em Configurar → Planos.
+- Não souber responder algo específico? Direcione pro suporte: suporte@postou.app.
+
+[SUA TAREFA]
+Leia a mensagem do dono, escolha UMA intenção e escreva uma "reply" curta e simpática (pt-BR):
+- "update": ele conta um fato/novidade do NEGÓCIO. Inclua "category" (novidade|conquista|evento|bastidor|dica|parceria|geral). reply: confirma que anotou e que vira post.
+- "rating": ele avalia o ÚLTIMO POST recebido (gostei/amei/não curti/ficou ruim/👍/👎). Inclua "sentiment". reply: agradece o feedback.
+- "generate": ele pede pra criar um post E disse o tema. Inclua "theme". reply: curtinho (ex: "Boa! Já te pergunto o formato 👇"). Se ele pedir pra gerar mas NÃO disser o tema, use "clarify" e pergunte sobre o quê.
+- "question": dúvida sobre o uso/app. reply: RESPONDA de verdade usando o que você sabe acima; se não souber, mande pro suporte.
+- "smalltalk": saudação/agradecimento/conversa ("oi", "bom dia", "obrigado", "👋"). reply: cumprimenta e orienta o que dá pra fazer aqui.
+- "clarify": a mensagem é AMBÍGUA — poderia ser 2+ intenções (ex: novidade OU pedido de geração). reply: pergunte, de forma simpática, o que ele quis.
+
+REGRA DE OURO: havendo dúvida real entre duas intenções (ex: update vs generate), use "clarify" e PERGUNTE — não chute. Elogio ao próprio NEGÓCIO é "update"; elogio ao POST recebido é "rating".
+
+Responda APENAS em JSON, sem markdown:
+{"intent":"...","reply":"...","sentiment":"positive|negative","theme":"...","category":"..."}
+(inclua só os campos que fizerem sentido pra intenção)`;
+
+// Uma chamada: entende a mensagem, escolhe a intenção e já escreve a resposta.
+// O webhook executa a ação (anotar/avaliar/gerar) com base no intent.
+export async function whatsappAgent(message: string): Promise<WaAgentResult> {
   try {
     const res = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      temperature: 0,
+      temperature: 0.5, // um pouco de carisma, mas controlado
       messages: [
-        {
-          role: "system",
-          content: `Você roteia mensagens que o DONO de um negócio manda no WhatsApp da ferramenta Postou (que gera posts pra ele e entrega ali). Classifique em UMA intenção:
-
-- "update": ele conta um FATO/novidade do NEGÓCIO pra virar conteúdo. Ex: "fechei um cliente hoje", "lançamos um produto", "tenho 14 anos de experiência", "palestrei num evento".
-- "rating": ele está AVALIANDO o ÚLTIMO POST que recebeu da ferramenta. Ex: "gostei", "amei esse", "ficou ótimo", "não curti", "tá ruim", "esse não", "👍", "👎". Inclua "sentiment".
-- "question": ele faz uma PERGUNTA ou pede AJUDA sobre a ferramenta/uso. Ex: "como funciona?", "como mudo o horário?", "preciso de ajuda", "não recebi meu post".
-- "other": saudação, agradecimento ou conversa sem conteúdo de negócio. Ex: "oi", "bom dia", "obrigado", "ok", "👋", "tudo bem?".
-
-REGRA: "rating" é só sobre o POST que ele recebeu. Elogio/crítica ao próprio NEGÓCIO é "update". Saudação/conversa fiada é "other", NUNCA update. Na dúvida entre update e rating, escolha "update".
-
-Responda APENAS em JSON, sem markdown: {"intent":"update|rating|question|other","sentiment":"positive|negative"}
-("sentiment" só quando intent="rating")`,
-        },
+        { role: "system", content: WA_AGENT_PROMPT },
         { role: "user", content: message },
       ],
     });
     const parsed = JSON.parse((res.choices[0].message.content ?? "{}").replace(/```json|```/g, "").trim());
-    const intent: Intent = (["update", "rating", "question", "other"] as const).includes(parsed.intent)
-      ? parsed.intent
-      : "update";
-    const sentiment =
-      parsed.sentiment === "negative" ? "negative" : parsed.sentiment === "positive" ? "positive" : undefined;
-    return { intent, sentiment };
+    const valid: WaIntent[] = ["update", "rating", "generate", "question", "smalltalk", "clarify"];
+    const intent: WaIntent = valid.includes(parsed.intent) ? parsed.intent : "smalltalk";
+    return {
+      intent,
+      reply: typeof parsed.reply === "string" && parsed.reply.trim() ? parsed.reply.trim() : "Recebi! 🙂",
+      sentiment: parsed.sentiment === "negative" ? "negative" : parsed.sentiment === "positive" ? "positive" : undefined,
+      theme: typeof parsed.theme === "string" && parsed.theme.trim() ? parsed.theme.trim() : undefined,
+      category: categories.includes(parsed.category) ? (parsed.category as Category) : undefined,
+    };
   } catch {
-    return { intent: "update" }; // fallback seguro: comportamento atual (trata como update)
+    // falha do modelo → não toma ação errada, só pede pra repetir
+    return { intent: "clarify", reply: "Ops, não consegui processar agora 😅 manda de novo?" };
   }
 }
 

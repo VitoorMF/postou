@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { classify, classifyIntent, generateEmbedding } from "@/lib/ai";
+import { whatsappAgent, classify, generateEmbedding } from "@/lib/ai";
 import { sendText, sendButton, normalizePhone } from "@/lib/zapi";
 
 interface PendingAction {
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  // ─── 1. Detecta resposta de botão ─────────────────────────────────────────
+  // ─── 1. Resposta de botão (escolha de formato) ─────────────────────────────
   const buttonResp = (payload.buttonsResponseMessage ?? payload.listResponseMessage) as
     | { buttonId?: string; selectedRowId?: string }
     | undefined;
@@ -89,18 +89,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true });
     }
 
-    // limpa state e dispara geração (não aguarda — Z-API tem timeout curto)
     await admin.from("brand_kits").update({ whatsapp_pending_action: null }).eq("id", kit.id);
     fireGeneration(kit.id, pending.theme, format);
-
-    await sendText(
-      phone,
-      `Gerando *${format}* sobre _"${pending.theme}"_ ⏳\n\nVocê recebe aqui em alguns minutos.`,
-    );
+    await sendText(phone, `Gerando *${format}* sobre _"${pending.theme}"_ ⏳\n\nVocê recebe aqui em alguns minutos.`);
     return NextResponse.json({ ok: true });
   }
 
-  // ─── 2. Extrai texto da mensagem ──────────────────────────────────────────
+  // ─── 2. Extrai texto/imagem ────────────────────────────────────────────────
   let content: string | null = null;
   let imageUrl: string | null = null;
 
@@ -113,45 +108,33 @@ export async function POST(request: Request) {
     if (image.caption) content = image.caption.trim();
   }
 
-  // ─── 3. Detecta comando "Gerar [agora] <tema>" ────────────────────────────
-  if (content) {
-    const match = content.match(/^\/?gerar\s+(?:agora\s+)?(.+)/i);
-    if (match) {
-      const theme = match[1].trim();
-      if (theme.length < 3) {
-        await sendText(phone, "Me diz o tema também 😅\n\nEx: *Gerar agora Feliz Natal*");
-        return NextResponse.json({ ok: true });
-      }
-
-      const pending: PendingAction = {
-        type: "awaiting_format",
-        theme,
-        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
-      };
-      await admin.from("brand_kits").update({ whatsapp_pending_action: pending }).eq("id", kit.id);
-
-      await sendButton(phone, `Tema: _"${theme}"_\n\nQual formato você quer?`, [
-        { id: "gen:carrossel", label: "Carrossel" },
-        { id: "gen:post", label: "Post" },
-        { id: "gen:story", label: "Story" },
-      ]);
-
-      return NextResponse.json({ ok: true });
-    }
-  }
-
-  // ─── 4. Caso contrário, trata como update normal ──────────────────────────
   if (!content && !imageUrl) {
     await sendText(phone, "Hmm, só entendo texto ou imagem com legenda 📝\n\nMe conta uma novidade do seu negócio!");
     return NextResponse.json({ ok: true });
   }
 
-  // ─── 3.5 Roteia por intenção (só texto puro; imagem é sempre conteúdo) ─────
+  // ─── 3. Texto puro → o agente decide a intenção e já escreve a resposta ─────
   if (content && !imageUrl) {
-    const { intent, sentiment } = await classifyIntent(content);
+    const a = await whatsappAgent(content);
 
-    if (intent === "rating") {
-      // avalia o ÚLTIMO post entregue (mais recente com sucesso)
+    // pedido de geração com tema → pede o formato (botões)
+    if (a.intent === "generate" && a.theme && a.theme.length >= 3) {
+      const pending: PendingAction = {
+        type: "awaiting_format",
+        theme: a.theme,
+        expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      };
+      await admin.from("brand_kits").update({ whatsapp_pending_action: pending }).eq("id", kit.id);
+      await sendButton(phone, `Tema: _"${a.theme}"_\n\nQual formato você quer?`, [
+        { id: "gen:carrossel", label: "Carrossel" },
+        { id: "gen:post", label: "Post" },
+        { id: "gen:story", label: "Story" },
+      ]);
+      return NextResponse.json({ ok: true });
+    }
+
+    // avaliação → grava no último post entregue
+    if (a.intent === "rating") {
       const { data: lastPack } = await admin
         .from("packs")
         .select("id")
@@ -161,36 +144,37 @@ export async function POST(request: Request) {
         .limit(1)
         .maybeSingle();
       if (lastPack) {
-        await admin.from("packs").update({ rating: sentiment === "negative" ? -1 : 1 }).eq("id", lastPack.id);
+        await admin.from("packs").update({ rating: a.sentiment === "negative" ? -1 : 1 }).eq("id", lastPack.id);
       }
-      await sendText(
-        phone,
-        sentiment === "negative"
-          ? "Valeu pelo feedback 🙏 anotei — vou usar pra melhorar os próximos."
-          : "Que bom que curtiu! 🙌 Anotei — vou manter esse estilo.",
-      );
+      await sendText(phone, a.reply);
       return NextResponse.json({ ok: true });
     }
 
-    if (intent === "question") {
-      await sendText(
-        phone,
-        "Boa pergunta! 🙂\n\nAjustes (horário, formato, marca) é no app, em *Configurar*.\nDúvidas ou problemas: *suporte@postou.app* — a gente responde rápido.",
-      );
+    // question / smalltalk / clarify / generate-sem-tema → só responde (a IA já escreveu)
+    if (a.intent !== "update") {
+      await sendText(phone, a.reply);
       return NextResponse.json({ ok: true });
     }
 
-    if (intent === "other") {
-      await sendText(
-        phone,
-        "Oi! 👋 Me conta uma *novidade do seu negócio* que eu viro post.\n\nOu manda *Gerar agora <tema>* pra criar um na hora. 🚀",
-      );
+    // update → anota (categoria já veio do agente)
+    const embedding = await generateEmbedding(content);
+    const { error } = await admin.from("updates").insert({
+      user_id: kit.user_id,
+      brand_kit_id: kit.id,
+      content,
+      category: a.category ?? "geral",
+      embedding,
+    });
+    if (error) {
+      console.error("Erro ao salvar update do WhatsApp:", error);
+      await sendText(phone, "Tive um problema pra salvar. Tenta de novo daqui a pouco 🙏");
       return NextResponse.json({ ok: true });
     }
-    // intent === "update" → segue o fluxo normal abaixo (anota)
+    await sendText(phone, a.reply);
+    return NextResponse.json({ ok: true });
   }
 
-  // baixa imagem se houver
+  // ─── 4. Imagem → sempre conteúdo (update) ──────────────────────────────────
   let photoUrls: string[] | null = null;
   if (imageUrl) {
     try {
@@ -210,11 +194,7 @@ export async function POST(request: Request) {
   }
 
   const finalContent = content || "Imagem enviada via WhatsApp";
-
-  const [category, embedding] = await Promise.all([
-    classify(finalContent),
-    generateEmbedding(finalContent),
-  ]);
+  const [category, embedding] = await Promise.all([classify(finalContent), generateEmbedding(finalContent)]);
 
   const { error: insertError } = await admin.from("updates").insert({
     user_id: kit.user_id,
@@ -231,18 +211,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const replies: Record<string, string> = {
-    parceria: "Anotei essa parceria! 🤝",
-    conquista: "Conquista anotada! 🏆",
-    evento: "Evento registrado! 📅",
-    bastidor: "Bastidor anotado! 🎬",
-    dica: "Dica salva! 💡",
-    novidade: "Novidade anotada! ✨",
-    geral: "Anotado! ✓",
-  };
-  const reply = `${replies[category] ?? "Anotado! ✓"}\n\nVai virar conteúdo no próximo post.`;
-  await sendText(phone, reply);
-
+  await sendText(phone, "Anotei essa! 📸 Vai virar conteúdo no próximo post.");
   return NextResponse.json({ ok: true });
 }
 
