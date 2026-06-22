@@ -320,12 +320,12 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
             {/* Tema */}
             <div className="flex flex-col gap-2">
               <label className="text-xs font-semibold text-[#555] tracking-widest">TEMA (opcional)</label>
-              <input
-                type="text"
+              <textarea
                 value={theme}
                 onChange={(e) => setTheme(e.target.value)}
-                placeholder="Ex: lançamento do produto, dica de uso..."
-                className="w-full bg-[#242424] text-white text-sm rounded-xl px-4 h-11 placeholder:text-[#444] outline-none focus:ring-1 focus:ring-[#137EFF]"
+                placeholder="Ex: lançamento do produto novo, com foco no público jovem e tom descontraído..."
+                rows={3}
+                className="w-full bg-[#242424] text-white text-sm rounded-xl px-4 py-3 leading-relaxed placeholder:text-[#444] outline-none focus:ring-1 focus:ring-[#137EFF] resize-none"
               />
               <p className="text-xs text-[#555]">Deixe vazio para a IA escolher o tema automaticamente.</p>
             </div>
