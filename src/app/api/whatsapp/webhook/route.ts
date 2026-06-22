@@ -179,6 +179,14 @@ export async function POST(request: Request) {
       );
       return NextResponse.json({ ok: true });
     }
+
+    if (intent === "other") {
+      await sendText(
+        phone,
+        "Oi! 👋 Me conta uma *novidade do seu negócio* que eu viro post.\n\nOu manda *Gerar agora <tema>* pra criar um na hora. 🚀",
+      );
+      return NextResponse.json({ ok: true });
+    }
     // intent === "update" → segue o fluxo normal abaixo (anota)
   }
 

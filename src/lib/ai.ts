@@ -21,7 +21,7 @@ export async function classify(content: string): Promise<Category> {
   return categories.includes(raw as Category) ? (raw as Category) : "geral";
 }
 
-export type Intent = "update" | "rating" | "question";
+export type Intent = "update" | "rating" | "question" | "other";
 
 // Roteia a mensagem que o dono manda no WhatsApp: anotar / avaliar o post / dúvida.
 export async function classifyIntent(
@@ -39,17 +39,18 @@ export async function classifyIntent(
 - "update": ele conta um FATO/novidade do NEGÓCIO pra virar conteúdo. Ex: "fechei um cliente hoje", "lançamos um produto", "tenho 14 anos de experiência", "palestrei num evento".
 - "rating": ele está AVALIANDO o ÚLTIMO POST que recebeu da ferramenta. Ex: "gostei", "amei esse", "ficou ótimo", "não curti", "tá ruim", "esse não", "👍", "👎". Inclua "sentiment".
 - "question": ele faz uma PERGUNTA ou pede AJUDA sobre a ferramenta/uso. Ex: "como funciona?", "como mudo o horário?", "preciso de ajuda", "não recebi meu post".
+- "other": saudação, agradecimento ou conversa sem conteúdo de negócio. Ex: "oi", "bom dia", "obrigado", "ok", "👋", "tudo bem?".
 
-REGRA: "rating" é só sobre o POST que ele recebeu. Elogio/crítica ao próprio NEGÓCIO é "update". Na dúvida entre update e rating, escolha "update".
+REGRA: "rating" é só sobre o POST que ele recebeu. Elogio/crítica ao próprio NEGÓCIO é "update". Saudação/conversa fiada é "other", NUNCA update. Na dúvida entre update e rating, escolha "update".
 
-Responda APENAS em JSON, sem markdown: {"intent":"update|rating|question","sentiment":"positive|negative"}
+Responda APENAS em JSON, sem markdown: {"intent":"update|rating|question|other","sentiment":"positive|negative"}
 ("sentiment" só quando intent="rating")`,
         },
         { role: "user", content: message },
       ],
     });
     const parsed = JSON.parse((res.choices[0].message.content ?? "{}").replace(/```json|```/g, "").trim());
-    const intent: Intent = (["update", "rating", "question"] as const).includes(parsed.intent)
+    const intent: Intent = (["update", "rating", "question", "other"] as const).includes(parsed.intent)
       ? parsed.intent
       : "update";
     const sentiment =
