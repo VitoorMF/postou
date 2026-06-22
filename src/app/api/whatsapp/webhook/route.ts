@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase-admin";
-import { classify, generateEmbedding } from "@/lib/ai";
+import { classify, classifyIntent, generateEmbedding } from "@/lib/ai";
 import { sendText, sendButton, normalizePhone } from "@/lib/zapi";
 
 interface PendingAction {
@@ -144,6 +144,42 @@ export async function POST(request: Request) {
   if (!content && !imageUrl) {
     await sendText(phone, "Hmm, só entendo texto ou imagem com legenda 📝\n\nMe conta uma novidade do seu negócio!");
     return NextResponse.json({ ok: true });
+  }
+
+  // ─── 3.5 Roteia por intenção (só texto puro; imagem é sempre conteúdo) ─────
+  if (content && !imageUrl) {
+    const { intent, sentiment } = await classifyIntent(content);
+
+    if (intent === "rating") {
+      // avalia o ÚLTIMO post entregue (mais recente com sucesso)
+      const { data: lastPack } = await admin
+        .from("packs")
+        .select("id")
+        .eq("brand_kit_id", kit.id)
+        .eq("status", "success")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (lastPack) {
+        await admin.from("packs").update({ rating: sentiment === "negative" ? -1 : 1 }).eq("id", lastPack.id);
+      }
+      await sendText(
+        phone,
+        sentiment === "negative"
+          ? "Valeu pelo feedback 🙏 anotei — vou usar pra melhorar os próximos."
+          : "Que bom que curtiu! 🙌 Anotei — vou manter esse estilo.",
+      );
+      return NextResponse.json({ ok: true });
+    }
+
+    if (intent === "question") {
+      await sendText(
+        phone,
+        "Boa pergunta! 🙂\n\nAjustes (horário, formato, marca) é no app, em *Configurar*.\nDúvidas ou problemas: *suporte@postou.app* — a gente responde rápido.",
+      );
+      return NextResponse.json({ ok: true });
+    }
+    // intent === "update" → segue o fluxo normal abaixo (anota)
   }
 
   // baixa imagem se houver
