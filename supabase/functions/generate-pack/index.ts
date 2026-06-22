@@ -389,7 +389,7 @@ Visual style rules:
 
   const allReferenceUrls = [
     ...personaUrls.slice(0, 2).map((url: string, i: number) => ({ url, name: `persona-${i}.jpg`, type: "image/jpeg" })),
-    ...updatePhotos.slice(0, 2).map((url: string, i: number) => ({ url, name: `update-${i}.jpg`, type: "image/jpeg" })),
+    ...updatePhotos.slice(0, 5).map((url: string, i: number) => ({ url, name: `update-${i}.jpg`, type: "image/jpeg" })),
   ];
 
   try {
@@ -558,11 +558,13 @@ Deno.serve(async (req) => {
 
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* ignora — body vazio */ }
-  const { brand_kit_id, theme_override, force_type } = body as {
+  const { brand_kit_id, theme_override, force_type, image_urls } = body as {
     brand_kit_id?: string;
     theme_override?: string;     // se vier, pula planner e usa esse tema direto
     force_type?: "post" | "carrossel" | "story"; // se vier, gera só esse formato
+    image_urls?: string[];       // fotos anexadas na geração manual → referência visual
   };
+  const manualImages = Array.isArray(image_urls) ? image_urls.filter((u) => typeof u === "string" && u) : [];
   // Tipo "efetivo" da geração — pode ser rebaixado em runtime (ex: carrossel
   // esgotado no Starter vira "post"). force_type fica imutável só pra isManual.
   let effectiveType: "post" | "carrossel" | "story" | undefined = force_type;
@@ -795,7 +797,8 @@ Deno.serve(async (req) => {
       const generated = await generatePack(type, brandKit, updates, mode, theme_override);
       if (!generated) throw new Error("generatePack retornou null");
 
-      const updatePhotoUrls = updates[0]?.photo_urls;
+      // fotos anexadas na geração manual têm prioridade como referência visual
+      const updatePhotoUrls = manualImages.length > 0 ? manualImages : updates[0]?.photo_urls;
       let slides = (generated.slides ?? []) as { order: number; role?: string; content: string }[];
       // post/story é imagem única — se o LLM devolver vários slides, mantém só o 1º
       if (type !== "carrossel") slides = slides.slice(0, 1);

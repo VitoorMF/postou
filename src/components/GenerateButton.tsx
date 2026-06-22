@@ -37,6 +37,12 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
   const router = useRouter();
   const { generate } = useGeneration();
 
+  // ─── Imagens anexadas (opcional) ───────────────────────────────────
+  const MAX_IMAGES = 5;
+  const [images, setImages] = useState<string[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // ─── Cotas do usuário ──────────────────────────────────────────────
   const [plan, setPlan] = useState("free");
   const [manualCount, setManualCount] = useState(0);
@@ -88,13 +94,44 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
     }
   }
 
+  async function handleFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const remaining = MAX_IMAGES - images.length;
+    const toUpload = Array.from(files).slice(0, remaining);
+    if (toUpload.length === 0) return;
+    setUploading(true);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const urls: string[] = [];
+      for (const file of toUpload) {
+        const ext = file.name.split(".").pop() || "jpg";
+        const path = `${user.id}/gen-${Date.now()}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
+        const { error } = await supabase.storage.from("updates").upload(path, file, { contentType: file.type });
+        if (!error) {
+          const { data } = supabase.storage.from("updates").getPublicUrl(path);
+          urls.push(data.publicUrl);
+        }
+      }
+      setImages((prev) => [...prev, ...urls].slice(0, MAX_IMAGES));
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function removeImage(url: string) {
+    setImages((prev) => prev.filter((u) => u !== url));
+  }
+
   function handleGenerate() {
-    if (manualExhausted) return;
+    if (manualExhausted || uploading) return;
     // dispara a geração no provider (banner global, sobrevive à navegação)
-    generate({ format, theme });
+    generate({ format, theme, images });
     // fecha o modal e leva pra Hoje, onde o banner mostra "gerando…"
     const onHoje = window.location.pathname === "/hoje";
     setTheme("");
+    setImages([]);
     setStatus("idle");
     setMessage("");
     dismiss();
@@ -114,6 +151,7 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
     if (status === "loading") return;
     dismiss();
     setTheme("");
+    setImages([]);
     setStatus("idle");
     setMessage("");
   }
@@ -292,6 +330,61 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
               <p className="text-xs text-[#555]">Deixe vazio para a IA escolher o tema automaticamente.</p>
             </div>
 
+            {/* Imagens */}
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-[#555] tracking-widest">IMAGENS (opcional)</label>
+                <span className="text-xs text-[#555]">{images.length}/{MAX_IMAGES}</span>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                {images.map((url) => (
+                  <div key={url} className="relative h-16 w-16 rounded-xl overflow-hidden border border-white/[0.08] shrink-0">
+                    <img src={url} alt="" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removeImage(url)}
+                      className="absolute top-0.5 right-0.5 h-5 w-5 rounded-full bg-black/70 text-white text-[11px] grid place-items-center hover:bg-black/90"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+                {images.length < MAX_IMAGES && (
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    className="h-16 w-16 rounded-xl border border-dashed border-white/[0.18] grid place-items-center text-[#666] hover:bg-white/[0.03] disabled:opacity-50 shrink-0"
+                  >
+                    {uploading ? (
+                      <svg className="animate-spin" width="18" height="18" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                      </svg>
+                    ) : (
+                      <span className="flex flex-col items-center gap-0.5">
+                        <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><path d="M21 15l-5-5L5 21" /></svg>
+                        <span className="text-[10px]">adicionar</span>
+                      </span>
+                    )}
+                  </button>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => { handleFiles(e.target.files); e.target.value = ""; }}
+              />
+              <p className="text-xs text-[#555]">
+                {images.length > 0
+                  ? `${images.length} ${images.length === 1 ? "imagem anexada" : "imagens anexadas"} · a IA vai usá-las na geração.`
+                  : "Anexe fotos reais (produto, cliente, evento) pra IA usar no post."}
+              </p>
+            </div>
+
             {/* Formato */}
             <div className="flex flex-col gap-2">
               <label className="text-xs font-semibold text-[#555] tracking-widest">FORMATO</label>
@@ -346,7 +439,7 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
             {/* Botão gerar */}
             <button
               onClick={handleGenerate}
-              disabled={status === "loading" || manualExhausted}
+              disabled={status === "loading" || manualExhausted || uploading}
               className="w-full h-12 rounded-2xl bg-[#137EFF] text-white text-sm font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
             >
               {status === "loading" ? (
