@@ -23,10 +23,15 @@ export async function GET(request: Request) {
 
   const cookieStore = await cookies();
 
+  // destino pós-login: lê do cookie setado pelo middleware (só path interno, anti open-redirect)
+  const nextPath = cookieStore.get("next_path")?.value;
+  const safeNext = nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/hoje";
+
   // IMPORTANTE: cria a response do redirect ANTES e grava os cookies de sessão
   // DIRETO nela. Gravar no cookieStore + retornar um redirect separado faz o
   // Set-Cookie se perder de forma intermitente → "precisa logar duas vezes".
-  const response = NextResponse.redirect(`${base}/hoje`);
+  const response = NextResponse.redirect(`${base}${safeNext}`);
+  response.cookies.set("next_path", "", { path: "/", maxAge: 0 }); // consome o cookie
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

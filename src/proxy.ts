@@ -28,7 +28,18 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.redirect(new URL("/", request.url));
+    // grava o destino num cookie pra voltar pra cá depois do login (deep link sobrevive;
+    // funciona com Google e magic link no mesmo navegador, sem depender do Supabase)
+    const res = NextResponse.redirect(new URL("/entrar", request.url));
+    res.cookies.set("next_path", request.nextUrl.pathname + request.nextUrl.search, {
+      path: "/",
+      maxAge: 600,
+      // legível pelo client: o login por CÓDIGO (verifyOtp no browser) também precisa
+      // ler o destino. É só um path interno, validado no consumo (anti open-redirect).
+      httpOnly: false,
+      sameSite: "lax",
+    });
+    return res;
   }
 
   return response;

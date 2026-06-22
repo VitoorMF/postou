@@ -23,6 +23,8 @@ export default function AuthForm({ initialMode = "login" }: { initialMode?: "log
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sent, setSent] = useState(false);
+  const [code, setCode] = useState("");
+  const [verifying, setVerifying] = useState(false);
 
   async function sendLink(e: React.FormEvent) {
     e.preventDefault();
@@ -49,6 +51,34 @@ export default function AuthForm({ initialMode = "login" }: { initialMode?: "log
     setSent(true);
   }
 
+  async function verifyCode(e: React.FormEvent) {
+    e.preventDefault();
+    if (verifying) return;
+    if (code.length !== 6) {
+      setError("O código tem 6 dígitos.");
+      return;
+    }
+    setVerifying(true);
+    setError("");
+    const supabase = createClient();
+    // existente vem como "email"; cadastro novo vem como "signup" → tenta os dois
+    let { error } = await supabase.auth.verifyOtp({ email, token: code, type: "email" });
+    if (error) {
+      ({ error } = await supabase.auth.verifyOtp({ email, token: code, type: "signup" }));
+    }
+    if (error) {
+      setVerifying(false);
+      setError("Código inválido ou expirado. Confira ou peça outro.");
+      return;
+    }
+    // sessão setada no browser → volta pro destino guardado (deep link) ou /hoje
+    const raw = document.cookie.match(/(?:^|;\s*)next_path=([^;]+)/)?.[1];
+    const next = raw ? decodeURIComponent(raw) : "";
+    const dest = next.startsWith("/") && !next.startsWith("//") ? next : "/hoje";
+    document.cookie = "next_path=; path=/; max-age=0";
+    window.location.assign(dest);
+  }
+
   if (sent) {
     return (
       <div className="w-full text-center">
@@ -59,12 +89,33 @@ export default function AuthForm({ initialMode = "login" }: { initialMode?: "log
         </div>
         <h1 className="text-2xl font-bold tracking-tight">Confira seu email</h1>
         <p className="mt-2 text-sm text-[#8A8A8E]">
-          Enviei um link de acesso pra <span className="font-semibold text-white">{email}</span>.
-          Abra e clique pra entrar.
+          Enviei um acesso pra <span className="font-semibold text-white">{email}</span>.
+          Clique no link <b className="text-white font-semibold">ou</b> digite o código abaixo.
         </p>
-        <p className="mt-4 text-xs text-[#636366]">Não chegou? Olhe o spam ou</p>
+
+        <form onSubmit={verifyCode} className="mt-5 flex flex-col gap-3">
+          <input
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            placeholder="000000"
+            value={code}
+            onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+            className={`${inputCls} text-center text-lg font-semibold tracking-[0.5em]`}
+          />
+          {error && <p className="text-sm text-red-400">{error}</p>}
+          <button
+            type="submit"
+            disabled={verifying || code.length !== 6}
+            className="rounded-xl bg-[#137EFF] px-4 py-3 text-[15px] font-semibold text-white transition hover:bg-[#137EFF]/90 active:scale-[0.99] disabled:opacity-60"
+          >
+            {verifying ? "Entrando…" : "Entrar com código"}
+          </button>
+        </form>
+
+        <p className="mt-5 text-xs text-[#636366]">Não chegou? Olhe o spam ou</p>
         <button
-          onClick={() => { setSent(false); setError(""); }}
+          onClick={() => { setSent(false); setError(""); setCode(""); }}
           className="mt-1 text-sm font-semibold text-[#137EFF] hover:underline"
         >
           tentar outro email
