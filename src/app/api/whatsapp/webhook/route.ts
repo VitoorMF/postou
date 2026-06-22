@@ -12,6 +12,9 @@ interface PendingAction {
 type Format = "post" | "story" | "carrossel";
 const VALID_FORMATS: Format[] = ["post", "story", "carrossel"];
 
+// memória curta da conversa (janela de 10 min, só texto)
+type WaCtx = { role: "user" | "assistant"; at: number; text: string };
+
 // dispara a Edge Function sem aguardar (pra não dar timeout no webhook)
 function fireGeneration(brandKitId: string, theme: string, format: Format) {
   const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-pack`;
@@ -54,7 +57,7 @@ export async function POST(request: Request) {
   const admin = createAdminClient();
   const { data: kit } = await admin
     .from("brand_kits")
-    .select("id, user_id, whatsapp_verified, whatsapp_pending_action")
+    .select("id, user_id, whatsapp_verified, whatsapp_pending_action, whatsapp_context")
     .or(`whatsapp_number.eq.+${normalized},whatsapp_number.eq.${normalized}`)
     .maybeSingle();
 
@@ -115,7 +118,25 @@ export async function POST(request: Request) {
 
   // ─── 3. Texto puro → o agente decide a intenção e já escreve a resposta ─────
   if (content && !imageUrl) {
-    const a = await whatsappAgent(content);
+    const userText = content;
+
+    // contexto: mensagens dos últimos 10 min (só texto) pra dar continuidade
+    const cutoff = Date.now() - 10 * 60 * 1000;
+    const recent = ((kit.whatsapp_context as WaCtx[] | null) ?? []).filter((h) => h.at > cutoff);
+    const contextStr = recent.map((h) => `${h.role === "user" ? "Dono" : "Você"}: ${h.text}`).join("\n");
+
+    // grava o turno (mensagem + resposta) na janela, auto-trimada (10 min / 12 msgs)
+    const logTurn = async (assistantText: string) => {
+      const now = Date.now();
+      const next = [
+        ...recent,
+        { role: "user" as const, at: now, text: userText.slice(0, 280) },
+        { role: "assistant" as const, at: now, text: assistantText.slice(0, 280) },
+      ].slice(-12);
+      await admin.from("brand_kits").update({ whatsapp_context: next }).eq("id", kit.id);
+    };
+
+    const a = await whatsappAgent(userText, contextStr || undefined);
 
     // pedido de geração com tema → pede o formato (botões)
     if (a.intent === "generate" && a.theme && a.theme.length >= 3) {
@@ -130,6 +151,7 @@ export async function POST(request: Request) {
         { id: "gen:post", label: "Post" },
         { id: "gen:story", label: "Story" },
       ]);
+      await logTurn(`Perguntei qual formato pro post sobre "${a.theme}".`);
       return NextResponse.json({ ok: true });
     }
 
@@ -147,21 +169,23 @@ export async function POST(request: Request) {
         await admin.from("packs").update({ rating: a.sentiment === "negative" ? -1 : 1 }).eq("id", lastPack.id);
       }
       await sendText(phone, a.reply);
+      await logTurn(a.reply);
       return NextResponse.json({ ok: true });
     }
 
     // question / smalltalk / clarify / generate-sem-tema → só responde (a IA já escreveu)
     if (a.intent !== "update") {
       await sendText(phone, a.reply);
+      await logTurn(a.reply);
       return NextResponse.json({ ok: true });
     }
 
     // update → anota (categoria já veio do agente)
-    const embedding = await generateEmbedding(content);
+    const embedding = await generateEmbedding(userText);
     const { error } = await admin.from("updates").insert({
       user_id: kit.user_id,
       brand_kit_id: kit.id,
-      content,
+      content: userText,
       category: a.category ?? "geral",
       embedding,
     });
@@ -171,6 +195,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true });
     }
     await sendText(phone, a.reply);
+    await logTurn(a.reply);
     return NextResponse.json({ ok: true });
   }
 

@@ -65,19 +65,22 @@ REGRA DE OURO: havendo dúvida real entre duas intenções (ex: update vs genera
 
 LINKS: quando orientar uma ação que é feita no app (mudar horário, ajustar marca, ver planos, etc.), INCLUA o link direto da seção na reply (ex: "é em Configurar 👉 https://postou.app/settings"). Use com parcimônia — só quando ajudar o usuário a chegar lá, nunca em toda mensagem.
 
+CONTINUIDADE: se vier uma "Conversa recente" (últimos minutos), use-a pra dar seguimento. Ex: se VOCÊ acabou de perguntar algo (clarify) e o dono responde curto ("gerar", "o segundo", "dia das mães"), interprete a resposta à luz da SUA pergunta — não trate como mensagem solta.
+
 Responda APENAS em JSON, sem markdown:
 {"intent":"...","reply":"...","sentiment":"positive|negative","theme":"...","category":"..."}
 (inclua só os campos que fizerem sentido pra intenção)`;
 
 // Uma chamada: entende a mensagem, escolhe a intenção e já escreve a resposta.
 // O webhook executa a ação (anotar/avaliar/gerar) com base no intent.
-export async function whatsappAgent(message: string): Promise<WaAgentResult> {
+export async function whatsappAgent(message: string, history?: string): Promise<WaAgentResult> {
   try {
     const res = await openai.chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.5, // um pouco de carisma, mas controlado
       messages: [
         { role: "system", content: WA_AGENT_PROMPT },
+        ...(history ? [{ role: "system" as const, content: `Conversa recente (últimos 10 min):\n${history}` }] : []),
         { role: "user", content: message },
       ],
     });
