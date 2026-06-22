@@ -80,7 +80,7 @@ export async function whatsappAgent(message: string, history?: string): Promise<
       temperature: 0.5, // um pouco de carisma, mas controlado
       messages: [
         { role: "system", content: WA_AGENT_PROMPT },
-        ...(history ? [{ role: "system" as const, content: `Conversa recente (últimos 10 min):\n${history}` }] : []),
+        ...(history ? [{ role: "system" as const, content: `Conversa recente (mesma sessão):\n${history}` }] : []),
         { role: "user", content: message },
       ],
     });

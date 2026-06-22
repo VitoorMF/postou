@@ -120,19 +120,25 @@ export async function POST(request: Request) {
   if (content && !imageUrl) {
     const userText = content;
 
-    // contexto: mensagens dos últimos 10 min (só texto) pra dar continuidade
-    const cutoff = Date.now() - 10 * 60 * 1000;
-    const recent = ((kit.whatsapp_context as WaCtx[] | null) ?? []).filter((h) => h.at > cutoff);
+    // memória da conversa: mantém as últimas N msgs ENQUANTO for a mesma sessão.
+    // "mesma sessão" = gap curto desde a última msg (não idade absoluta) — assim uma
+    // conversa ativa que passa de 10 min não perde a cabeça, e um buraco longo zera.
+    const SAME_SESSION_MS = 30 * 60 * 1000; // gap máx. entre msgs da mesma conversa
+    const WINDOW = 10; // nº de mensagens mantidas
+    const stored = (kit.whatsapp_context as WaCtx[] | null) ?? [];
+    const last = stored[stored.length - 1];
+    const sameSession = last ? Date.now() - last.at < SAME_SESSION_MS : false;
+    const recent = sameSession ? stored.slice(-WINDOW) : [];
     const contextStr = recent.map((h) => `${h.role === "user" ? "Dono" : "Você"}: ${h.text}`).join("\n");
 
-    // grava o turno (mensagem + resposta) na janela, auto-trimada (10 min / 12 msgs)
+    // grava o turno (mensagem + resposta) na sessão, capada em N
     const logTurn = async (assistantText: string) => {
       const now = Date.now();
       const next = [
         ...recent,
         { role: "user" as const, at: now, text: userText.slice(0, 280) },
         { role: "assistant" as const, at: now, text: assistantText.slice(0, 280) },
-      ].slice(-12);
+      ].slice(-WINDOW);
       await admin.from("brand_kits").update({ whatsapp_context: next }).eq("id", kit.id);
     };
 
