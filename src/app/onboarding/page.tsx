@@ -4,8 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { getPaletteSync } from "colorthief";
-
-const TONES = ["institucional", "próximo", "descontraído", "acadêmico", "inspirador"];
+import { TONES } from "@/lib/tone";
 
 const STEPS = [
   { label: "Sua marca" },

@@ -4,6 +4,7 @@
 // de propósito, pra garantir variedade e não viciar no ângulo mais óbvio.
 
 import { COPY_MODEL, type Mode, openai } from "./shared.ts";
+import { toneGuide } from "./tone.ts";
 
 export async function planTheme(
   brandKit: Record<string, unknown>,
@@ -57,7 +58,7 @@ Adicione "type": ${carrosselAvailable ? `"story" | "post" | "carrossel"` : `"sto
       content: `Você é um estrategista de conteúdo para Instagram.
 Marca: ${brandKit.business_name ?? ""}
 Descrição: ${brandKit.description ?? ""}
-Tom: ${brandKit.voice_tone ?? "neutro"}
+Tom de voz: ${toneGuide(brandKit.voice_tone as string | null)}
 
 Updates disponíveis:
 ${samplesText}

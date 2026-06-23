@@ -2,6 +2,7 @@ import OpenAI from "openai";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
+import { toneGuide } from "@/lib/tone";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
@@ -46,7 +47,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 [MARCA]
 Nome: ${kit?.business_name ?? "—"}
 Descrição: ${kit?.description ?? "—"}
-Tom de voz: ${kit?.voice_tone ?? "neutro"}
+Tom de voz: ${toneGuide(kit?.voice_tone)}
 
 [NÃO FAZER]
 ${kit?.do_not_do ?? "Nenhuma restrição."}

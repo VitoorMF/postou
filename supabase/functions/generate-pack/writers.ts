@@ -6,6 +6,7 @@
 
 import { type Archetype } from "./archetypes.ts";
 import { COPY_MODEL, type Mode, openai } from "./shared.ts";
+import { toneGuide } from "./tone.ts";
 
 type WriterUpdate = { id: string; created_at: string; category: string; content: string };
 
@@ -114,7 +115,7 @@ function composePrompt(args: WriterArgs, type: string, structureBlock: string): 
 
 [DESCRIPTION]
 ${brandKit.description ?? "Empresa sem descrição cadastrada."}
-Tom de voz: ${brandKit.voice_tone ?? "neutro"}
+Tom de voz: ${toneGuide(brandKit.voice_tone as string | null)}
 
 [BRAND MEMORY]
 ${brandKit.context ?? "Sem histórico acumulado ainda."}
@@ -184,7 +185,7 @@ export async function generateCaption(
 
 [MARCA]
 Descrição: ${brandKit.description ?? "—"}
-Tom de voz: ${brandKit.voice_tone ?? "neutro"}
+Tom de voz: ${toneGuide(brandKit.voice_tone as string | null)}
 
 [DO NOT DO]
 ${brandKit.do_not_do ?? "Nenhuma restrição."}
