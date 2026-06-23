@@ -103,7 +103,9 @@ export default async function HojePage() {
   function nextAutoLabel(): string {
     if (!deliveryTime) return "";
     const days = activeDays.length ? activeDays : [0, 1, 2, 3, 4, 5, 6];
-    if (days.includes(todayWeekday) && count === 0) return "hoje";
+    // "hoje" só se AINDA vai gerar hoje (dia ativo, sem post e o horário não passou);
+    // senão (ex: 22h com entrega às 11h) cai pro próximo dia ativo.
+    if (pillUpcoming) return "hoje";
     for (let off = 1; off <= 7; off++) {
       const d = (todayWeekday + off) % 7;
       if (days.includes(d)) return off === 1 ? "amanhã" : WEEKDAYS[d];
