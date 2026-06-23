@@ -22,7 +22,7 @@ export default function Onboarding() {
   // Step 0
   const [businessName, setBusinessName] = useState("");
   const [description, setDescription] = useState("");
-  const [tone, setTone] = useState("");
+  const [tone, setTone] = useState("próximo");
 
   // Step 1
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -123,7 +123,7 @@ export default function Onboarding() {
   const canAdvance0 = businessName.trim().length > 0 && description.trim().length > 0;
 
   return (
-    <div className="min-h-screen bg-[#141414] text-white font-sans flex flex-col md:flex-row">
+    <div className="min-h-screen bg-[#0C0C0E] text-white font-sans flex flex-col md:flex-row">
 
       {/* Painel esquerdo — branding (só desktop) */}
       <div className="hidden md:flex md:w-[42%] lg:w-1/2 relative overflow-hidden border-r border-white/5 flex-col justify-between p-12">
@@ -131,11 +131,11 @@ export default function Onboarding() {
         <span className="relative text-2xl font-bold tracking-tight">postou</span>
         <div className="relative">
           <h2 className="text-4xl font-bold leading-[1.1] tracking-tight">Sua empresa<br />postando<br />todos os dias.</h2>
-          <p className="text-[#888079] mt-5 max-w-sm leading-relaxed">
+          <p className="text-[#8A8A8E] mt-5 max-w-sm leading-relaxed">
             A IA aprende sua marca e transforma novidades do seu negócio em posts prontos pro Instagram.
           </p>
         </div>
-        <span className="relative text-sm text-[#555]">Configure em 3 passos rápidos.</span>
+        <span className="relative text-sm text-[#636366]">Configure em 3 passos rápidos.</span>
       </div>
 
       {/* Painel direito — formulário */}
@@ -146,7 +146,7 @@ export default function Onboarding() {
         {/* Voltar — seta no topo, só a partir do passo 2 */}
         <button
           onClick={() => setStep((s) => s - 1)}
-          className={`h-9 w-9 rounded-full bg-[#1c1c1c] flex items-center justify-center mb-4 transition-opacity ${
+          className={`h-9 w-9 rounded-full bg-[#161618] flex items-center justify-center mb-4 transition-opacity ${
             step > 0 ? "opacity-100" : "opacity-0 pointer-events-none"
           }`}
           aria-label="Voltar"
@@ -159,11 +159,11 @@ export default function Onboarding() {
         <div className="flex items-center gap-2 mb-6">
           {STEPS.map((s, i) => (
             <div key={i} className="flex items-center gap-2 flex-1">
-              <div className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? "bg-[#137EFF]" : "bg-[#2b2b2b]"}`} />
+              <div className={`h-1 flex-1 rounded-full transition-colors ${i <= step ? "bg-[#137EFF]" : "bg-[#202022]"}`} />
             </div>
           ))}
         </div>
-        <p className="text-xs text-[#555] font-medium tracking-widest uppercase">
+        <p className="text-xs text-[#636366] font-medium tracking-widest uppercase">
           Passo {step + 1} de {STEPS.length}
         </p>
         <h1 className="text-3xl font-semibold mt-1">{STEPS[step].label}</h1>
@@ -175,15 +175,15 @@ export default function Onboarding() {
         {/* Step 0 — Sua marca */}
         {step === 0 && (
           <>
-            <div className="bg-[#1c1c1c] rounded-2xl p-4 flex flex-col gap-3">
+            <div className="bg-[#161618] rounded-2xl p-4 flex flex-col gap-3">
               <div className="flex flex-col gap-2">
                 <p className="text-base font-medium">Nome da marca</p>
                 <input
                   type="text"
                   value={businessName}
                   onChange={(e) => setBusinessName(e.target.value)}
-                  placeholder="Ex: Studio Alma, Naná Normanha..."
-                  className="bg-[#242424] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#555] focus:outline-none"
+                  placeholder="Ex: Postou, Studio Alma..."
+                  className="bg-[#202022] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:ring-1 focus:ring-[#137EFF]"
                   autoFocus
                 />
               </div>
@@ -193,25 +193,25 @@ export default function Onboarding() {
                   rows={5}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  placeholder="O que sua marca faz? Para quem? Ex: Engenheira agrônoma e especialista em comunicação estratégica para o agronegócio."
-                  className="bg-[#242424] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#555] focus:outline-none resize-none leading-snug"
+                  placeholder="O que sua marca faz? Para quem? Ex: Agência de moda voltada para jovens adultos no Sul do Brasil."
+                  className="bg-[#202022] rounded-xl px-4 py-3 text-sm text-white placeholder:text-[#636366] focus:outline-none focus:ring-1 focus:ring-[#137EFF] resize-none leading-snug"
                 />
               </div>
             </div>
 
-            <div className="bg-[#1c1c1c] rounded-2xl p-4 flex flex-col gap-3">
+            <div className="bg-[#161618] rounded-2xl p-4 flex flex-col gap-3">
               <div>
                 <p className="text-base font-medium">Tom de voz</p>
-                <p className="text-sm text-[#888079]">Como sua marca se comunica</p>
+                <p className="text-sm text-[#8A8A8E]">Como sua marca se comunica</p>
               </div>
               <div className="flex gap-2 flex-wrap">
                 {TONES.map((t) => (
                   <button
                     key={t}
                     onClick={() => setTone(t)}
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${tone === t ? "bg-[#137EFF] text-white" : "bg-[#2b2b2b] text-[#888079]"}`}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${tone === t ? "bg-[#137EFF] text-white" : "bg-[#202022] text-[#8A8A8E]"}`}
                   >
-                    {t}
+                    {t[0].toUpperCase() + t.slice(1)}
                   </button>
                 ))}
               </div>
@@ -222,12 +222,12 @@ export default function Onboarding() {
         {/* Step 1 — Identidade visual */}
         {step === 1 && (
           <>
-            <div className="bg-[#1c1c1c] rounded-2xl p-4 flex items-center gap-3">
-              <div className="h-14 w-14 rounded-xl bg-[#242424] flex items-center justify-center shrink-0 overflow-hidden">
+            <div className="bg-[#161618] rounded-2xl p-4 flex items-center gap-3">
+              <div className="h-14 w-14 rounded-xl bg-[#202022] flex items-center justify-center shrink-0 overflow-hidden">
                 {logoUrl ? (
                   <img src={logoUrl} alt="logo" className="w-full h-full object-contain" />
                 ) : (
-                  <svg width="24" height="24" fill="none" stroke="#555" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <svg width="24" height="24" fill="none" stroke="#636366" strokeWidth="1.5" viewBox="0 0 24 24">
                     <rect x="3" y="3" width="18" height="18" rx="3" />
                     <path d="M8 17V7l4 8 4-8v10" />
                   </svg>
@@ -235,7 +235,7 @@ export default function Onboarding() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-base font-medium">Logotipo</p>
-                <p className="text-sm text-[#888079]">
+                <p className="text-sm text-[#8A8A8E]">
                   {saving ? "Enviando..." : logoUrl ? "Logo salvo ✓" : "PNG ou SVG recomendado"}
                 </p>
               </div>
@@ -246,38 +246,38 @@ export default function Onboarding() {
             </div>
 
             {palette.length > 0 && (
-              <div className="bg-[#1c1c1c] rounded-2xl p-4 flex flex-col gap-3">
+              <div className="bg-[#161618] rounded-2xl p-4 flex flex-col gap-3">
                 <div>
                   <p className="text-base font-medium">Paleta extraída</p>
-                  <p className="text-sm text-[#888079]">Cores detectadas no logotipo</p>
+                  <p className="text-sm text-[#8A8A8E]">Cores detectadas no logotipo</p>
                 </div>
                 <div className="flex gap-2">
                   {palette.map((hex, i) => (
                     <div key={i} className="flex flex-col items-center gap-1 flex-1">
                       <div className="w-full aspect-square rounded-xl" style={{ backgroundColor: hex }} />
-                      <span className="text-[10px] text-[#888079]">{hex.replace("#", "").toUpperCase()}</span>
+                      <span className="text-[10px] text-[#8A8A8E]">{hex.replace("#", "").toUpperCase()}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            <p className="text-sm text-[#555] text-center">Pode pular — você edita isso depois nas configurações</p>
+            <p className="text-sm text-[#636366] text-center">Pode pular — você edita isso depois nas configurações</p>
           </>
         )}
 
         {/* Step 2 — Sua foto */}
         {step === 2 && (
           <>
-            <div className="bg-[#1c1c1c] rounded-2xl p-4 flex flex-col gap-3">
+            <div className="bg-[#161618] rounded-2xl p-4 flex flex-col gap-3">
               <div>
                 <p className="text-base font-medium">Fotos suas</p>
-                <p className="text-sm text-[#888079]">Usamos para gerar posts com o seu rosto. Quanto mais fotos, melhor a semelhança.</p>
+                <p className="text-sm text-[#8A8A8E]">Usamos para gerar posts com o seu rosto. Quanto mais fotos, melhor a semelhança.</p>
               </div>
 
               <div className="grid grid-cols-3 gap-2">
                 {personas.map((url, i) => (
-                  <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-[#242424]">
+                  <div key={i} className="relative aspect-square rounded-xl overflow-hidden bg-[#202022]">
                     <img src={url} alt="" className="w-full h-full object-cover" />
                     <button
                       onClick={() => removePersona(i)}
@@ -291,15 +291,15 @@ export default function Onboarding() {
                 ))}
 
                 {personas.length < 6 && (
-                  <label className="aspect-square rounded-xl bg-[#242424] border border-dashed border-[#3a3a3a] flex flex-col items-center justify-center gap-1 cursor-pointer">
+                  <label className="aspect-square rounded-xl bg-[#202022] border border-dashed border-[#2e2e2e] flex flex-col items-center justify-center gap-1 cursor-pointer">
                     {saving ? (
-                      <div className="h-5 w-5 rounded-full border-2 border-[#555] border-t-white animate-spin" />
+                      <div className="h-5 w-5 rounded-full border-2 border-[#636366] border-t-white animate-spin" />
                     ) : (
                       <>
-                        <svg width="20" height="20" fill="none" stroke="#555" strokeWidth="1.5" viewBox="0 0 24 24">
+                        <svg width="20" height="20" fill="none" stroke="#636366" strokeWidth="1.5" viewBox="0 0 24 24">
                           <path d="M12 5v14M5 12h14" />
                         </svg>
-                        <span className="text-[10px] text-[#555]">foto</span>
+                        <span className="text-[10px] text-[#636366]">foto</span>
                       </>
                     )}
                     <input
@@ -314,7 +314,7 @@ export default function Onboarding() {
               </div>
             </div>
 
-            <p className="text-sm text-[#555] text-center">Opcional — você adiciona fotos depois também</p>
+            <p className="text-sm text-[#636366] text-center">Opcional — você adiciona fotos depois também</p>
           </>
         )}
       </div>
@@ -334,7 +334,7 @@ export default function Onboarding() {
             {step > 0 && (
               <button
                 onClick={() => setStep((s) => s + 1)}
-                className="w-full h-10 text-sm text-[#555]"
+                className="w-full h-10 text-sm text-[#636366]"
               >
                 Pular
               </button>
@@ -357,13 +357,6 @@ export default function Onboarding() {
                   </svg>
                 </>
               )}
-            </button>
-            <button
-              onClick={finish}
-              disabled={saving}
-              className="w-full h-10 text-sm text-[#555]"
-            >
-              Pular e começar
             </button>
           </>
         )}

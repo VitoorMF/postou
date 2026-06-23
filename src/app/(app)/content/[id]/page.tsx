@@ -17,6 +17,7 @@ interface Slide {
 
 interface Pack {
   id: string;
+  user_id: string;
   type: string;
   title: string;
   caption: string | null;
@@ -42,6 +43,8 @@ export default function PackPage({ params }: { params: Promise<{ id: string }> }
 async function PackDetail({ id }: { id: string }) {
   const supabase = await createClient();
 
+  const { data: { user } } = await supabase.auth.getUser();
+
   const { data: pack } = await supabase
     .from("packs")
     .select("*, slides(*)")
@@ -49,7 +52,8 @@ async function PackDetail({ id }: { id: string }) {
     .order("order", { referencedTable: "slides", ascending: true })
     .single();
 
-  if (!pack) notFound();
+  // não logado, não existe, ou não é o dono → 404 (não revela conteúdo de outra conta)
+  if (!user || !pack || (pack as Pack).user_id !== user.id) notFound();
 
   const p = pack as Pack;
 

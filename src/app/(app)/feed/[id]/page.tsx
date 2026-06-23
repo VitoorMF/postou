@@ -1,12 +1,13 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { type Category, categoryColors } from "@/lib/categories";
 
 interface Update {
   id: string;
+  user_id: string;
   content: string;
   category: string;
   photo_urls: string[] | null;
@@ -32,6 +33,7 @@ function formatDate(dateStr: string) {
 export default function UpdatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [update, setUpdate] = useState<Update | null>(null);
+  const [notFoundFlag, setNotFoundFlag] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [editCategory, setEditCategory] = useState<Category>("geral");
@@ -89,19 +91,16 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
   }
 
   useEffect(() => {
-    const supabase = createClient();
-    supabase
-      .from("updates")
-      .select("*")
-      .eq("id", id)
-      .single()
-      .then(({ data }) => {
-        if (data) {
-          setUpdate(data);
-          setEditContent(data.content);
-          setEditCategory((data.category as Category) ?? "geral");
-        }
-      });
+    (async () => {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data } = await supabase.from("updates").select("*").eq("id", id).single();
+      // não logado, não existe, ou não é o dono → 404 (não revela conteúdo de outra conta)
+      if (!user || !data || data.user_id !== user.id) { setNotFoundFlag(true); return; }
+      setUpdate(data);
+      setEditContent(data.content);
+      setEditCategory((data.category as Category) ?? "geral");
+    })();
   }, [id]);
 
   async function handleSave() {
@@ -123,6 +122,7 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
     router.refresh();
   }
 
+  if (notFoundFlag) notFound();
   if (!update) return null;
 
   return (

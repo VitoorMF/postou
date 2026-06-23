@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "deploy:fn": "npx supabase functions deploy generate-pack && npx supabase functions deploy cron-dispatch && npx supabase functions deploy expire-plans && npx supabase functions deploy refresh-brand-memory"
+    "deploy:fn": "npx supabase functions deploy generate-pack --no-verify-jwt && npx supabase functions deploy cron-dispatch --no-verify-jwt && npx supabase functions deploy expire-plans --no-verify-jwt && npx supabase functions deploy refresh-brand-memory --no-verify-jwt"
   },
   "dependencies": {
     "@google/genai": "^2.0.0",
