@@ -28,11 +28,6 @@ export async function proxy(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
-    // /content/<id> e /feed/<id>: links de item que podem não ser do usuário. Não força
-    // login — deixa passar e a PRÓPRIA PÁGINA devolve 404 se não for o dono (não revela que existe).
-    if (/^\/(content|feed)\/[^/]+$/.test(request.nextUrl.pathname)) {
-      return response;
-    }
     // grava o destino num cookie pra voltar pra cá depois do login (deep link sobrevive;
     // funciona com Google e magic link no mesmo navegador, sem depender do Supabase)
     const res = NextResponse.redirect(new URL("/entrar", request.url));

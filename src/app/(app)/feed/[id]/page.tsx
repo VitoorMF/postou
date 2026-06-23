@@ -1,8 +1,9 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
-import { useRouter, notFound } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
+import NoAccess from "@/components/NoAccess";
 import { type Category, categoryColors } from "@/lib/categories";
 
 interface Update {
@@ -33,7 +34,7 @@ function formatDate(dateStr: string) {
 export default function UpdatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [update, setUpdate] = useState<Update | null>(null);
-  const [notFoundFlag, setNotFoundFlag] = useState(false);
+  const [noAccess, setNoAccess] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
   const [editCategory, setEditCategory] = useState<Category>("geral");
@@ -96,7 +97,7 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
       const { data: { user } } = await supabase.auth.getUser();
       const { data } = await supabase.from("updates").select("*").eq("id", id).single();
       // não logado, não existe, ou não é o dono → 404 (não revela conteúdo de outra conta)
-      if (!user || !data || data.user_id !== user.id) { setNotFoundFlag(true); return; }
+      if (!user || !data || data.user_id !== user.id) { setNoAccess(true); return; }
       setUpdate(data);
       setEditContent(data.content);
       setEditCategory((data.category as Category) ?? "geral");
@@ -122,7 +123,7 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
     router.refresh();
   }
 
-  if (notFoundFlag) notFound();
+  if (noAccess) return <NoAccess />;
   if (!update) return null;
 
   return (

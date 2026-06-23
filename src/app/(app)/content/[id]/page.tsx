@@ -1,5 +1,5 @@
-import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase-server";
+import NoAccess from "@/components/NoAccess";
 import { use } from "react";
 import BackButton from "./BackButton";
 import DeleteButton from "./DeleteButton";
@@ -52,8 +52,8 @@ async function PackDetail({ id }: { id: string }) {
     .order("order", { referencedTable: "slides", ascending: true })
     .single();
 
-  // não logado, não existe, ou não é o dono → 404 (não revela conteúdo de outra conta)
-  if (!user || !pack || (pack as Pack).user_id !== user.id) notFound();
+  // não é o dono (ou não existe) → tela "conteúdo indisponível nesta conta"
+  if (!user || !pack || (pack as Pack).user_id !== user.id) return <NoAccess />;
 
   const p = pack as Pack;
 
