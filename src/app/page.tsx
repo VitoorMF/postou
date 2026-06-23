@@ -1,14 +1,26 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import "./page.css";
 import SignInButton from "@/components/SignInButton";
 import HowItWorks from "@/components/HowItWorks";
 import { HeroPhone, DemoTrigger } from "@/components/HeroPhone";
 import LandingScripts from "@/components/LandingScripts";
+import FAQ from "@/components/FAQ";
+import Link from "next/link";
+import { CATEGORIES, countByCategory } from "@/content/posts";
 
 export const metadata: Metadata = {
   title: "Postou — Sua IA de conteúdo para Instagram",
   description:
     "O Postou aprende sobre sua marca e cria posts, stories e carrosséis automaticamente para manter sua empresa ativa todos os dias.",
+};
+
+const CAT_ICONS: Record<string, ReactNode> = {
+  "primeiros-passos": (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5z" /></svg>),
+  geracao: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" /></svg>),
+  marca: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r="1.4" fill="currentColor" stroke="none" /><circle cx="17" cy="11" r="1.4" fill="currentColor" stroke="none" /><circle cx="8.5" cy="7" r="1.4" fill="currentColor" stroke="none" /><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.6-1.4-.3-.4-.6-.9-.6-1.4a2 2 0 0 1 2-2H17a5 5 0 0 0 5-5c0-4.4-4.5-8-10-8z" /></svg>),
+  whatsapp: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8A8.5 8.5 0 0 1 12.5 3a8.5 8.5 0 0 1 8.5 8.5z" /></svg>),
+  planos: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h18l-1.5 12.5a2 2 0 0 1-2 1.5H6.5a2 2 0 0 1-2-1.5z" /><path d="M8 7V5a4 4 0 0 1 8 0v2" /></svg>),
 };
 
 export default function Landing() {
@@ -231,6 +243,8 @@ export default function Landing() {
           </div>
         </section>
 
+
+
         {/* FAQ */}
         <section id="faq">
           <div className="wrap">
@@ -238,27 +252,40 @@ export default function Landing() {
               <span className="sec-tag">Dúvidas</span>
               <h2>Perguntas frequentes</h2>
             </div>
-            <div className="faq-list reveal">
-              <details className="faq-item">
-                <summary>Preciso saber design ou escrever bem?<span className="faq-ic">+</span></summary>
-                <p>Não. Você só conta o que aconteceu no seu negócio e a IA cria o post — imagem e legenda — já na identidade da sua marca.</p>
-              </details>
-              <details className="faq-item">
-                <summary>O Postou posta sozinho no meu Instagram?<span className="faq-ic">+</span></summary>
-                <p>Ele gera e entrega o post pronto no seu WhatsApp. A publicação final é sua — você confere, dá o último toque e posta quando quiser.</p>
-              </details>
-              <details className="faq-item">
-                <summary>Funciona para o meu tipo de negócio?<span className="faq-ic">+</span></summary>
-                <p>Sim. Seja restaurante, advogado, nutricionista, loja ou prestador de serviço, o Postou aprende o seu nicho e gera conteúdo relevante para ele.</p>
-              </details>
-              <details className="faq-item">
-                <summary>E se eu não gostar do post?<span className="faq-ic">+</span></summary>
-                <p>Você gera outro na hora ou edita a legenda direto no app. Nada é publicado sem você aprovar.</p>
-              </details>
-              <details className="faq-item">
-                <summary>Preciso de cartão para usar o plano grátis?<span className="faq-ic">+</span></summary>
-                <p>Não. O plano Free é gratuito para sempre, sem cartão. Você só assina se quiser mais gerações por semana.</p>
-              </details>
+            <div className="reveal">
+              <FAQ />
+            </div>
+          </div>
+        </section>
+
+
+        {/* Central de ajuda — categorias + guias do blog */}
+        <section id="ajuda" className="help-sec">
+          <div className="wrap">
+            <div className="sec-head reveal">
+              <span className="sec-tag">Central de ajuda</span>
+              <h2>Como podemos ajudar?</h2>
+              <p className="sec-sub">Guias, respostas e tudo que você precisa pra postar todo dia.</p>
+            </div>
+            <div className="help-cats reveal">
+              {CATEGORIES.map((c) => {
+                const n = countByCategory(c.slug);
+                if (!n) return null;
+                return (
+                  <Link key={c.slug} href={`/blog?cat=${c.slug}`} className="help-cat">
+                    <span className="hc-ic">{CAT_ICONS[c.slug]}</span>
+                    <h3>{c.label}</h3>
+                    <p>{c.desc}</p>
+                    <span className="hc-n">{n} {n === 1 ? "artigo" : "artigos"}</span>
+                  </Link>
+                );
+              })}
+            </div>
+            <div className="guides-all-wrap reveal">
+              <Link href="/blog" className="guides-all">
+                Ver todos
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12" /><polyline points="12 5 19 12 12 19" /></svg>
+              </Link>
             </div>
           </div>
         </section>

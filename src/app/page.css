@@ -1064,6 +1064,201 @@
   line-height: 1.6;
 }
 
+.faq-item p b {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* FAQ — categorias (sidebar no desktop, chips no mobile) */
+.faq-layout {
+  max-width: 900px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 36px;
+  align-items: start;
+}
+
+.faq-layout .faq-list {
+  max-width: none;
+  margin: 0;
+}
+
+.faq-nav {
+  position: sticky;
+  top: 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.faq-cat {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+  padding: 11px 14px;
+  border-radius: 11px;
+  cursor: pointer;
+  transition: color .18s var(--ease), background .18s var(--ease);
+}
+
+.faq-cat:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, .04);
+}
+
+.faq-cat.on {
+  color: var(--text);
+  background: var(--bg-3);
+}
+
+.faq-cat-c {
+  font-size: 12px;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 760px) {
+  .faq-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .faq-nav {
+    position: static;
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .faq-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .faq-cat {
+    flex: none;
+    border: 1px solid var(--line-2);
+    border-radius: 999px;
+    padding: 9px 16px;
+  }
+
+  .faq-cat.on {
+    background: #fff;
+    color: #0a0a0b;
+    border-color: #fff;
+  }
+
+  .faq-cat.on .faq-cat-c {
+    color: rgba(0, 0, 0, .45);
+  }
+}
+
+/* Central de ajuda — tiles de categoria */
+.help-sec {
+  background: #252527;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 100px 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.help-cats {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.help-cat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: var(--bg-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  text-align: left;
+  transition: transform .2s var(--ease), border-color .2s var(--ease);
+}
+
+.help-cat:hover {
+  transform: translateY(-3px);
+  border-color: var(--line-2);
+}
+
+.hc-ic {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  background: rgba(47, 107, 255, .13);
+  color: var(--blue);
+  display: grid;
+  place-items: center;
+  margin-bottom: 16px;
+}
+
+.hc-ic svg {
+  width: 23px;
+  height: 23px;
+}
+
+.help-cat h3 {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+  margin: 0 0 5px;
+  color: var(--text);
+}
+
+.help-cat p {
+  font-size: 14px;
+  color: var(--text-2);
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.hc-n {
+  font-size: 12.5px;
+  color: var(--text-2);
+  font-weight: 600;
+  margin-top: 13px;
+}
+
+@media (max-width: 880px) {
+  .help-cats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* "Ver todos os guias" — link da central de ajuda */
+.guides-all-wrap {
+  text-align: center;
+  margin-top: 26px;
+  color: var(--blue);
+}
+
+.guides-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--blue);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
 /* CTA */
 .cta-sec {
   text-align: center;

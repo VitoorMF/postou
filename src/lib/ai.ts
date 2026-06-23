@@ -46,7 +46,7 @@ Uma IA que aprende a marca do negócio e gera posts, stories e carrosséis pro I
 [NO APP — use isto pra responder "como faço…". O app fica em https://postou.app]
 - Hoje (https://postou.app/hoje): painel inicial — status do dia, gerações usadas na semana e o próximo post automático agendado.
 - Configurar (https://postou.app/settings): horário de entrega, dias da semana, o que gerar (deixar a IA escolher ou fixar post/story/carrossel) e conectar/verificar o WhatsApp (https://postou.app/settings/whatsapp).
-- Brand Kit (https://postou.app/settings/brand-kit): logo, paleta de cores, personas/rostos da marca, tom de voz, "sobre a marca" e restrições do que a IA não deve fazer.
+- Brand Kit (https://postou.app/settings/brand-kit): logo(foto de perfil), paleta de cores, personas/rostos da marca, tom de voz, "sobre a marca" e restrições do que a IA não deve fazer.
 - Anotações (https://postou.app/feed): adicionar novidades e contexto da marca (também dá pra mandar por aqui).
 - Conteúdo (https://postou.app/content): ver, compartilhar, baixar, marcar como postado e avaliar 👍/👎 os posts gerados.
 - Planos (https://postou.app/settings/plans): Free (1 post automático + 1 manual por semana, sem carrossel), Starter (3 automáticos, 2 manuais e 1 carrossel por semana), Pro (posta todo dia, 14 manuais e 4 carrosséis por semana).

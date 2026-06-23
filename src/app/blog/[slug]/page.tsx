@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPost, getAllSlugs } from "@/content/posts";
+import Markdown from "@/components/Markdown";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -75,54 +76,7 @@ export default async function BlogPost({ params }: Props) {
           {post.title}
         </h1>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          {post.body.map((block, i) => {
-            if (block.type === "h2") {
-              return (
-                <h2 key={i} style={{
-                  fontSize: 24,
-                  fontWeight: 700,
-                  letterSpacing: "-0.015em",
-                  marginTop: 16,
-                  marginBottom: 0,
-                  color: "#fff",
-                }}>
-                  {block.text}
-                </h2>
-              );
-            }
-            if (block.type === "p") {
-              return (
-                <p key={i} style={{ color: "#bbb", fontSize: 17, margin: 0 }}>
-                  {block.text}
-                </p>
-              );
-            }
-            if (block.type === "ul") {
-              return (
-                <ul key={i} style={{ color: "#bbb", fontSize: 17, paddingLeft: 24, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-                  {block.items?.map((it, j) => <li key={j}>{it}</li>)}
-                </ul>
-              );
-            }
-            if (block.type === "quote") {
-              return (
-                <blockquote key={i} style={{
-                  borderLeft: "3px solid #4169E1",
-                  paddingLeft: 20,
-                  color: "#ddd",
-                  fontSize: 19,
-                  fontStyle: "italic",
-                  fontWeight: 500,
-                  margin: "8px 0",
-                }}>
-                  {block.text}
-                </blockquote>
-              );
-            }
-            return null;
-          })}
-        </div>
+        <Markdown content={post.content} />
 
         <div style={{
           marginTop: 64,

@@ -7,6 +7,7 @@ import SlideViewer from "./SlideViewer";
 import CaptionEditor from "./CaptionEditor";
 import ContentActions from "./ContentActions";
 import RatingButtons from "./RatingButtons";
+import Poller from "@/components/Poller";
 
 interface Slide {
   id: string;
@@ -23,6 +24,7 @@ interface Pack {
   created_at: string;
   posted_at: string | null;
   rating: number | null;
+  status: string;
   slides: Slide[];
 }
 
@@ -50,6 +52,10 @@ async function PackDetail({ id }: { id: string }) {
   if (!pack) notFound();
 
   const p = pack as Pack;
+
+  // Ainda gerando → estado "sendo gerada" (a página se atualiza sozinha quando fica pronto)
+  if (p.status === "pending") return <GeneratingDetail p={p} />;
+
   const ordered = [...p.slides].sort((a, b) => a.order - b.order);
   const shareImages = ordered.map((s) => s.image_url).filter((u): u is string => !!u);
   const isStory = p.type === "story";
@@ -111,6 +117,66 @@ async function PackDetail({ id }: { id: string }) {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+// Estado de "sendo gerada" — mostrado enquanto o pack está pending.
+function GeneratingDetail({ p }: { p: Pack }) {
+  return (
+    <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans">
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-[1180px] mx-auto px-4 md:px-12 pt-12 pb-16">
+
+          <div className="flex items-center justify-between mb-7">
+            <BackButton />
+          </div>
+
+          <div className="flex items-center justify-between mb-5">
+            <span className={`text-[13px] font-bold px-3.5 py-1.5 rounded-[10px] lowercase ${badgeColors[p.type] ?? badgeColors.post}`}>
+              {p.type}
+            </span>
+            <span className="text-base text-[#636366] font-semibold">
+              {new Date(p.created_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+            </span>
+          </div>
+
+          <div className="grid md:grid-cols-[minmax(0,430px)_1fr] gap-7 md:gap-12 items-start">
+
+            {/* imagem em geração */}
+            <div className="md:sticky md:top-4">
+              <div className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden bg-[#1A1A1C] border border-white/[0.07]">
+                <div className="absolute inset-0 shimmer-bg" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 px-6 text-center">
+                  <svg className="animate-spin" width="26" height="26" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="#137EFF" strokeWidth="3" />
+                    <path className="opacity-90" fill="#137EFF" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+                  </svg>
+                  <p className="text-sm font-bold text-white">Gerando seu conteúdo…</p>
+                  <p className="text-xs text-[#8A8A8E]">Fica pronto em alguns minutos. Esta página atualiza sozinha.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* metadados (skeleton) */}
+            <div className="flex flex-col max-w-[760px] min-w-0">
+              <p className="text-[13px] font-bold tracking-[0.14em] uppercase text-[#636366] mb-3">Título</p>
+              {p.title ? (
+                <h1 className="text-2xl md:text-3xl font-extrabold tracking-[-0.025em] leading-[1.12] mb-7 text-balance">{p.title}</h1>
+              ) : (
+                <div className="h-8 w-2/3 rounded-lg bg-[#1A1A1C] animate-pulse mb-7" />
+              )}
+              <div className="flex flex-col gap-2.5">
+                <div className="h-4 w-full rounded bg-[#1A1A1C] animate-pulse" />
+                <div className="h-4 w-11/12 rounded bg-[#1A1A1C] animate-pulse" />
+                <div className="h-4 w-4/5 rounded bg-[#1A1A1C] animate-pulse" />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+      <Poller intervalMs={6000} />
     </div>
   );
 }

@@ -18,6 +18,7 @@ interface Pack {
   cta: string | null;
   created_at: string;
   posted_at: string | null;
+  status: string;
   slides: Slide[];
 }
 
@@ -34,7 +35,25 @@ function timeAgo(dateStr: string) {
   return `gerado há ${Math.floor(h / 24)}d`;
 }
 
-function PackCard({ id, type, title, caption, cta, created_at, posted_at, slides }: Pack) {
+function PackCard({ id, type, title, caption, cta, created_at, posted_at, slides, status }: Pack) {
+  if (status === "pending") {
+    return (
+      <Link href={`/content/${id}`} className="bg-[#1A1A1C] border border-white/[0.07] w-full rounded-[22px] overflow-hidden flex flex-col shrink-0 hover:border-white/[0.12] transition-colors">
+        <div className="relative w-full aspect-[4/3] bg-[#202022]">
+          <div className="absolute inset-0 shimmer-bg" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2">
+            <svg className="animate-spin" width="22" height="22" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="#137EFF" strokeWidth="3" /><path className="opacity-90" fill="#137EFF" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>
+            <span className="text-xs font-semibold text-white">Gerando…</span>
+          </div>
+        </div>
+        <div className="p-4 flex items-center gap-2 min-w-0">
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md lowercase shrink-0 ${badgeColors[type]}`}>{type}</span>
+          <span className="text-sm text-[#8A8A8E] font-medium truncate">{title || "Gerando seu conteúdo…"}</span>
+        </div>
+      </Link>
+    );
+  }
+
   const isCarrossel = type === "carrossel";
   const cover = slides.find((s) => s.order === 1)?.image_url ?? slides[0]?.image_url ?? null;
 
@@ -96,7 +115,7 @@ async function PacksList({ filter, count }: { filter?: string; count: number }) 
 
   let query = supabase
     .from("packs")
-    .select("id, type, title, caption, cta, created_at, posted_at, slides(id, order, image_url)")
+    .select("id, type, title, caption, cta, created_at, posted_at, status, slides(id, order, image_url)")
     .order("created_at", { ascending: false })
     .limit(count + 1); // +1 pra detectar se há mais
 

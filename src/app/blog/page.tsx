@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { posts } from "@/content/posts";
+import { posts, CATEGORIES } from "@/content/posts";
 
 export const metadata: Metadata = {
   title: "Blog — Postou",
@@ -15,7 +15,15 @@ function formatDate(iso: string) {
   });
 }
 
-export default function BlogIndex() {
+export default async function BlogIndex({ searchParams }: { searchParams: Promise<{ cat?: string }> }) {
+  const { cat } = await searchParams;
+  const active = CATEGORIES.find((c) => c.slug === cat)?.slug ?? "";
+  const filtered = active ? posts.filter((p) => p.category === active) : posts;
+  const chips = [
+    { slug: "", label: "Todos" },
+    ...CATEGORIES.filter((c) => posts.some((p) => p.category === c.slug)),
+  ];
+
   return (
     <main style={{
       background: "#0a0a0c",
@@ -43,12 +51,36 @@ export default function BlogIndex() {
         <h1 style={{ fontSize: 48, fontWeight: 800, letterSpacing: "-0.025em", marginBottom: 12, lineHeight: 1.05 }}>
           Blog
         </h1>
-        <p style={{ color: "#888", fontSize: 18, marginBottom: 56 }}>
+        <p style={{ color: "#888", fontSize: 18, marginBottom: 32 }}>
           Conteúdo, IA e estratégia de marca pra quem quer estar presente todos os dias.
         </p>
 
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 48 }}>
+          {chips.map((c) => {
+            const on = c.slug === active;
+            return (
+              <Link
+                key={c.slug || "todos"}
+                href={c.slug ? `/blog?cat=${c.slug}` : "/blog"}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: 999,
+                  border: `1px solid ${on ? "#fff" : "rgba(255,255,255,0.12)"}`,
+                  background: on ? "#fff" : "transparent",
+                  color: on ? "#0a0a0c" : "#888",
+                  fontSize: 14,
+                  fontWeight: 600,
+                  textDecoration: "none",
+                }}
+              >
+                {c.label}
+              </Link>
+            );
+          })}
+        </div>
+
         <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: 8 }}>
-          {posts.map((post) => (
+          {filtered.map((post) => (
             <li key={post.slug}>
               <Link
                 href={`/blog/${post.slug}`}

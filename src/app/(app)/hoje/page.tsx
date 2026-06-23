@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase-server";
 import GenerateButton from "@/components/GenerateButton";
 import BrandKitAvatar from "@/components/BrandKitAvatar";
 import { getLimits } from "@/lib/plans";
+import Poller from "@/components/Poller";
 
 interface Slide { id: string; order: number; image_url: string | null; }
 interface Pack {
@@ -202,6 +203,8 @@ export default async function HojePage() {
 
   return (
     <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans">
+      {/* auto-atualiza enquanto algo gera (pending) ou enquanto o post de hoje ainda vai sair */}
+      {(hasPending || comingToday) && <Poller intervalMs={10000} />}
       <div className="flex-1 overflow-y-auto w-full">
         <div className="px-5 lg:px-10 pt-12 pb-8 lg:pb-12 max-w-lg lg:max-w-[1100px] mx-auto w-full">
 
