@@ -9,7 +9,7 @@ type GenState = "idle" | "generating" | "success" | "error" | "limit";
 
 interface GenContext {
   state: GenState;
-  generate: (opts: { format: Format; theme?: string; images?: string[] }) => void;
+  generate: (opts: { format: Format; theme?: string; images?: string[]; usePersona?: boolean }) => void;
 }
 
 const Ctx = createContext<GenContext | null>(null);
@@ -25,7 +25,7 @@ export default function GenerationProvider({ children }: { children: React.React
   const [message, setMessage] = useState("");
   const router = useRouter();
 
-  const generate = useCallback(({ format, theme, images }: { format: Format; theme?: string; images?: string[] }) => {
+  const generate = useCallback(({ format, theme, images, usePersona }: { format: Format; theme?: string; images?: string[]; usePersona?: boolean }) => {
     // dispara em background — não bloqueia a UI; o banner mostra o progresso
     setState("generating");
     setMessage("");
@@ -41,7 +41,10 @@ export default function GenerationProvider({ children }: { children: React.React
 
         const { data: { session } } = await supabase.auth.getSession();
         const body: Record<string, unknown> = { brand_kit_id: kit.id, force_type: format };
-        if (theme?.trim()) body.theme_override = theme.trim();
+        if (theme?.trim()) {
+          body.theme_override = theme.trim();
+          body.use_persona = !!usePersona; // só faz sentido com tema (geração manual pula o planner)
+        }
         if (images && images.length) body.image_urls = images;
 
         const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-pack`, {

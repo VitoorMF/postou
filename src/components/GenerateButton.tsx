@@ -30,6 +30,7 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
   const [closing, setClosing] = useState(false);
   const [theme, setTheme] = useState("");
   const [format, setFormat] = useState<Format>("story");
+  const [usePersona, setUsePersona] = useState(false);
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
   const [dragY, setDragY] = useState(0);
@@ -47,6 +48,7 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
   const [plan, setPlan] = useState("free");
   const [manualCount, setManualCount] = useState(0);
   const [carrosselCount, setCarrosselCount] = useState(0);
+  const [hasPersona, setHasPersona] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -62,6 +64,12 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
         setManualCount(data.weekly_manual_count ?? 0);
         setCarrosselCount(data.weekly_carrossel_count ?? 0);
       }
+      const { data: kit } = await supabase
+        .from("brand_kits")
+        .select("persona_urls")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      setHasPersona(!!(kit?.persona_urls as string[] | null)?.length);
     });
   }, []);
 
@@ -127,11 +135,12 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
   function handleGenerate() {
     if (manualExhausted || uploading) return;
     // dispara a geração no provider (banner global, sobrevive à navegação)
-    generate({ format, theme, images });
+    generate({ format, theme, images, usePersona });
     // fecha o modal e leva pra Hoje, onde o banner mostra "gerando…"
     const onHoje = window.location.pathname === "/hoje";
     setTheme("");
     setImages([]);
+    setUsePersona(false);
     setStatus("idle");
     setMessage("");
     dismiss();
@@ -152,6 +161,7 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
     dismiss();
     setTheme("");
     setImages([]);
+    setUsePersona(false);
     setStatus("idle");
     setMessage("");
   }
@@ -329,6 +339,23 @@ export default function GenerateButton({ variant = "floating" }: { variant?: "fl
               />
               <p className="text-xs text-[#555]">Deixe vazio para a IA escolher o tema automaticamente.</p>
             </div>
+
+            {/* Persona — só aparece com tema digitado e se a marca tiver fotos de persona */}
+            {theme.trim() && hasPersona && (
+              <button
+                type="button"
+                onClick={() => setUsePersona((v) => !v)}
+                className="flex items-center justify-between gap-3 w-full text-left -mt-1"
+              >
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-white">Aparecer no post</span>
+                  <span className="text-xs text-[#555]">Usar suas fotos de persona neste post</span>
+                </div>
+                <span className={`relative h-6 w-11 rounded-full transition-colors shrink-0 ${usePersona ? "bg-[#137EFF]" : "bg-[#3a3a3a]"}`}>
+                  <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white transition-transform ${usePersona ? "translate-x-[22px]" : "translate-x-0.5"}`} />
+                </span>
+              </button>
+            )}
 
             {/* Imagens */}
             <div className="flex flex-col gap-2">
