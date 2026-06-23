@@ -59,7 +59,8 @@ Legenda atual (gere algo DIFERENTE desta): ${pack.caption ?? "—"}
 
 Escreva uma NOVA legenda criativa e um CTA curto, em português, no tom da marca.
 A legenda deve COMPLEMENTAR a arte (que já mostra o conceito visualmente) — acrescente contexto, história ou provocação e puxe engajamento; não descreva nem repita o que já está na imagem.
-Responda APENAS em JSON, sem markdown: {"caption":"...","cta":"..."}`;
+QUEBRE em PARÁGRAFOS CURTOS (nada de bloco único): uma linha em branco entre cada parágrafo. Estrutura típica: gancho na 1ª frase, 1-2 parágrafos de desenvolvimento, e um fecho. Escape as quebras como \\n\\n dentro do JSON.
+Responda APENAS em JSON, sem markdown: {"caption":"gancho\\n\\ndesenvolvimento\\n\\nfecho","cta":"..."}`;
 
   let caption = "";
   let cta: string | null = null;

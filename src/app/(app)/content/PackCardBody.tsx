@@ -81,7 +81,7 @@ export default function PackCardBody({
         <ShareButton
           imageUrls={[...slides].sort((a, b) => a.order - b.order).map((s) => s.image_url).filter((u): u is string => !!u)}
           title={title}
-          text={isStory ? title : `${title}${caption ? `\n\n${caption}` : ""}${cta ? `\n\n${cta}` : ""}`}
+          text={[caption, cta].filter(Boolean).join("\n\n")}
           onShared={() => { if (!posted) markPosted(true); }}
           className="flex-[7] h-10 rounded-xl bg-[#137EFF] text-sm font-medium text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
         />

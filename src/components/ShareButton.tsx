@@ -13,7 +13,7 @@ export default function ShareButton({ imageUrls, title, text, className, iconOnl
     if (busy) return;
     setBusy(true);
 
-    // Copia a legenda (título + caption + cta) pro clipboard já no clique —
+    // Copia a legenda (caption + cta, sem o título) pro clipboard já no clique —
     // pronto pra colar no Instagram depois de compartilhar a imagem.
     let didCopy = false;
     try {

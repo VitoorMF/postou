@@ -59,9 +59,8 @@ async function PackDetail({ id }: { id: string }) {
   const ordered = [...p.slides].sort((a, b) => a.order - b.order);
   const shareImages = ordered.map((s) => s.image_url).filter((u): u is string => !!u);
   const isStory = p.type === "story";
-  const shareText = isStory
-    ? p.title
-    : `${p.title}${p.caption ? `\n\n${p.caption}` : ""}${p.cta ? `\n\n${p.cta}` : ""}`;
+  // legenda pro clipboard/compartilhar — só caption + cta (sem o título)
+  const shareText = [p.caption, p.cta].filter(Boolean).join("\n\n");
 
   return (
     <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans">

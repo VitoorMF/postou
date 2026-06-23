@@ -288,7 +288,8 @@ ${imageText || "—"}
 
 Escreva a LEGENDA do Instagram + um CTA curto, em português, no tom da marca.
 A legenda COMPLEMENTA a arte — acrescenta contexto, história, exemplo ou provocação e puxa engajamento. NÃO descreva nem repita o que já está na imagem.
-Responda APENAS em JSON, sem markdown: {"caption":"...","cta":"..."}`;
+QUEBRE em PARÁGRAFOS CURTOS (nada de bloco único): uma linha em branco entre cada parágrafo. Estrutura típica: gancho na 1ª frase, 1-2 parágrafos de desenvolvimento, e um fecho. Escape as quebras como \\n\\n dentro do JSON.
+Responda APENAS em JSON, sem markdown: {"caption":"gancho\\n\\ndesenvolvimento\\n\\nfecho","cta":"..."}`;
 
   try {
     const res = await openai.chat.completions.create({
@@ -426,13 +427,12 @@ Visual style rules:
           prompt: imagePrompt,
           // deno-lint-ignore no-explicit-any
           size: size as any,
-          output_format: "jpeg",
-          output_compression: 90,
+          output_format: "png",
           n: 1,
         });
         const item = response.data?.[0];
         if (!item) return null;
-        if (item.b64_json) return `data:image/jpeg;base64,${item.b64_json}`;
+        if (item.b64_json) return `data:image/png;base64,${item.b64_json}`;
         return item.url ?? null;
       }
     }
@@ -443,13 +443,12 @@ Visual style rules:
       prompt: imagePrompt,
       // deno-lint-ignore no-explicit-any
       size: size as any,
-      output_format: "jpeg",
-      output_compression: 90,
+      output_format: "png",
       n: 1,
     });
     const item = response.data?.[0];
     if (!item) return null;
-    if (item.b64_json) return `data:image/jpeg;base64,${item.b64_json}`;
+    if (item.b64_json) return `data:image/png;base64,${item.b64_json}`;
     return item.url ?? null;
   } catch (err) {
     console.error("Erro ao gerar imagem:", err);
@@ -471,7 +470,7 @@ async function uploadImage(data: string, path: string): Promise<string | null> {
 
   const { error } = await supabaseAdmin.storage
     .from("packs")
-    .upload(path, buffer, { contentType: "image/jpeg", upsert: true });
+    .upload(path, buffer, { contentType: "image/png", upsert: true });
 
   if (error) { console.error("Erro upload:", error); return null; }
 
@@ -822,7 +821,7 @@ Deno.serve(async (req) => {
           updatePhotoUrls,
         );
         slideImageUrls[hookSlide.order] = hookData
-          ? await uploadImage(hookData, `${brandKit.user_id}/${pack.id}/slide-${hookSlide.order}.jpg`)
+          ? await uploadImage(hookData, `${brandKit.user_id}/${pack.id}/slide-${hookSlide.order}.png`)
           : null;
 
         // 2) Demais slides em paralelo, ancorados no estilo do hook (Nível 2).
@@ -838,7 +837,7 @@ Deno.serve(async (req) => {
               hookData, // âncora visual
             );
             slideImageUrls[s.order] = imageData
-              ? await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-${s.order}.jpg`)
+              ? await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-${s.order}.png`)
               : null;
           }),
         );
@@ -853,7 +852,7 @@ Deno.serve(async (req) => {
           updatePhotoUrls,
         );
         if (imageData) {
-          slideImageUrls[1] = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-1.jpg`);
+          slideImageUrls[1] = await uploadImage(imageData, `${brandKit.user_id}/${pack.id}/slide-1.png`);
         }
       }
 
