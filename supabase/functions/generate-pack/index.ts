@@ -20,6 +20,7 @@ import { pickArchetype } from "./archetypes.ts";
 import { generateCaption, write } from "./writers.ts";
 import { carouselArtist, postArtist, storyArtist } from "./artists.ts";
 import { sendWhatsAppPack } from "./whatsapp.ts";
+import { regenerateSlide } from "./regen-slide.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -31,13 +32,18 @@ Deno.serve(async (req) => {
 
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* ignora — body vazio */ }
-  const { brand_kit_id, theme_override, force_type, image_urls, use_persona } = body as {
+  const { brand_kit_id, theme_override, force_type, image_urls, use_persona, regen_slide_id } = body as {
     brand_kit_id?: string;
     theme_override?: string;     // se vier, pula planner e usa esse tema direto
     force_type?: "post" | "carrossel" | "story"; // se vier, gera só esse formato
     image_urls?: string[];       // fotos anexadas na geração manual → referência visual
     use_persona?: boolean;       // toggle do manual: incluir a persona (só com tema)
+    regen_slide_id?: string;     // "refazer esse slide" → regenera 1 imagem só
   };
+
+  // Modo "refazer slide" — curto-circuito, não passa pelo fluxo de pack/cota.
+  if (regen_slide_id) return await regenerateSlide(regen_slide_id, req);
+
   const manualImages = Array.isArray(image_urls) ? image_urls.filter((u) => typeof u === "string" && u) : [];
   // Tipo "efetivo" da geração — pode ser rebaixado em runtime (ex: carrossel
   // esgotado no Starter vira "post"). force_type fica imutável só pra isManual.
@@ -280,6 +286,14 @@ Deno.serve(async (req) => {
             image_url: slideImageUrls[s.order] ?? null,
           })),
         );
+      }
+
+      // Wipeout total — nenhuma imagem veio. Não é um "success" vazio: marca failed,
+      // não consome cota nem entrega no WhatsApp. (Parcial segue success → UI mostra ⚠️.)
+      const anyImage = slides.some((s) => !!slideImageUrls[s.order]);
+      if (!anyImage) {
+        await supabaseAdmin.from("packs").update({ status: "failed" }).eq("id", pack.id);
+        continue;
       }
 
       if (updates.length > 0) {

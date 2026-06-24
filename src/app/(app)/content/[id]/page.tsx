@@ -65,6 +65,7 @@ async function PackDetail({ id }: { id: string }) {
 
   const ordered = [...p.slides].sort((a, b) => a.order - b.order);
   const shareImages = ordered.map((s) => s.image_url).filter((u): u is string => !!u);
+  const hasMissing = ordered.some((s) => !s.image_url); // algum slide sem imagem (degradou)
   const isStory = p.type === "story";
   // legenda pro clipboard/compartilhar — só caption + cta (sem o título)
   const shareText = [p.caption, p.cta].filter(Boolean).join("\n\n");
@@ -95,7 +96,7 @@ async function PackDetail({ id }: { id: string }) {
 
             {/* Coluna esquerda — imagem */}
             <div className="md:sticky md:top-4">
-              <SlideViewer slides={p.slides} title={p.title} type={p.type} />
+              <SlideViewer slides={ordered} title={p.title} type={p.type} packId={p.id} />
             </div>
 
             {/* Coluna direita — metadados */}
@@ -113,7 +114,7 @@ async function PackDetail({ id }: { id: string }) {
               )}
 
               {/* Ações */}
-              <ContentActions packId={p.id} imageUrls={shareImages} title={p.title} text={shareText} initialPosted={!!p.posted_at} />
+              <ContentActions packId={p.id} imageUrls={shareImages} title={p.title} text={shareText} initialPosted={!!p.posted_at} incomplete={hasMissing} />
 
               {/* Qualidade */}
               <RatingButtons packId={p.id} initialRating={p.rating ?? null} />

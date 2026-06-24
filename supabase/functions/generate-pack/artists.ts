@@ -6,6 +6,12 @@
 
 import { imageToFile, openai, toFile } from "./shared.ts";
 
+// gpt-image-2 normal leva ~15-45s. O default do SDK é 10min de timeout → por isso
+// um hang pendurava a função até a Supabase matá-la (pack preso em "pending"). Este
+// teto transforma o hang num erro capturável → o pack degrada e completa.
+// Knob: manter confortavelmente abaixo do limite de wall-clock do edge.
+const IMAGE_TIMEOUT_MS = 60_000;
+
 type RenderSpec = {
   kind: "post" | "story" | "carrossel";
   title: string;
@@ -120,7 +126,7 @@ Visual style rules:
           size: size as any,
           output_format: "png",
           n: 1,
-        });
+        }, { timeout: IMAGE_TIMEOUT_MS, maxRetries: 0 });
         const item = response.data?.[0];
         if (!item) return null;
         if (item.b64_json) return `data:image/png;base64,${item.b64_json}`;
@@ -136,7 +142,7 @@ Visual style rules:
       size: size as any,
       output_format: "png",
       n: 1,
-    });
+    }, { timeout: IMAGE_TIMEOUT_MS, maxRetries: 0 });
     const item = response.data?.[0];
     if (!item) return null;
     if (item.b64_json) return `data:image/png;base64,${item.b64_json}`;
