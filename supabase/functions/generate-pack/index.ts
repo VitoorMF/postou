@@ -112,8 +112,6 @@ Deno.serve(async (req) => {
 
   const plan = userRow?.plan ?? "free";
   const limits = LIMITS[plan] ?? LIMITS.free;
-  const autoCount    = userRow?.weekly_auto_count ?? 0;
-  const manualCount  = userRow?.weekly_manual_count ?? 0;
   const carrosselCount = userRow?.weekly_carrossel_count ?? 0;
 
   // Verifica limite de carrossel
@@ -131,19 +129,11 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Verifica limite semanal (auto ou manual)
-  if (isManual) {
-    if (manualCount >= limits.manual) {
-      // O cliente trata o aviso de limite (banner). Aqui só retorna o status.
-      const limitMsg = `Limite de ${limits.manual} geração${limits.manual > 1 ? "ões" : ""} manual${limits.manual > 1 ? "is" : ""} por semana atingido.`;
-      return new Response(JSON.stringify({ error: limitMsg, code: "manual_limit" }), { status: 429 });
-    }
-  } else {
-    if (autoCount >= limits.auto) {
-      console.log(`Kit ${brand_kit_id} atingiu limite automático semanal (${autoCount}/${limits.auto})`);
-      return new Response(JSON.stringify({ error: "Limite automático semanal atingido", code: "auto_limit" }), { status: 429 });
-    }
-  }
+  // Limite semanal (auto/manual): a reserva ATÔMICA de cota acontece dentro do loop,
+  // logo antes de gastar com LLM/imagem — ver "try_increment_counter". Checar aqui em
+  // cima com um valor lido antes é o TOCTOU que permitia N requests simultâneas (ex: 5
+  // cliques rápidos no Generate) passarem todas pelo check antes de qualquer uma
+  // incrementar, gerando N packs e pagando N× custo de imagem com cota pra 1 só.
 
   const hasPersona = (brandKit.persona_urls as string[] | null)?.length ? true : false;
 
@@ -203,7 +193,31 @@ Deno.serve(async (req) => {
 
   const results: { type: string; pack_id: string }[] = [];
 
+  const counterField = isManual ? "weekly_manual_count" : "weekly_auto_count";
+  const counterLimit = isManual ? limits.manual : limits.auto;
+
   for (const type of postTypes) {
+    // Reserva ATÔMICA da cota (auto/manual) ANTES de gastar qualquer coisa com LLM/imagem.
+    // O UPDATE...WHERE no Postgres é atômico — corta a corrida de N requests simultâneas
+    // lendo o mesmo contador "zerado" e todas passando juntas.
+    const { data: reserved } = await supabaseAdmin.rpc("try_increment_counter", {
+      p_user_id: userId,
+      p_field: counterField,
+      p_limit: counterLimit,
+    });
+
+    if (!reserved) {
+      // 1ª tentativa do request sem cota → erro pro caller tratar (banner de limite).
+      // Tentativas seguintes (fan-out auto com vários types) → só pula esse type.
+      if (results.length === 0) {
+        const limitMsg = isManual
+          ? `Limite de ${limits.manual} geração${limits.manual > 1 ? "ões" : ""} manual${limits.manual > 1 ? "is" : ""} por semana atingido.`
+          : "Limite automático semanal atingido";
+        return new Response(JSON.stringify({ error: limitMsg, code: isManual ? "manual_limit" : "auto_limit" }), { status: 429 });
+      }
+      continue;
+    }
+
     // ARQUÉTIPO: rotação por código só quando NÃO há tema do usuário.
     // Com tema manual, a estrutura vem do próprio tema (archetype = null).
     const archetype = theme_override ? null : pickArchetype(type, recentArchetypes);
@@ -216,7 +230,11 @@ Deno.serve(async (req) => {
       .select("id")
       .single();
 
-    if (packError || !pack) continue;
+    if (packError || !pack) {
+      // cota já reservada mas o pack não foi nem criado — devolve a cota.
+      await supabaseAdmin.rpc("decrement_counter", { p_user_id: userId, p_field: counterField });
+      continue;
+    }
 
     try {
       // ─── ROTEIRISTA: copy (texto da arte) ──
@@ -299,6 +317,8 @@ Deno.serve(async (req) => {
       const anyImage = slides.some((s) => !!slideImageUrls[s.order]);
       if (!anyImage) {
         await supabaseAdmin.from("packs").update({ status: "failed" }).eq("id", pack.id);
+        // devolve a cota — não foi uma geração de verdade, não deve consumir.
+        await supabaseAdmin.rpc("decrement_counter", { p_user_id: userId, p_field: counterField });
         continue;
       }
 
@@ -308,12 +328,9 @@ Deno.serve(async (req) => {
 
       await supabaseAdmin.from("packs").update({ status: "success" }).eq("id", pack.id);
 
-      // Incrementa contador semanal
-      const counterField = isManual ? "weekly_manual_count" : "weekly_auto_count";
-      await supabaseAdmin.rpc("increment_user_counter", {
-        p_user_id: userId,
-        p_field: counterField,
-      });
+      // weekly_auto_count/weekly_manual_count já foi reservado atomicamente no
+      // início do loop — não incrementa de novo aqui. Carrossel é um contador
+      // separado (driver de custo maior), incrementado só em caso de sucesso:
       if (type === "carrossel") {
         await supabaseAdmin.rpc("increment_user_counter", {
           p_user_id: userId,
@@ -339,6 +356,8 @@ Deno.serve(async (req) => {
     } catch (err) {
       console.error(`Falha ao gerar pack ${pack.id}:`, err);
       await supabaseAdmin.from("packs").update({ status: "failed" }).eq("id", pack.id);
+      // devolve a cota — a tentativa não gerou nada de fato.
+      await supabaseAdmin.rpc("decrement_counter", { p_user_id: userId, p_field: counterField });
     }
   }
 

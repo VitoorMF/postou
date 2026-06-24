@@ -39,19 +39,16 @@ function fireGeneration(brandKitId: string, theme: string, format: Format) {
 
 // Z-API envia POST aqui quando chega uma mensagem nova no WhatsApp
 export async function POST(request: Request) {
-  // ─── Segurança: valida o Client-Token que a Z-API envia no header ───
+  // ─── Segurança: valida o z-api-token que a Z-API envia no header ───
+  // (não é o "Client-Token"/Token de Segurança da conta — confirmado por log que a
+  // Z-API manda, sim, o token da instância no header "z-api-token" em todo webhook).
   // Sem isso, qualquer um que soubesse o número verificado de um cliente
   // podia forjar mensagens (gravar updates falsos, disparar geração, etc).
-  //
-  // TEMP DEBUG — só loga, não bloqueia ainda. Confirmar no log se a Z-API
-  // de fato manda o header "client-token" no webhook antes de ativar o bloqueio.
-  const expectedToken = process.env.Z_API_CLIENT_TOKEN;
-  const receivedToken = request.headers.get("client-token");
-  console.log("[whatsapp-webhook][TEMP DEBUG] headers:", Object.fromEntries(request.headers));
-  console.log("[whatsapp-webhook][TEMP DEBUG] client-token recebido:", receivedToken, "| bateu com o esperado?", receivedToken === expectedToken);
-  // if (!expectedToken || receivedToken !== expectedToken) {
-  //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // }
+  const expectedToken = process.env.Z_API_TOKEN;
+  const receivedToken = request.headers.get("z-api-token");
+  if (!expectedToken || receivedToken !== expectedToken) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   let payload: Record<string, unknown>;
   try {
