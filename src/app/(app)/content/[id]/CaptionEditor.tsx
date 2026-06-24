@@ -97,12 +97,14 @@ export default function CaptionEditor({
             value={draftCaption}
             onChange={(e) => setDraftCaption(e.target.value)}
             rows={5}
+            maxLength={2000}
             className="w-full bg-[#1c1c1c] border border-[#2a2a2a] rounded-xl p-3 text-sm text-[#eee] leading-relaxed resize-none focus:outline-none focus:border-[#137EFF]"
             placeholder="Legenda..."
           />
           <input
             value={draftCta}
             onChange={(e) => setDraftCta(e.target.value)}
+            maxLength={300}
             className="w-full bg-[#1c1c1c] border border-[#2a2a2a] rounded-xl p-3 text-sm text-[#137EFF] focus:outline-none focus:border-[#137EFF]"
             placeholder="CTA (opcional)"
           />

@@ -11,7 +11,8 @@ export async function POST(request: Request) {
   // ─── Segurança: valida o token que o Asaas envia no header ───
   const expected = process.env.ASAAS_WEBHOOK_TOKEN;
   const received = request.headers.get("asaas-access-token");
-  if (expected && received !== expected) {
+  // fail-closed: sem token configurado, rejeita tudo (em vez de aceitar qualquer payload)
+  if (!expected || received !== expected) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

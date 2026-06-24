@@ -207,6 +207,7 @@ export default function BrandKitPage() {
                   onChange={(e) => setBusinessName(e.target.value)}
                   onBlur={() => save({ business_name: businessName })}
                   placeholder="Ex: Postou, Studio Alma..."
+                  maxLength={100}
                   className={fieldCls}
                 />
               </div>
@@ -220,6 +221,7 @@ export default function BrandKitPage() {
                   onChange={(e) => setDescription(e.target.value)}
                   onBlur={() => save({ description })}
                   placeholder="O que sua marca faz? Para quem? Ex: Agência de moda voltada para jovens adultos no Sul do Brasil."
+                  maxLength={5000}
                   className={`${fieldCls} resize-none leading-relaxed`}
                 />
               </div>
@@ -252,6 +254,7 @@ export default function BrandKitPage() {
                   onChange={(e) => setDoNotDo(e.target.value)}
                   onBlur={() => save({ do_not_do: doNotDo })}
                   placeholder="Ex: Não usar tom infantil. Não inventar promoções. Não mencionar concorrentes."
+                  maxLength={2000}
                   className={`${fieldCls} resize-none leading-relaxed`}
                 />
               </div>

@@ -202,6 +202,7 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 rows={8}
+                maxLength={5000}
                 className="w-full bg-[#242426] border border-white/[0.12] rounded-[14px] px-4 py-3.5 text-white text-base leading-relaxed focus:outline-none focus:border-[#137EFF]/60 resize-none transition-colors"
               />
               <div className="flex gap-2">

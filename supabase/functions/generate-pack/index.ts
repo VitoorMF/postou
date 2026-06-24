@@ -44,6 +44,12 @@ Deno.serve(async (req) => {
   // Modo "refazer slide" — curto-circuito, não passa pelo fluxo de pack/cota.
   if (regen_slide_id) return await regenerateSlide(regen_slide_id, req);
 
+  // theme_override vira instrução direta pro Roteirista (USER = DIRETOR) — sem
+  // limite, um payload gigante infla custo de LLM. Front já limita a 500, isso é o backstop.
+  if (theme_override && theme_override.length > 500) {
+    return new Response(JSON.stringify({ error: "Tema muito longo (máx. 500 caracteres)" }), { status: 400 });
+  }
+
   const manualImages = Array.isArray(image_urls) ? image_urls.filter((u) => typeof u === "string" && u) : [];
   // Tipo "efetivo" da geração — pode ser rebaixado em runtime (ex: carrossel
   // esgotado no Starter vira "post"). force_type fica imutável só pra isManual.

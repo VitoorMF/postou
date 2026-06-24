@@ -16,6 +16,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Número inválido" }, { status: 400 });
   }
 
+  // Cooldown de 60s entre envios — evita reenvio em loop (WhatsApp bombing via Z-API).
+  // expires_at é setado pra +10min no envio, então "enviado em" = expires_at - 10min.
+  const { data: existing } = await supabase
+    .from("brand_kits")
+    .select("whatsapp_verification_expires_at")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (existing?.whatsapp_verification_expires_at) {
+    const sentAt = new Date(existing.whatsapp_verification_expires_at).getTime() - 10 * 60 * 1000;
+    const secondsLeft = 60 - Math.floor((Date.now() - sentAt) / 1000);
+    if (secondsLeft > 0) {
+      return NextResponse.json({ error: `Aguarde ${secondsLeft}s pra pedir outro código` }, { status: 429 });
+    }
+  }
+
   // gera código 6 dígitos
   const code = String(Math.floor(100000 + Math.random() * 900000));
   const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min

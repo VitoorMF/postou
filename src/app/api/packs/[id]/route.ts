@@ -14,8 +14,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const body = await req.json().catch(() => ({}));
   const patch: Record<string, unknown> = {};
 
-  if (typeof body.caption === "string") patch.caption = body.caption.trim();
-  if (typeof body.cta === "string") patch.cta = body.cta.trim() || null;
+  if (typeof body.caption === "string") {
+    if (body.caption.length > 2000) return NextResponse.json({ error: "Legenda muito longa (máx. 2000 caracteres)" }, { status: 400 });
+    patch.caption = body.caption.trim();
+  }
+  if (typeof body.cta === "string") {
+    if (body.cta.length > 300) return NextResponse.json({ error: "CTA muito longo (máx. 300 caracteres)" }, { status: 400 });
+    patch.cta = body.cta.trim() || null;
+  }
   else if (body.cta === null) patch.cta = null;
   if (typeof body.posted === "boolean") patch.posted_at = body.posted ? new Date().toISOString() : null;
   if (body.rating === 1 || body.rating === -1 || body.rating === null) patch.rating = body.rating;

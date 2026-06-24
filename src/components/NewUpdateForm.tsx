@@ -91,6 +91,7 @@ export default function NewUpdateForm() {
         <textarea
           rows={1}
           disabled={loading}
+          maxLength={5000}
           className="bg-[#1F1F1F] w-full min-h-12 max-h-36 px-4 py-3 rounded-2xl text-[#888079] placeholder:text-[#888079] focus:outline-none resize-none overflow-y-auto leading-snug disabled:opacity-50 transition-opacity"
           placeholder="Um fato, um detalhe, uma ideia do negócio..."
           value={content}

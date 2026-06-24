@@ -60,6 +60,7 @@ export async function POST(request: Request) {
 
   const { content, photo_urls } = await request.json();
   if (!content?.trim()) return NextResponse.json({ error: "Conteúdo obrigatório" }, { status: 400 });
+  if (content.length > 5000) return NextResponse.json({ error: "Conteúdo muito longo (máx. 5000 caracteres)" }, { status: 400 });
 
   // Busca o brand_kit do usuário autenticado — não confia no client
   const { data: kit } = await supabase
