@@ -54,6 +54,23 @@ function PackCard({ id, type, title, caption, cta, created_at, posted_at, slides
     );
   }
 
+  if (status === "failed") {
+    return (
+      <Link href={`/content/${id}`} className="bg-[#1A1A1C] border border-[#F0871E]/25 w-full rounded-[22px] overflow-hidden flex flex-col shrink-0 hover:border-[#F0871E]/45 transition-colors">
+        <div className="relative w-full aspect-[4/3] bg-[#202022] flex flex-col items-center justify-center gap-2">
+          <div className="h-11 w-11 rounded-2xl bg-[#F0871E]/12 grid place-items-center">
+            <svg width="22" height="22" fill="none" stroke="#F0871E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
+          </div>
+          <span className="text-xs font-semibold text-[#F0871E]">Falha na geração</span>
+        </div>
+        <div className="p-4 flex items-center gap-2 min-w-0">
+          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md lowercase shrink-0 ${badgeColors[type]}`}>{type}</span>
+          <span className="text-sm text-[#8A8A8E] font-medium truncate">{title || "Conteúdo não gerado"}</span>
+        </div>
+      </Link>
+    );
+  }
+
   const isCarrossel = type === "carrossel";
   const cover = slides.find((s) => s.order === 1)?.image_url ?? slides[0]?.image_url ?? null;
 

@@ -60,6 +60,9 @@ async function PackDetail({ id }: { id: string }) {
   // Ainda gerando → estado "sendo gerada" (a página se atualiza sozinha quando fica pronto)
   if (p.status === "pending") return <GeneratingDetail p={p} />;
 
+  // Falhou (ex: timeout do edge mata a função antes de finalizar) → tela de erro
+  if (p.status === "failed") return <FailedDetail p={p} />;
+
   const ordered = [...p.slides].sort((a, b) => a.order - b.order);
   const shareImages = ordered.map((s) => s.image_url).filter((u): u is string => !!u);
   const isStory = p.type === "story";
@@ -180,6 +183,36 @@ function GeneratingDetail({ p }: { p: Pack }) {
         </div>
       </div>
       <Poller intervalMs={6000} />
+    </div>
+  );
+}
+
+// Estado de falha — a geração não terminou (erro ou timeout do edge). Sem Poller.
+function FailedDetail({ p }: { p: Pack }) {
+  return (
+    <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans">
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-[1180px] mx-auto px-4 md:px-12 pt-12 pb-16">
+
+          <div className="flex items-center justify-between mb-7">
+            <BackButton />
+            <DeleteButton packId={p.id} />
+          </div>
+
+          <div className="max-w-md mx-auto text-center mt-16 flex flex-col items-center">
+            <div className="h-14 w-14 rounded-2xl bg-[#F0871E]/12 grid place-items-center mb-5">
+              <svg width="26" height="26" fill="none" stroke="#F0871E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
+                <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" />
+              </svg>
+            </div>
+            <h1 className="text-2xl font-extrabold tracking-tight">Não foi possível gerar</h1>
+            <p className="text-[#8A8A8E] mt-3 leading-relaxed">
+              A geração deste conteúdo não terminou — normalmente porque demorou demais. Pode remover e gerar de novo.
+            </p>
+          </div>
+
+        </div>
+      </div>
     </div>
   );
 }
