@@ -26,6 +26,7 @@ interface Pack {
   created_at: string;
   posted_at: string | null;
   rating: number | null;
+  rating_feedback: string | null;
   status: string;
   slides: Slide[];
 }
@@ -122,7 +123,7 @@ async function PackDetail({ id }: { id: string }) {
               <ContentActions packId={p.id} imageUrls={shareImages} title={p.title} text={shareText} initialPosted={!!p.posted_at} incomplete={incomplete} />
 
               {/* Qualidade */}
-              <RatingButtons packId={p.id} initialRating={p.rating ?? null} />
+              <RatingButtons packId={p.id} initialRating={p.rating ?? null} initialFeedback={p.rating_feedback ?? null} />
 
             </div>
 

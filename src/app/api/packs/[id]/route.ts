@@ -25,6 +25,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   else if (body.cta === null) patch.cta = null;
   if (typeof body.posted === "boolean") patch.posted_at = body.posted ? new Date().toISOString() : null;
   if (body.rating === 1 || body.rating === -1 || body.rating === null) patch.rating = body.rating;
+  if (typeof body.rating_feedback === "string") {
+    if (body.rating_feedback.length > 1000) return NextResponse.json({ error: "Feedback muito longo (máx. 1000 caracteres)" }, { status: 400 });
+    patch.rating_feedback = body.rating_feedback.trim() || null;
+  }
+  else if (body.rating_feedback === null) patch.rating_feedback = null;
 
   if (Object.keys(patch).length === 0) {
     return NextResponse.json({ error: "Nada para atualizar" }, { status: 400 });
