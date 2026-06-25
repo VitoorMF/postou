@@ -6,11 +6,18 @@
 
 import { imageToFile, openai, toFile } from "./shared.ts";
 
-// gpt-image-2 normal leva ~15-45s. O default do SDK é 10min de timeout → por isso
-// um hang pendurava a função até a Supabase matá-la (pack preso em "pending"). Este
-// teto transforma o hang num erro capturável → o pack degrada e completa.
-// Knob: manter confortavelmente abaixo do limite de wall-clock do edge.
-const IMAGE_TIMEOUT_MS = 60_000;
+// gpt-image-2 normal leva ~15-45s, mas sob contenção (carrossel = 4-5 chamadas
+// concorrentes) já vimos passar de 60s e estourar. O default do SDK é 10min de
+// timeout → por isso um hang pendurava a função até a Supabase matá-la (pack
+// preso em "pending"). Este teto transforma o hang num erro capturável → o
+// pack degrada e completa.
+//
+// Knob com teto rígido: o "Request idle timeout" da Supabase Free é 150s pro
+// REQUEST INTEIRO. O carrossel gera o hook sequencial e o resto em paralelo
+// ANCORADO nele (Nível 2) → pior caso é 2×IMAGE_TIMEOUT_MS, sobrando só uns
+// ~15-20s pra Roteirista+legenda+DB. Não dá pra subir muito mais que isto sem
+// estourar o teto e voltar ao problema original (morte silenciosa, sem log).
+const IMAGE_TIMEOUT_MS = 65_000;
 
 type RenderSpec = {
   kind: "post" | "story" | "carrossel";

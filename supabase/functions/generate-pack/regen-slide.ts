@@ -77,6 +77,6 @@ export async function regenerateSlide(slideId: string, req: Request): Promise<Re
   const url = await uploadImage(imageData, `${pack.user_id}/${pack.id}/slide-${slide.order}-${Date.now()}.png`);
   if (!url) return json({ error: "Falha ao salvar imagem" }, 500);
 
-  await supabaseAdmin.from("slides").update({ image_url: url }).eq("id", slide.id);
+  await supabaseAdmin.from("slides").update({ image_url: url, image_status: "done" }).eq("id", slide.id);
   return json({ image_url: url });
 }

@@ -13,6 +13,7 @@ interface Slide {
   id: string;
   order: number;
   image_url: string | null;
+  image_status: "pending" | "done" | "failed";
 }
 
 interface Pack {
@@ -56,16 +57,20 @@ async function PackDetail({ id }: { id: string }) {
   if (!user || !pack || (pack as Pack).user_id !== user.id) return <NoAccess />;
 
   const p = pack as Pack;
+  const ordered = [...p.slides].sort((a, b) => a.order - b.order);
 
-  // Ainda gerando → estado "sendo gerada" (a página se atualiza sozinha quando fica pronto)
-  if (p.status === "pending") return <GeneratingDetail p={p} />;
+  // Pending e AINDA sem nenhum slide no banco (Roteirista/legenda ainda escrevendo,
+  // ~10-35s) → shimmer genérico, não tem nada de real pra mostrar ainda.
+  if (p.status === "pending" && ordered.length === 0) return <GeneratingDetail p={p} />;
 
-  // Falhou (ex: timeout do edge mata a função antes de finalizar) → tela de erro
+  // Falhou (wipeout total, ou erro antes de chegar a inserir slide) → tela de erro
   if (p.status === "failed") return <FailedDetail p={p} />;
 
-  const ordered = [...p.slides].sort((a, b) => a.order - b.order);
-  const shareImages = ordered.map((s) => s.image_url).filter((u): u is string => !!u);
-  const hasMissing = ordered.some((s) => !s.image_url); // algum slide sem imagem (degradou)
+  // Daqui pra baixo: "success" OU "pending"-com-slides-já-inseridos (em andamento,
+  // alguns slides já "done", outros ainda "pending"/"failed" — ver SlideViewer).
+  const isPending = p.status === "pending";
+  const shareImages = ordered.filter((s) => s.image_status === "done").map((s) => s.image_url).filter((u): u is string => !!u);
+  const incomplete = ordered.some((s) => s.image_status !== "done"); // algum slide ainda não-pronto
   const isStory = p.type === "story";
   // legenda pro clipboard/compartilhar — só caption + cta (sem o título)
   const shareText = [p.caption, p.cta].filter(Boolean).join("\n\n");
@@ -114,7 +119,7 @@ async function PackDetail({ id }: { id: string }) {
               )}
 
               {/* Ações */}
-              <ContentActions packId={p.id} imageUrls={shareImages} title={p.title} text={shareText} initialPosted={!!p.posted_at} incomplete={hasMissing} />
+              <ContentActions packId={p.id} imageUrls={shareImages} title={p.title} text={shareText} initialPosted={!!p.posted_at} incomplete={incomplete} />
 
               {/* Qualidade */}
               <RatingButtons packId={p.id} initialRating={p.rating ?? null} />
@@ -124,6 +129,7 @@ async function PackDetail({ id }: { id: string }) {
           </div>
         </div>
       </div>
+      {isPending && <Poller intervalMs={6000} />}
     </div>
   );
 }

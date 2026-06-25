@@ -7,7 +7,7 @@
 //   AUTO/Cron:  Bibliotecário → Diretor (tema + arquétipo por rotação) → Roteirista → Artista
 //   MANUAL c/ tema: Bibliotecário → (USER = DIRETOR, pula o planner) → Roteirista → Artista
 
-import { supabaseAdmin, upcomingCommemorativeHint, uploadImage } from "./shared.ts";
+import { supabaseAdmin, upcomingCommemorativeHint } from "./shared.ts";
 import {
   fetchBrandKit,
   fetchRecentArchetypes,
@@ -18,9 +18,8 @@ import {
 import { planTheme } from "./planner.ts";
 import { pickArchetype } from "./archetypes.ts";
 import { generateCaption, write } from "./writers.ts";
-import { carouselArtist, postArtist, storyArtist } from "./artists.ts";
-import { sendWhatsAppPack } from "./whatsapp.ts";
 import { regenerateSlide } from "./regen-slide.ts";
+import { fireSlideJob, processSlideJob, type SlideJob } from "./slide-jobs.ts";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -32,14 +31,26 @@ Deno.serve(async (req) => {
 
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* ignora — body vazio */ }
-  const { brand_kit_id, theme_override, force_type, image_urls, use_persona, regen_slide_id } = body as {
+  const { brand_kit_id, theme_override, force_type, image_urls, use_persona, regen_slide_id, slide_job } = body as {
     brand_kit_id?: string;
     theme_override?: string;     // se vier, pula planner e usa esse tema direto
     force_type?: "post" | "carrossel" | "story"; // se vier, gera só esse formato
     image_urls?: string[];       // fotos anexadas na geração manual → referência visual
     use_persona?: boolean;       // toggle do manual: incluir a persona (só com tema)
     regen_slide_id?: string;     // "refazer esse slide" → regenera 1 imagem só
+    slide_job?: SlideJob;        // job interno de 1 imagem — disparado pelo próprio maestro
   };
+
+  // Modo "job de slide" — geração assíncrona de 1 imagem, disparada fire-and-forget
+  // pelo próprio maestro (ver slide-jobs.ts). Server-to-server only, nunca do client.
+  if (slide_job) {
+    const internalSecret = req.headers.get("x-internal-secret");
+    const expectedInternal = Deno.env.get("INTERNAL_SECRET");
+    if (!expectedInternal || internalSecret !== expectedInternal) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
+    }
+    return await processSlideJob(slide_job);
+  }
 
   // Modo "refazer slide" — curto-circuito, não passa pelo fluxo de pack/cota.
   if (regen_slide_id) return await regenerateSlide(regen_slide_id, req);
@@ -191,7 +202,7 @@ Deno.serve(async (req) => {
     postTypes = [...new Set(postTypes.map((t) => (t === "carrossel" ? "post" : t)))];
   }
 
-  const results: { type: string; pack_id: string }[] = [];
+  const results: { type: string; pack_id: string; status: string }[] = [];
 
   const counterField = isManual ? "weekly_manual_count" : "weekly_auto_count";
   const counterLimit = isManual ? limits.manual : limits.auto;
@@ -247,112 +258,70 @@ Deno.serve(async (req) => {
       // post/story é imagem única — se o LLM devolver vários slides, mantém só o 1º
       if (type !== "carrossel") slides = slides.slice(0, 1);
 
-      // Salva o título já. A LEGENDA roda em PARALELO com as imagens (só precisa do texto dos slides).
-      await supabaseAdmin.from("packs").update({ title: generated.title }).eq("id", pack.id);
-      const captionPromise = generateCaption(type, generated.title, slides, brandKit);
-
-      // ─── ARTISTA: imagens por slide em paralelo ──
-      //  - post/story: 1 imagem (cover)
-      //  - carrossel: 1 imagem por slide (4-5)
-      const slideImageUrls: Record<number, string | null> = {};
-
-      if (type === "carrossel" && slides.length > 0) {
-        // 1) Gera o HOOK primeiro — ele vira a âncora visual dos demais slides.
-        const hookSlide = slides.find((s) => s.role === "hook") ?? slides[0];
-        const hookData = await carouselArtist({
-          title: generated.title, slideContent: hookSlide.content, role: "hook",
-          brandKit, usePersona, updatePhotoUrls,
-        });
-        slideImageUrls[hookSlide.order] = hookData
-          ? await uploadImage(hookData, `${userId}/${pack.id}/slide-${hookSlide.order}.png`)
-          : null;
-
-        // 2) Demais slides em paralelo, ancorados no estilo do hook (Nível 2).
-        //    Se o hook falhou (hookData null), geram sem âncora (degrada bem).
-        const restSlides = slides.filter((s) => s.order !== hookSlide.order);
-        await Promise.all(
-          restSlides.map(async (s) => {
-            const imageData = await carouselArtist({
-              title: generated.title, slideContent: s.content, role: s.role ?? "body",
-              brandKit, usePersona, updatePhotoUrls, styleRefData: hookData, // âncora visual
-            });
-            slideImageUrls[s.order] = imageData
-              ? await uploadImage(imageData, `${userId}/${pack.id}/slide-${s.order}.png`)
-              : null;
-          }),
-        );
-      } else {
-        // post/story: só uma imagem (cover do slide 1).
-        // Renderiza o TEXTO DO SLIDE na arte (não a legenda) — assim a legenda
-        // complementa a imagem em vez de repetir o que já está nela.
-        const artistArgs = {
-          title: generated.title, slideContent: slides[0]?.content ?? generated.title,
-          brandKit, usePersona, updatePhotoUrls,
-        };
-        const imageData = type === "story" ? await storyArtist(artistArgs) : await postArtist(artistArgs);
-        if (imageData) {
-          slideImageUrls[1] = await uploadImage(imageData, `${userId}/${pack.id}/slide-1.png`);
-        }
-      }
-
-      // Legenda (rodou em paralelo às imagens) — salva agora.
-      const { caption, cta } = await captionPromise;
-      await supabaseAdmin.from("packs").update({ caption, cta }).eq("id", pack.id);
-
-      const coverImageUrl = slideImageUrls[1] ?? null;
-
-      if (slides.length > 0) {
-        await supabaseAdmin.from("slides").insert(
-          slides.map((s) => ({
-            pack_id: pack.id,
-            order: s.order,
-            content: s.content,            // texto da arte — usado pela regeneração de legenda
-            image_url: slideImageUrls[s.order] ?? null,
-          })),
-        );
-      }
-
-      // Wipeout total — nenhuma imagem veio. Não é um "success" vazio: marca failed,
-      // não consome cota nem entrega no WhatsApp. (Parcial segue success → UI mostra ⚠️.)
-      const anyImage = slides.some((s) => !!slideImageUrls[s.order]);
-      if (!anyImage) {
+      if (slides.length === 0) {
+        // Roteirista não devolveu nada pra desenhar — não tem job pra disparar,
+        // então ninguém nunca finalizaria isso. Marca failed agora e devolve a cota.
         await supabaseAdmin.from("packs").update({ status: "failed" }).eq("id", pack.id);
-        // devolve a cota — não foi uma geração de verdade, não deve consumir.
         await supabaseAdmin.rpc("decrement_counter", { p_user_id: userId, p_field: counterField });
         continue;
       }
 
-      if (updates.length > 0) {
-        await supabaseAdmin.from("updates").update({ used_in_pack_id: pack.id }).eq("id", updates[0].id);
-      }
+      // Salva o título já e gera a legenda (rápida, só texto — não espera imagem).
+      await supabaseAdmin.from("packs").update({ title: generated.title }).eq("id", pack.id);
+      const { caption, cta } = await generateCaption(type, generated.title, slides, brandKit);
+      await supabaseAdmin.from("packs").update({ caption, cta }).eq("id", pack.id);
 
-      await supabaseAdmin.from("packs").update({ status: "success" }).eq("id", pack.id);
+      // Insere os slides como placeholder (image_url null, "pending") — a imagem
+      // vira um job assíncrono PRÓPRIO (ver slide-jobs.ts), fora da janela de
+      // wall-clock desta requisição. Quem termina por último finaliza o pack.
+      const { data: insertedSlides } = await supabaseAdmin
+        .from("slides")
+        .insert(
+          slides.map((s) => ({
+            pack_id: pack.id,
+            order: s.order,
+            content: s.content, // texto da arte — usado pela regeneração de legenda
+            image_url: null,
+            image_status: "pending",
+          })),
+        )
+        .select("id, order");
 
-      // weekly_auto_count/weekly_manual_count já foi reservado atomicamente no
-      // início do loop — não incrementa de novo aqui. Carrossel é um contador
-      // separado (driver de custo maior), incrementado só em caso de sucesso:
+      const idByOrder = new Map((insertedSlides ?? []).map((s) => [s.order, s.id as string]));
+
+      const baseJob = {
+        packId: pack.id, type: type as SlideJob["type"], title: generated.title,
+        brandKit, usePersona, updatePhotoUrls, userId, counterField,
+        updateId: updates.length > 0 ? updates[0].id : null,
+      };
+
       if (type === "carrossel") {
-        await supabaseAdmin.rpc("increment_user_counter", {
-          p_user_id: userId,
-          p_field: "weekly_carrossel_count",
+        const hookSlide = slides.find((s) => s.role === "hook") ?? slides[0];
+        const restSlides = slides
+          .filter((s) => s.order !== hookSlide.order)
+          .map((s) => ({ slideId: idByOrder.get(s.order)!, order: s.order, role: s.role ?? "body", content: s.content }));
+
+        // Dispara só o HOOK — ele, ao terminar, dispara o resto ancorado no seu resultado.
+        fireSlideJob({
+          ...baseJob,
+          slideId: idByOrder.get(hookSlide.order)!,
+          order: hookSlide.order,
+          role: "hook",
+          slideContent: hookSlide.content,
+          isHook: true,
+          restSlides,
+        });
+      } else {
+        fireSlideJob({
+          ...baseJob,
+          slideId: idByOrder.get(1)!,
+          order: 1,
+          role: "cover",
+          slideContent: slides[0]?.content ?? generated.title,
         });
       }
 
-      // Entrega via WhatsApp se habilitado
-      if (
-        brandKit.whatsapp_delivery_enabled &&
-        brandKit.whatsapp_verified &&
-        brandKit.whatsapp_number
-      ) {
-        await sendWhatsAppPack(
-          brandKit.whatsapp_number as string,
-          { title: generated.title, caption, cta, type },
-          coverImageUrl,
-          pack.id,
-        );
-      }
-
-      results.push({ type, pack_id: pack.id });
+      results.push({ type, pack_id: pack.id, status: "queued" });
     } catch (err) {
       console.error(`Falha ao gerar pack ${pack.id}:`, err);
       await supabaseAdmin.from("packs").update({ status: "failed" }).eq("id", pack.id);

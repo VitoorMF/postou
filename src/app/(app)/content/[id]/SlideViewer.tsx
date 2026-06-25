@@ -8,6 +8,7 @@ interface Slide {
   id: string;
   order: number;
   image_url: string | null;
+  image_status: "pending" | "done" | "failed";
 }
 
 export default function SlideViewer({ slides, title, type, packId }: { slides: Slide[]; title: string; type: string; packId: string }) {
@@ -49,9 +50,20 @@ export default function SlideViewer({ slides, title, type, packId }: { slides: S
           </svg>
           <span className="text-sm font-semibold text-white">Refazendo esse slide…</span>
         </div>
-      ) : selected?.image_url ? (
+      ) : selected?.image_status === "done" && selected.image_url ? (
         <div className="w-full rounded-[20px] overflow-hidden bg-[#111] shadow-[0_24px_50px_-20px_rgba(0,0,0,0.6)]">
           <img src={selected.image_url} alt={title} className="w-full h-auto" />
+        </div>
+      ) : selected?.image_status === "pending" ? (
+        <div className="w-full aspect-[4/5] rounded-[20px] overflow-hidden bg-[#1A1A1C] border border-white/[0.07] relative">
+          <div className="absolute inset-0 shimmer-bg" />
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+            <svg className="animate-spin" width="26" height="26" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="#137EFF" strokeWidth="3" />
+              <path className="opacity-90" fill="#137EFF" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+            <span className="text-sm font-semibold text-white">Gerando esse slide…</span>
+          </div>
         </div>
       ) : (
         <div className="w-full aspect-[4/5] rounded-[20px] bg-[#1A1A1C] border border-[#F0871E]/25 flex flex-col items-center justify-center gap-3 px-6 text-center">
@@ -81,14 +93,16 @@ export default function SlideViewer({ slides, title, type, packId }: { slides: S
                 selected?.id === s.id ? "border-[#137EFF] opacity-100" : "border-transparent opacity-60 hover:opacity-90"
               }`}
             >
-              {s.image_url ? (
+              {s.image_status === "done" && s.image_url ? (
                 <img src={s.image_url} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              ) : s.image_status === "pending" ? (
+                <div className="absolute inset-0 shimmer-bg" />
               ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <svg width="18" height="18" fill="none" stroke="#F0871E" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></svg>
                 </div>
               )}
-              {regenId === s.id && (
+              {(regenId === s.id || s.image_status === "pending") && (
                 <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                   <svg className="animate-spin" width="16" height="16" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="#fff" strokeWidth="3" /><path className="opacity-90" fill="#fff" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" /></svg>
                 </div>
