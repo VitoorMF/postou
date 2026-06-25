@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
 import GenerateButton from "@/components/GenerateButton";
 import BrandKitAvatar from "@/components/BrandKitAvatar";
+import LibrarianCard from "@/components/LibrarianCard";
 import { getLimits } from "@/lib/plans";
 import Poller from "@/components/Poller";
 
@@ -256,6 +257,9 @@ export default async function HojePage() {
 
             <GenerateButton variant="card" />
 
+            {/* Bibliotecário — no mobile fica aqui, depois de "Criar post" */}
+            <LibrarianCard />
+
             <div className="flex flex-col gap-2.5">
               <p className="text-[15px] font-bold">Suas gerações</p>
               <div className="grid grid-cols-3 gap-2.5">
@@ -333,6 +337,9 @@ export default async function HojePage() {
                   </div>
                 </div>
               )}
+
+              {/* Bibliotecário — no desktop fica aqui no rail */}
+              <LibrarianCard />
 
               <div className="bg-[#1A1A1C] border border-white/[0.07] rounded-[20px] p-4 flex items-start gap-3.5">
                 <span className="h-11 w-11 rounded-[13px] grid place-items-center shrink-0" style={{ background: "rgba(48,196,107,0.12)", color: "#30C46B" }}>
