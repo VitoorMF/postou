@@ -53,14 +53,49 @@ async function generateEmbedding(text: string): Promise<number[]> {
   return res.data[0].embedding;
 }
 
+// Quando a anotação vem de uma pergunta do Bibliotecário, a resposta sozinha
+// perde o contexto ("Foi no RS" não diz do quê). Sintetiza pergunta + resposta
+// num FATO declarativo e autossuficiente — vira matéria-prima limpa pro pipeline.
+async function synthesizeFact(question: string, answer: string): Promise<string | null> {
+  try {
+    const res = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      temperature: 0.3,
+      messages: [
+        {
+          role: "system",
+          content: `Você transforma um par PERGUNTA + RESPOSTA numa única anotação declarativa e factual sobre a marca, autossuficiente (faz sentido sozinha, sem a pergunta).
+Regras: use SÓ o que está na resposta (e o contexto da pergunta); NUNCA invente fatos, números ou nomes que não foram ditos; se a resposta for vaga, mantenha vaga. 1 a 2 frases naturais em português. Não repita a pergunta, não use formato de Q&A.
+Exemplo: P "Qual o lugar mais longe onde já deu palestra?" R "campo de pesquisa do RS" → "A palestra mais distante que já demos foi no campo de pesquisa do Rio Grande do Sul."
+Responda só com a anotação, sem aspas e sem markdown.`,
+        },
+        { role: "user", content: `PERGUNTA: ${question}\nRESPOSTA: ${answer}` },
+      ],
+    });
+    return res.choices[0].message.content?.trim() || null;
+  } catch (err) {
+    console.error("Erro ao sintetizar anotação:", err);
+    return null;
+  }
+}
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
-  const { content, photo_urls } = await request.json();
+  const { content, photo_urls, prompt } = await request.json();
   if (!content?.trim()) return NextResponse.json({ error: "Conteúdo obrigatório" }, { status: 400 });
   if (content.length > 5000) return NextResponse.json({ error: "Conteúdo muito longo (máx. 5000 caracteres)" }, { status: 400 });
+  if (typeof prompt === "string" && prompt.length > 500) return NextResponse.json({ error: "Pergunta inválida" }, { status: 400 });
+
+  // Veio de uma pergunta do Bibliotecário → sintetiza pergunta+resposta num fato
+  // limpo (senão a resposta sozinha perde o contexto). Falha na síntese → usa a
+  // resposta crua (degrada sem quebrar).
+  let finalContent = content.trim();
+  if (typeof prompt === "string" && prompt.trim()) {
+    finalContent = (await synthesizeFact(prompt.trim(), finalContent)) ?? finalContent;
+  }
 
   // Busca o brand_kit do usuário autenticado — não confia no client
   const { data: kit } = await supabase
@@ -70,15 +105,15 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   const [classification, embedding] = await Promise.all([
-    classify(content),
-    generateEmbedding(content),
+    classify(finalContent),
+    generateEmbedding(finalContent),
   ]);
 
   const admin = createAdminClient();
   const { error } = await admin.from("updates").insert({
     user_id: user.id,
     brand_kit_id: kit?.id ?? null,
-    content: content.trim(),
+    content: finalContent,
     category: classification.category,
     nature: classification.nature,
     photo_urls: photo_urls ?? null,

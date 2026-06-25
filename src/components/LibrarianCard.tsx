@@ -52,7 +52,8 @@ export default function LibrarianCard() {
       const res = await fetch("/api/updates", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content }),
+        // manda a pergunta junto → backend sintetiza resposta+pergunta num fato limpo
+        body: JSON.stringify({ content, prompt }),
       });
       if (res.ok) {
         setAnswer("");
