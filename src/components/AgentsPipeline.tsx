@@ -36,7 +36,7 @@ const AGENTS = [
 ];
 
 export default function AgentsPipeline() {
-  const [open, setOpen] = useState<number | null>(0);
+  const [open, setOpen] = useState<number | null>(null);
 
   return (
     <section id="como-funciona" className="ap">
@@ -249,7 +249,7 @@ export default function AgentsPipeline() {
             scrollbar-width: none; padding: 62px 20px 16px; margin: 0 -20px 8px;
           }
           .ap-row::-webkit-scrollbar { display: none; }
-          .ap-card { flex: 0 0 86%; scroll-snap-align: center; }
+          .ap-card { flex: 0 0 86%; scroll-snap-align: center; scroll-snap-stop: always; }
           .ap-card:hover { transform: none; }
           .ap-card.open { box-shadow: none; border-color: rgba(255,255,255,0.07); }
           .ap-img { max-height: 180px; }
@@ -264,7 +264,7 @@ export default function AgentsPipeline() {
           .ap-start { flex-direction: column; align-items: stretch; }
           .ap-start-arrow { justify-content: center; }
           .ap-result {
-            flex: 0 0 86%; scroll-snap-align: center; margin-top: 0;
+            flex: 0 0 86%; scroll-snap-align: center; scroll-snap-stop: always; margin-top: 0;
             flex-direction: column; text-align: center; padding: 26px 22px;
           }
           .ap-result-body > p { margin-left: auto; margin-right: auto; font-size: 15px; }
