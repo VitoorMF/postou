@@ -342,7 +342,7 @@ export default function Landing() {
               </div>
             </div>
             <div className="foot-bot">
-              <div>© 2026 Postou. Feito no Brasil 🇧🇷</div>
+              <div>© 2026 Postou</div>
               <div className="socials">
                 <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="2" width="20" height="20" rx="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" y1="6.5" x2="17.51" y2="6.5" /></svg></a>
                 <a href="#" aria-label="TikTok"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.6 6.3a4.8 4.8 0 0 1-3.4-1.4 4.8 4.8 0 0 1-1.4-3.3h-3.4v13.4a2.6 2.6 0 1 1-2.6-2.6c.3 0 .6 0 .8.1V9a6 6 0 1 0 5.2 5.9V8.6a8 8 0 0 0 4.8 1.6V6.3z" /></svg></a>
