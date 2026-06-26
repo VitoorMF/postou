@@ -87,12 +87,9 @@ export default function LibrarianCard() {
   return (
     <div className="bg-[#1A1A1C] border border-white/[0.07] rounded-[20px] p-5">
       <div className="flex items-start gap-3.5">
-        <span
-          className="h-10 w-10 rounded-[13px] grid place-items-center shrink-0 "
-          style={{ background: "rgba(123,84,255,0.14)", color: "#B9A2FF" }}
-        >
+        <span className="relative h-10 w-10 rounded-[13px] grid place-items-center shrink-0 ">
           <img
-            className="h-12 w-12 object-cover -translate-y-2"
+            className="h-12 w-12 object-cover -translate-y-1 translate-x-1 drop-shadow-[0_0_10px_rgba(123,84,255,0.4)]"
             src="/agents/bibliotecario_profile3.png"
             alt="perfil do bibliotecário"
           />
