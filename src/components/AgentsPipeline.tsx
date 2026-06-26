@@ -128,7 +128,7 @@ export default function AgentsPipeline() {
                     onClick={() => setFront(j)}
                     aria-label={`Ver exemplo ${j + 1}`}
                   >
-                    <img src={src} alt={j === 0 ? "Exemplo de post gerado pelo Postou" : ""} loading="lazy" />
+                    <img src={src} alt={j === 0 ? "Exemplo de post gerado pelo Postou" : ""} loading="eager" />
                   </button>
                 ))}
               </div>
