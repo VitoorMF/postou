@@ -87,8 +87,15 @@ export default function LibrarianCard() {
   return (
     <div className="bg-[#1A1A1C] border border-white/[0.07] rounded-[20px] p-5">
       <div className="flex items-start gap-3.5">
-        <span className="h-10 w-10 rounded-[13px] grid place-items-center shrink-0" style={{ background: "rgba(123,84,255,0.14)", color: "#B9A2FF" }}>
-          <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>
+        <span
+          className="h-10 w-10 rounded-[13px] grid place-items-center shrink-0 "
+          style={{ background: "rgba(123,84,255,0.14)", color: "#B9A2FF" }}
+        >
+          <img
+            className="h-12 w-12 object-cover -translate-y-2"
+            src="/agents/bibliotecario_profile3.png"
+            alt="perfil do bibliotecário"
+          />
         </span>
         <div className="flex-1 min-w-0">
           <p className="text-[12px] font-bold tracking-[0.12em] uppercase text-[#B9A2FF] mb-1.5">O Bibliotecário quer saber</p>
