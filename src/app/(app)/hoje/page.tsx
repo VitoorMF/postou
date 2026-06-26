@@ -127,7 +127,7 @@ export default async function HojePage() {
   function SeuDiaCards() {
     if (count > 0) {
       return (
-        <div className="flex gap-3.5 overflow-x-auto scrollbar-none">
+        <div className="flex gap-3.5 overflow-x-auto scrollbar-none -mx-5 px-5">
           {cards.map((c) => (
             <Link key={c.id} href={`/content/${c.id}`} className="shrink-0 w-[180px]">
               <div className="relative w-[180px] aspect-square rounded-[16px] overflow-hidden bg-[#242424] mb-2.5">
