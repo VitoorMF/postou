@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import "./page.css";
 import SignInButton from "@/components/SignInButton";
-import HowItWorks from "@/components/HowItWorks";
+import AgentsPipeline from "@/components/AgentsPipeline";
 import { HeroPhone, DemoTrigger } from "@/components/HeroPhone";
 import LandingScripts from "@/components/LandingScripts";
 import FAQ from "@/components/FAQ";
@@ -150,7 +150,7 @@ export default function Landing() {
           </div>
         </section>
 
-        <HowItWorks />
+        <AgentsPipeline />
 
         {/* Pricing */}
         <section id="precos">
