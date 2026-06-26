@@ -35,8 +35,18 @@ const AGENTS = [
   },
 ];
 
+const EXAMPLES = ["/examples/ex-1.png", "/examples/ex-2.png", "/examples/ex-3.png"];
+
 export default function AgentsPipeline() {
   const [open, setOpen] = useState<number | null>(null);
+  const [front, setFront] = useState(0);
+
+  // posição de cada capa no leque a partir de qual está "na frente"
+  const fanSlot = (j: number) => {
+    if (j === front) return "c";
+    const others = [0, 1, 2].filter((x) => x !== front);
+    return j === others[0] ? "l" : "r";
+  };
 
   return (
     <section id="como-funciona" className="ap">
@@ -109,12 +119,20 @@ export default function AgentsPipeline() {
           {/* Resultado — 5º item: full-width no desktop, card no carrossel mobile */}
           <div className="ap-result">
             <div className="ap-result-phone">
-              <div className="ap-phone">
-                <div className="ap-phone-top" />
-                <div className="ap-phone-art" />
-                <div className="ap-phone-cap"><span /><span /></div>
+              <div className="ap-fan">
+                {EXAMPLES.map((src, j) => (
+                  <button
+                    key={j}
+                    type="button"
+                    className={`ap-fan-card ap-fan-${fanSlot(j)}`}
+                    onClick={() => setFront(j)}
+                    aria-label={`Ver exemplo ${j + 1}`}
+                  >
+                    <img src={src} alt={j === 0 ? "Exemplo de post gerado pelo Postou" : ""} loading="lazy" />
+                  </button>
+                ))}
               </div>
-              <div className="ap-phone-wa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z" /></svg></div>
+
             </div>
             <div className="ap-result-body">
               <span className="ap-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>Entregue</span>
@@ -213,14 +231,33 @@ export default function AgentsPipeline() {
 
         .ap-result { grid-column: 1 / -1; margin-top: 10px; display: flex; align-items: center; gap: 32px; background: linear-gradient(135deg, rgba(48,196,107,0.07), rgba(48,196,107,0.01)); border: 1px solid rgba(48,196,107,0.22); border-radius: 24px; padding: 28px 36px; }
         .ap-result-phone { position: relative; flex: none; }
-        .ap-result-phone .ap-phone { animation: apFloat 5s ease-in-out infinite; }
+
+        .ap-fan { position: relative; width: 228px; height: 206px; }
+        .ap-fan-card {
+          appearance: none; padding: 0; cursor: pointer;
+          position: absolute; width: 126px; height: 158px; overflow: hidden;
+          border-radius: 14px; border: 2px solid rgba(255,255,255,0.14);
+          background: linear-gradient(150deg, #2f6bff, #4169e1 55%, #7b54ff);
+          box-shadow: 0 20px 38px -14px rgba(0,0,0,0.75);
+          transition: transform .45s cubic-bezier(.16,1,.3,1), left .45s cubic-bezier(.16,1,.3,1), top .45s cubic-bezier(.16,1,.3,1);
+        }
+        .ap-fan-l, .ap-fan-r { filter: brightness(0.82); }
+        .ap-fan-c { filter: brightness(1); }
+        .ap-fan-card img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .ap-fan-c { left: 51px; top: 24px; transform: rotate(0deg); z-index: 3; }
+        .ap-fan-l { left: 4px; top: 34px; transform: rotate(-9deg); z-index: 1; }
+        .ap-fan-r { left: 98px; top: 34px; transform: rotate(9deg); z-index: 2; }
+        .ap-result:hover .ap-fan-c { transform: translateY(-8px) rotate(0deg); }
+        .ap-result:hover .ap-fan-l { left: -10px; transform: rotate(-13deg); }
+        .ap-result:hover .ap-fan-r { left: 112px; transform: rotate(13deg); }
+
         .ap-phone { position: relative; width: 104px; height: 180px; border-radius: 18px; background: #0e0e10; border: 2px solid rgba(255,255,255,0.14); padding: 10px 9px; display: flex; flex-direction: column; gap: 8px; }
         .ap-phone-top { width: 30px; height: 4px; border-radius: 3px; background: rgba(255,255,255,0.18); margin: 0 auto 1px; }
         .ap-phone-art { flex: 1; border-radius: 9px; background: linear-gradient(150deg, #2f6bff, #4169e1 55%, #7b54ff); }
         .ap-phone-cap { display: flex; flex-direction: column; gap: 4px; }
         .ap-phone-cap span { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.16); }
         .ap-phone-cap span:last-child { width: 62%; }
-        .ap-phone-wa { position: absolute; right: -12px; bottom: 30px; width: 38px; height: 38px; border-radius: 12px; background: #25D366; color: #0b3d1f; display: grid; place-items: center; box-shadow: 0 8px 22px -6px rgba(37,211,102,0.7); }
+        .ap-phone-wa { position: absolute; right: -2px; bottom: 6px; width: 38px; height: 38px; border-radius: 12px; background: #25D366; color: #0b3d1f; display: grid; place-items: center; box-shadow: 0 8px 22px -6px rgba(37,211,102,0.7); z-index: 4; }
         .ap-phone-wa svg { width: 20px; height: 20px; }
 
         .ap-result-body { min-width: 0; }
