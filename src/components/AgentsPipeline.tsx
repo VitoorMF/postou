@@ -153,7 +153,7 @@ export default function AgentsPipeline() {
       </div>
 
       <style>{`
-        .ap { background: #1b1b1d; border-top: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 100px 0; overflow: hidden; }
+        .ap { background: #252527; border-top: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); padding: 100px 0; overflow: hidden; }
         .ap-wrap { max-width: 1240px; margin: 0 auto; padding: 0 32px; }
         .ap-head { text-align: center; max-width: 660px; margin: 0 auto 48px; }
         .ap-head h2 { font-size: 44px; font-weight: 700; color: #fff; margin: 14px 0 14px; letter-spacing: -0.025em; line-height: 1.08; }
