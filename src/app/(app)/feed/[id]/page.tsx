@@ -4,6 +4,7 @@ import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import NoAccess from "@/components/NoAccess";
+import ConfirmModal from "@/components/ConfirmModal";
 import { type Category, categoryColors } from "@/lib/categories";
 
 interface Update {
@@ -115,7 +116,7 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
   }
 
   async function handleDelete() {
-    if (!confirmDelete) { setConfirmDelete(true); return; }
+    setConfirmDelete(false);
     setDeleting(true);
     const supabase = createClient();
     await supabase.from("updates").delete().eq("id", id);
@@ -155,10 +156,9 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
 
               {/* Delete */}
               <button
-                onClick={handleDelete}
-                onBlur={() => setConfirmDelete(false)}
+                onClick={() => setConfirmDelete(true)}
                 disabled={deleting}
-                className={`flex items-center gap-2 px-3 py-2.5 rounded-[11px] text-sm font-semibold transition-colors ${confirmDelete ? "text-[#ff7a7a] bg-[rgba(255,80,80,0.08)]" : "text-[#636366] hover:text-[#ff7a7a] hover:bg-[rgba(255,80,80,0.08)]"}`}
+                className="flex items-center gap-2 px-3 py-2.5 rounded-[11px] text-sm font-semibold text-[#636366] hover:text-[#ff7a7a] hover:bg-[rgba(255,80,80,0.08)] transition-colors"
               >
                 {deleting ? (
                   <svg className="animate-spin" width="16" height="16" fill="none" viewBox="0 0 24 24">
@@ -168,7 +168,7 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
                 ) : (
                   <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
                 )}
-                {confirmDelete ? "confirmar?" : "deletar"}
+                deletar
               </button>
             </div>
           </div>
@@ -291,6 +291,13 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
         </div>
       )}
 
+      <ConfirmModal
+        open={confirmDelete}
+        title="Deletar anotação?"
+        message="Essa anotação será removida do seu feed. Não dá pra desfazer."
+        onConfirm={handleDelete}
+        onClose={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }

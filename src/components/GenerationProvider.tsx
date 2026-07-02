@@ -9,7 +9,7 @@ type GenState = "idle" | "generating" | "success" | "error" | "limit";
 
 interface GenContext {
   state: GenState;
-  generate: (opts: { format: Format; theme?: string; images?: string[]; usePersona?: boolean }) => void;
+  generate: (opts: { format: Format; theme?: string; images?: string[]; usePersona?: boolean; templateId?: string }) => void;
 }
 
 const Ctx = createContext<GenContext | null>(null);
@@ -25,7 +25,7 @@ export default function GenerationProvider({ children }: { children: React.React
   const [message, setMessage] = useState("");
   const router = useRouter();
 
-  const generate = useCallback(({ format, theme, images, usePersona }: { format: Format; theme?: string; images?: string[]; usePersona?: boolean }) => {
+  const generate = useCallback(({ format, theme, images, usePersona, templateId }: { format: Format; theme?: string; images?: string[]; usePersona?: boolean; templateId?: string }) => {
     // dispara em background — não bloqueia a UI; o banner mostra o progresso
     setState("generating");
     setMessage("");
@@ -46,6 +46,7 @@ export default function GenerationProvider({ children }: { children: React.React
           body.use_persona = !!usePersona; // só faz sentido com tema (geração manual pula o planner)
         }
         if (images && images.length) body.image_urls = images;
+        if (templateId) body.template_id = templateId; // "gerar com este modelo" → âncora de estilo
 
         const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/generate-pack`, {
           method: "POST",

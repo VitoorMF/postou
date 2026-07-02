@@ -234,7 +234,7 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
   return (
     <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans">
 
-      <div className="w-full px-4 md:px-8 pt-12 pb-4 shrink-0 max-w-[1100px] mx-auto">
+      <div className="w-full px-4 md:px-8 pt-4 md:pt-12 pb-4 shrink-0 max-w-[1100px] mx-auto">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl md:text-[34px] font-extrabold tracking-[-0.03em]">Conteúdo</h1>

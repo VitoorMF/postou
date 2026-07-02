@@ -160,7 +160,7 @@ export default function Settings() {
         </div>
       )}
 
-      <div className="w-full px-4 md:px-8 pt-12 pb-4 shrink-0 max-w-[1100px] mx-auto">
+      <div className="w-full px-4 md:px-8 pt-4 md:pt-12 pb-4 shrink-0 max-w-[1100px] mx-auto">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl md:text-[42px] font-extrabold tracking-[-0.035em] leading-none">Configurar</h1>

@@ -59,9 +59,9 @@ export async function processSlideJob(job: SlideJob): Promise<Response> {
   if (job.type === "carrossel") {
     imageData = await carouselArtist({ ...args, role: job.role, styleRefData: job.styleRefUrl });
   } else if (job.type === "story") {
-    imageData = await storyArtist(args);
+    imageData = await storyArtist({ ...args, styleRefData: job.styleRefUrl });
   } else {
-    imageData = await postArtist(args);
+    imageData = await postArtist({ ...args, styleRefData: job.styleRefUrl });
   }
 
   const url = imageData ? await uploadImage(imageData, `${job.userId}/${job.packId}/slide-${job.order}.png`) : null;

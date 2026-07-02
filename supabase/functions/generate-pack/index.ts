@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
 
   let body: Record<string, unknown> = {};
   try { body = await req.json(); } catch { /* ignora — body vazio */ }
-  const { brand_kit_id, theme_override, force_type, image_urls, use_persona, regen_slide_id, slide_job } = body as {
+  const { brand_kit_id, theme_override, force_type, image_urls, use_persona, regen_slide_id, slide_job, template_id } = body as {
     brand_kit_id?: string;
     theme_override?: string;     // se vier, pula planner e usa esse tema direto
     force_type?: "post" | "carrossel" | "story"; // se vier, gera só esse formato
@@ -39,6 +39,7 @@ Deno.serve(async (req) => {
     use_persona?: boolean;       // toggle do manual: incluir a persona (só com tema)
     regen_slide_id?: string;     // "refazer esse slide" → regenera 1 imagem só
     slide_job?: SlideJob;        // job interno de 1 imagem — disparado pelo próprio maestro
+    template_id?: string;        // "gerar com este modelo" → âncora de estilo SÓ nesta geração
   };
 
   // Modo "job de slide" — geração assíncrona de 1 imagem, disparada fire-and-forget
@@ -101,6 +102,19 @@ Deno.serve(async (req) => {
   const brandKit = await fetchBrandKit(brand_kit_id);
   if (!brandKit) return new Response(JSON.stringify({ error: "Brand kit não encontrado" }), { status: 404 });
   const userId = brandKit.user_id as string;
+
+  // ─── Modelo (âncora de estilo) — opt-in SÓ desta geração ("gerar com este modelo").
+  // Sem template_id (auto/manual tradicional), fica null → geração NÃO segue modelo nenhum.
+  let templateStyleUrl: string | null = null;
+  if (template_id) {
+    const { data: tpl } = await supabaseAdmin
+      .from("templates")
+      .select("image_url")
+      .eq("id", template_id)
+      .eq("brand_kit_id", brand_kit_id) // garante que o modelo é DESTA marca
+      .maybeSingle();
+    templateStyleUrl = (tpl?.image_url as string) ?? null;
+  }
 
   // ─── Cotas por plano ─────────────────────────────────────────────────────
   const isManual = !!(force_type || theme_override);
@@ -237,7 +251,7 @@ Deno.serve(async (req) => {
     // Insere o pack como pending imediatamente — permite retry se falhar
     const { data: pack, error: packError } = await supabaseAdmin
       .from("packs")
-      .insert({ brand_kit_id, user_id: userId, type, status: "pending", is_auto: !isManual, archetype: archetype?.key ?? null })
+      .insert({ brand_kit_id, user_id: userId, type, status: "pending", is_auto: !isManual, archetype: archetype?.key ?? null, template_id: templateStyleUrl ? template_id : null })
       .select("id")
       .single();
 
@@ -293,6 +307,9 @@ Deno.serve(async (req) => {
         packId: pack.id, type: type as SlideJob["type"], title: generated.title,
         brandKit, usePersona, updatePhotoUrls, userId, counterField,
         updateId: updates.length > 0 ? updates[0].id : null,
+        // Modelo: hook do carrossel + post/story ancoram no modelo. O resto do
+        // carrossel é re-ancorado na capa dentro do slide-job (coesão interna).
+        styleRefUrl: templateStyleUrl,
       };
 
       if (type === "carrossel") {

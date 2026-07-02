@@ -121,7 +121,7 @@ export default function FeedPage() {
   return (
     <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans justify-start items-center">
 
-      <div className="w-full px-4 md:px-8 pt-12 pb-4 shrink-0 mx-auto max-w-[1100px]">
+      <div className="w-full px-4 md:px-8 pt-4 md:pt-12 pb-4 shrink-0 mx-auto max-w-[1100px]">
         <div className="flex justify-between items-start">
           <div>
             <h1 className="text-3xl md:text-[34px] font-extrabold tracking-[-0.03em]">Anotações</h1>

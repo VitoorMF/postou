@@ -65,9 +65,10 @@ Do NOT create a generic, stock-photo, or AI-looking person. Use the real person'
         ? `Papel do slide: CTA (último slide). Foco em ação/engajamento (comentar, salvar, compartilhar). Rodapé APENAS com o logo e o nome da marca. NÃO inclua endereço, telefone, e-mail ou site — esses dados NÃO foram fornecidos; é PROIBIDO inventar contato.`
         : `Papel do slide: CORPO (conteúdo). Layout limpo e legível, foco SÓ na mensagem deste slide. NÃO repita o título principal do carrossel. NÃO inclua rodapé de contato neste slide.`;
 
-  // Âncora visual (Nível 2): replica o estilo do slide 1.
+  // Âncora visual: replica o estilo da imagem de referência — serve tanto pro slide 1
+  // do carrossel (coesão interna) quanto pro MODELO da marca ("gerar com este modelo").
   const styleSection = styleRefData
-    ? `TEMPLATE VISUAL: a PRIMEIRA imagem de referência é o slide 1 DESTE MESMO carrossel. Replique o sistema visual dela — mesma paleta, mesmo estilo de fundo, mesma posição e tamanho do logo, mesmas fontes e elementos decorativos. Mantenha o carrossel visualmente consistente; mude APENAS o texto/conteúdo para a mensagem deste slide.`
+    ? `PRIORIDADE MÁXIMA — SIGA O MODELO FIELMENTE: a PRIMEIRA imagem de referência é um MODELO de estilo que você DEVE copiar. Reproduza com precisão: a MESMA paleta de cores, o MESMO fundo (cor e textura), a MESMA estrutura de layout (posição do título, do corpo, dos elementos), as MESMAS fontes e pesos, o MESMO tratamento visual e elementos decorativos, a MESMA posição do logo. O resultado tem que parecer saído do MESMO template — só o TEXTO muda para a mensagem desta arte. Essa fidelidade ao modelo vale MAIS que qualquer regra de estilo abaixo; em caso de conflito, o modelo ganha.`
     : "";
 
   const imagePrompt = `Create an organic Instagram ${isCarousel ? "carousel slide" : kind} for the brand "${brandKit.business_name ?? "empresa"}".
@@ -79,7 +80,7 @@ ${roleInstruction}
 ${styleSection}
 
 Reference images provided (in order):
-${styleRefData ? "- First image: slide 1 of THIS carousel — the VISUAL TEMPLATE to replicate." : ""}
+${styleRefData ? "- First image: the VISUAL MODEL to replicate (palette, layout, fonts, logo placement)." : ""}
 ${personaUrls.length ? "- photos of the brand's real people — use their likeness naturally if relevant" : ""}
 ${updatePhotos.length ? "- real photos from this specific brand update — use as the main visual subject" : ""}
 - Last image: the brand logo — include subtly as brand identity
@@ -168,14 +169,15 @@ type ArtistArgs = {
   brandKit: Record<string, unknown>;
   usePersona: boolean;
   updatePhotoUrls?: string[] | null;
+  styleRefData?: string | null; // âncora de estilo (modelo) — null na geração tradicional
 };
 
 export function postArtist(a: ArtistArgs): Promise<string | null> {
-  return renderImage({ kind: "post", title: a.title, slideMessage: a.slideContent, brandKit: a.brandKit, usePersona: a.usePersona, updatePhotoUrls: a.updatePhotoUrls });
+  return renderImage({ kind: "post", title: a.title, slideMessage: a.slideContent, brandKit: a.brandKit, usePersona: a.usePersona, updatePhotoUrls: a.updatePhotoUrls, styleRefData: a.styleRefData });
 }
 
 export function storyArtist(a: ArtistArgs): Promise<string | null> {
-  return renderImage({ kind: "story", title: a.title, slideMessage: a.slideContent, brandKit: a.brandKit, usePersona: a.usePersona, updatePhotoUrls: a.updatePhotoUrls });
+  return renderImage({ kind: "story", title: a.title, slideMessage: a.slideContent, brandKit: a.brandKit, usePersona: a.usePersona, updatePhotoUrls: a.updatePhotoUrls, styleRefData: a.styleRefData });
 }
 
 export function carouselArtist(

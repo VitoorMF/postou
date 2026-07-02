@@ -7,6 +7,7 @@ import SlideViewer from "./SlideViewer";
 import CaptionEditor from "./CaptionEditor";
 import ContentActions from "./ContentActions";
 import RatingButtons from "./RatingButtons";
+import UseAsTemplateButton from "./UseAsTemplateButton";
 import Poller from "@/components/Poller";
 
 interface Slide {
@@ -72,6 +73,7 @@ async function PackDetail({ id }: { id: string }) {
   const isPending = p.status === "pending";
   const shareImages = ordered.filter((s) => s.image_status === "done").map((s) => s.image_url).filter((u): u is string => !!u);
   const incomplete = ordered.some((s) => s.image_status !== "done"); // algum slide ainda não-pronto
+  const coverReady = ordered.find((s) => s.order === 1)?.image_status === "done"; // capa pronta → pode virar modelo
   const isStory = p.type === "story";
   // legenda pro clipboard/compartilhar — só caption + cta (sem o título)
   const shareText = [p.caption, p.cta].filter(Boolean).join("\n\n");
@@ -124,6 +126,9 @@ async function PackDetail({ id }: { id: string }) {
 
               {/* Qualidade */}
               <RatingButtons packId={p.id} initialRating={p.rating ?? null} initialFeedback={p.rating_feedback ?? null} />
+
+              {/* Salvar como modelo (âncora de estilo) — só com a capa pronta */}
+              {coverReady && <UseAsTemplateButton packId={p.id} />}
 
             </div>
 
