@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase";
 import { getLimits } from "@/lib/plans";
+import { MenuButton } from "@/components/NavDrawer";
 
 const DAYS = ["S", "T", "Q", "Q", "S", "S", "D"];
 const TIMES = ["06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"];
@@ -163,7 +164,7 @@ export default function Settings() {
       <div className="w-full px-4 md:px-8 pt-4 md:pt-12 pb-4 shrink-0 max-w-[1100px] mx-auto">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl md:text-[42px] font-extrabold tracking-[-0.035em] leading-none">Configurar</h1>
+            <div className="flex items-center gap-1.5"><MenuButton /><h1 className="text-3xl md:text-[42px] font-extrabold tracking-[-0.035em] leading-none">Configurar</h1></div>
             <p className="text-base md:text-lg text-[#8A8A8E] font-medium mt-2">Escolha o que gerar todo dia</p>
           </div>
           {saving && (

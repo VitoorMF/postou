@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase-server";
 import ModelosGrid from "./ModelosGrid";
+import { MenuButton } from "@/components/NavDrawer";
 
 export default async function ModelosPage() {
   const supabase = await createClient();
@@ -37,7 +38,7 @@ export default async function ModelosPage() {
     <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans">
       <div className="flex-1 overflow-y-auto">
         <div className="max-w-[1100px] mx-auto px-5 lg:px-10 pt-4 md:pt-12 pb-16">
-          <h1 className="text-[40px] lg:text-[44px] font-extrabold tracking-tight leading-none">Modelos</h1>
+          <div className="flex items-center gap-1.5"><MenuButton /><h1 className="text-3xl md:text-[34px] font-extrabold tracking-tight leading-none">Modelos</h1></div>
           <p className="text-[#8A8A8E] text-base lg:text-lg mt-2 font-medium max-w-xl">
             Salve um estilo que você curtiu e gere posts seguindo ele. O visual vai ficar parecido — mesma paleta, mesmo clima.
           </p>

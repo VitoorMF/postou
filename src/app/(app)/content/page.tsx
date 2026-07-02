@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
 import TypeFilter, { type TypeCounts } from "./TypeFilter";
 import PackCardBody from "./PackCardBody";
+import { MenuButton } from "@/components/NavDrawer";
 
 interface Slide {
   id: string;
@@ -237,7 +238,7 @@ export default async function ContentPage({ searchParams }: { searchParams: Prom
       <div className="w-full px-4 md:px-8 pt-4 md:pt-12 pb-4 shrink-0 max-w-[1100px] mx-auto">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl md:text-[34px] font-extrabold tracking-[-0.03em]">Conteúdo</h1>
+            <div className="flex items-center gap-1.5"><MenuButton /><h1 className="text-3xl md:text-[34px] font-extrabold tracking-[-0.03em]">Conteúdo</h1></div>
             <p className="text-base text-[#8A8A8E] font-medium mt-1">Seus posts gerados</p>
           </div>
           <TypeFilter mode="dropdown" counts={counts} className="hidden md:block" />

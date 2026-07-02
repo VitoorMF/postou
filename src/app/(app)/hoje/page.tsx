@@ -5,6 +5,7 @@ import BrandKitAvatar from "@/components/BrandKitAvatar";
 import LibrarianCard from "@/components/LibrarianCard";
 import { getLimits } from "@/lib/plans";
 import Poller from "@/components/Poller";
+import { MenuButton } from "@/components/NavDrawer";
 
 interface Slide { id: string; order: number; image_url: string | null; }
 interface Pack {
@@ -215,7 +216,7 @@ export default async function HojePage() {
           <div className="flex items-start justify-between gap-4 mb-7">
             <div>
               <p className="lg:hidden text-[#636366] text-[12.5px] font-bold tracking-[0.14em] mb-1">{weekdayShort} · {dayNum} {monthShort}</p>
-              <h1 className="text-[40px] lg:text-[44px] font-extrabold tracking-tight leading-none">Hoje</h1>
+              <div className="flex items-center gap-1.5"><MenuButton /><h1 className="text-[40px] lg:text-[44px] font-extrabold tracking-tight leading-none">Hoje</h1></div>
               <p className="text-[#8A8A8E] text-base lg:text-lg mt-2 font-medium">
                 {greeting}{brandName ? <>, <b className="text-white font-semibold">{brandName}</b></> : ""} 👋
                 {subtitle && <span className="hidden lg:inline"> {subtitle}</span>}

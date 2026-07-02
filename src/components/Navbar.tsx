@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { getLimits } from "@/lib/plans";
+import { useNavDrawer } from "@/components/NavDrawer";
 
 function IconHome({ size = 22 }: { size?: number }) {
   return (
@@ -70,7 +71,7 @@ const PLAN_NAMES: Record<string, string> = { free: "Free", starter: "Starter", p
 
 export default function Navbar() {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false); // drawer mobile
+  const { open, setOpen } = useNavDrawer(); // drawer mobile (aberto pelo MenuButton nas páginas)
   const [brandName, setBrandName] = useState("");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [plan, setPlan] = useState("free");
@@ -158,14 +159,7 @@ export default function Navbar() {
 
   return (
     <>
-      {/* ===== Mobile: barra de topo com hambúrguer ===== */}
-      <header className="md:hidden order-1 shrink-0 flex items-center h-12 px-3 bg-[#0e0e0e]">
-        <button onClick={() => setOpen(true)} aria-label="Abrir menu" className="h-10 w-10 -ml-1 grid place-items-center text-[#E4E4E6] active:scale-90 transition-transform">
-          <svg width="19" height="19" fill="none" stroke="currentColor" strokeWidth="2.1" strokeLinecap="round" viewBox="0 0 24 24"><line x1="4" y1="7" x2="20" y2="7" /><line x1="4" y1="12" x2="20" y2="12" /><line x1="4" y1="17" x2="14" y2="17" /></svg>
-        </button>
-      </header>
-
-      {/* ===== Mobile: drawer deslizante ===== */}
+      {/* ===== Mobile: drawer deslizante (aberto pelo MenuButton nas páginas) ===== */}
       <div className={`md:hidden fixed inset-0 z-50 transition-opacity duration-300 ${open ? "opacity-100" : "opacity-0 pointer-events-none"}`}>
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
         <aside className={`absolute left-0 top-0 h-full w-72 max-w-[82%] bg-[#0e0e0e] border-r border-white/[0.06] px-4 py-6 flex flex-col transition-transform duration-300 ease-out ${open ? "translate-x-0" : "-translate-x-full"}`}>

@@ -5,6 +5,7 @@ import NewUpdateForm from "@/components/NewUpdateForm";
 import ScrollToBottom from "./ScrollToBottom";
 import { type Category, categoryColors } from "@/lib/categories";
 import BrandKitAvatar from "@/components/BrandKitAvatar";
+import { MenuButton } from "@/components/NavDrawer";
 
 interface Update {
   id: string;
@@ -124,7 +125,7 @@ export default function FeedPage() {
       <div className="w-full px-4 md:px-8 pt-4 md:pt-12 pb-4 shrink-0 mx-auto max-w-[1100px]">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl md:text-[34px] font-extrabold tracking-[-0.03em]">Anotações</h1>
+            <div className="flex items-center gap-1.5"><MenuButton /><h1 className="text-3xl md:text-[34px] font-extrabold tracking-[-0.03em]">Anotações</h1></div>
             <p className="text-base text-[#8A8A8E] font-medium mt-1">Anote qualquer coisa do seu negócio — a IA usa pra criar seus posts.</p>
           </div>
           <div className="md:hidden">
