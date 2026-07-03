@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useSmartBack } from "@/components/SmartBack";
 import { useState } from "react";
 
 // ⚠️ Os limites REAIS são aplicados em supabase/functions/generate-pack/index.ts
@@ -62,7 +62,7 @@ const plans = [
 ];
 
 export default function PlansClient({ currentPlan, planExpiresAt, planChange }: { currentPlan: string; planExpiresAt?: string | null; planChange?: string | null }) {
-  const router = useRouter();
+  const goBack = useSmartBack("/settings");
   const [selected, setSelected] = useState(currentPlan);
   const [showCpf, setShowCpf] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -192,7 +192,7 @@ export default function PlansClient({ currentPlan, planExpiresAt, planChange }: 
 
           {/* top */}
           <div className="mb-9">
-            <button onClick={() => router.back()} aria-label="Voltar" className="h-11 w-11 rounded-[13px] bg-[#161618] border border-white/[0.07] flex items-center justify-center text-white hover:bg-[#262628] active:scale-95 transition-all">
+            <button onClick={goBack} aria-label="Voltar" className="h-11 w-11 rounded-[13px] bg-[#161618] border border-white/[0.07] flex items-center justify-center text-white hover:bg-[#262628] active:scale-95 transition-all">
               <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
             </button>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useSmartBack } from "@/components/SmartBack";
 import { createClient } from "@/lib/supabase";
 
 function WaIcon({ size = 24, className = "" }: { size?: number; className?: string }) {
@@ -33,7 +33,7 @@ interface State {
 }
 
 export default function WhatsAppSettings() {
-  const router = useRouter();
+  const goBack = useSmartBack("/settings");
   const [state, setState] = useState<State | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -142,7 +142,7 @@ export default function WhatsAppSettings() {
         <div className="relative z-10 max-w-[720px] mx-auto px-4 md:px-10 pt-12 pb-16">
 
           {/* back */}
-          <button onClick={() => router.back()} aria-label="Voltar" className="h-11 w-11 rounded-[13px] bg-[#161618] border border-white/[0.07] flex items-center justify-center text-white hover:bg-[#262628] active:scale-95 transition-all mb-7">
+          <button onClick={goBack} aria-label="Voltar" className="h-11 w-11 rounded-[13px] bg-[#161618] border border-white/[0.07] flex items-center justify-center text-white hover:bg-[#262628] active:scale-95 transition-all mb-7">
             <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
           </button>
 

@@ -58,7 +58,8 @@ export default function NewUpdateForm() {
     if (images.length > 0) {
       const uploads = await Promise.all(
         images.map(async ({ file }) => {
-          const path = `${user.id}/${Date.now()}-${file.name}`;
+          const ext = file.name.split(".").pop() || "jpg";
+          const path = `${user.id}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
           const { error } = await supabase.storage.from("updates").upload(path, file);
           if (error) return null;
           return supabase.storage.from("updates").getPublicUrl(path).data.publicUrl;

@@ -28,7 +28,8 @@ export default function ModelosGrid({ templates }: { templates: Template[] }) {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
-      const path = `${user.id}/templates/${Date.now()}-${file.name}`;
+      const ext = file.name.split(".").pop() || "png";
+      const path = `${user.id}/templates/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
       const { error } = await supabase.storage.from("brand-kits").upload(path, file);
       if (error) return;
       const { data } = supabase.storage.from("brand-kits").getPublicUrl(path);

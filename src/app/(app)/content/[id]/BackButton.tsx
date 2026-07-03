@@ -1,12 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useSmartBack } from "@/components/SmartBack";
 
-export default function BackButton() {
-  const router = useRouter();
+export default function BackButton({ fallback = "/content" }: { fallback?: string }) {
+  const goBack = useSmartBack(fallback);
   return (
     <button
-      onClick={() => router.back()}
+      onClick={goBack}
       aria-label="Voltar"
       className="h-11 w-11 rounded-[14px] bg-[#1A1A1C] border border-white/[0.07] flex items-center justify-center text-white hover:bg-[#262628] active:scale-95 transition-all"
     >

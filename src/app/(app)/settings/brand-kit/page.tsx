@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useSmartBack } from "@/components/SmartBack";
 import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase";
 import { getPaletteSync } from "colorthief";
@@ -18,7 +18,7 @@ interface BrandKit {
 }
 
 export default function BrandKitPage() {
-  const router = useRouter();
+  const goBack = useSmartBack("/settings");
   const [kit, setKit] = useState<BrandKit | null>(null);
   const [businessName, setBusinessName] = useState("");
   const [description, setDescription] = useState("");
@@ -156,7 +156,7 @@ export default function BrandKitPage() {
     <div className="flex flex-col h-full bg-[#0C0C0E] text-white font-sans">
 
       <div className="w-full px-4 md:px-12 pt-12 pb-2 shrink-0 max-w-[1360px] mx-auto">
-        <button onClick={() => router.back()} aria-label="Voltar" className="h-11 w-11 rounded-[14px] bg-[#1A1A1C] border border-white/[0.07] flex items-center justify-center text-white hover:bg-[#262628] active:scale-95 transition-all mb-6">
+        <button onClick={goBack} aria-label="Voltar" className="h-11 w-11 rounded-[14px] bg-[#1A1A1C] border border-white/[0.07] flex items-center justify-center text-white hover:bg-[#262628] active:scale-95 transition-all mb-6">
           <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24">
             <polyline points="15 18 9 12 15 6" />
           </svg>

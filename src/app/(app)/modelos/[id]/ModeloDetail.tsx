@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useGeneration } from "@/components/GenerationProvider";
 import ConfirmModal from "@/components/ConfirmModal";
+import { useSmartBack } from "@/components/SmartBack";
 
 interface Template { id: string; image_url: string; name: string; }
 interface Post { id: string; type: string; title: string; cover: string | null; }
@@ -26,6 +27,7 @@ const typeBadge: Record<string, string> = {
 
 export default function ModeloDetail({ template, posts }: { template: Template; posts: Post[] }) {
   const router = useRouter();
+  const goBack = useSmartBack("/modelos");
   const { generate } = useGeneration();
   const [genOpen, setGenOpen] = useState(false);
   const [format, setFormat] = useState<Format>("post");
@@ -85,9 +87,9 @@ export default function ModeloDetail({ template, posts }: { template: Template; 
 
           {/* nav */}
           <div className="flex items-center justify-between mb-8">
-            <Link href="/modelos" aria-label="Voltar" className="h-11 w-11 rounded-[13px] bg-[#161618] border border-white/[0.07] grid place-items-center hover:bg-[#262628] transition-colors">
+            <button onClick={goBack} aria-label="Voltar" className="h-11 w-11 rounded-[13px] bg-[#161618] border border-white/[0.07] grid place-items-center hover:bg-[#262628] transition-colors">
               <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
-            </Link>
+            </button>
             <button onClick={() => setConfirmDel(true)} disabled={deleting} className="text-sm font-semibold text-[#636366] hover:text-[#ff7a7a] transition-colors flex items-center gap-1.5 disabled:opacity-50">
               <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
               deletar

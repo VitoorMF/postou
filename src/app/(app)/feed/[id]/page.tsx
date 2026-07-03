@@ -2,6 +2,7 @@
 
 import { use, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSmartBack } from "@/components/SmartBack";
 import { createClient } from "@/lib/supabase";
 import NoAccess from "@/components/NoAccess";
 import ConfirmModal from "@/components/ConfirmModal";
@@ -45,6 +46,7 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
   const [openImage, setOpenImage] = useState<number | null>(null);
   const [deletingImage, setDeletingImage] = useState(false);
   const router = useRouter();
+  const goBack = useSmartBack("/feed");
 
   // ESC fecha o modal
   useEffect(() => {
@@ -82,7 +84,8 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    const path = `${user.id}/${Date.now()}-${file.name}`;
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${user.id}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
     const { error } = await supabase.storage.from("updates").upload(path, file);
     if (error) return;
 
@@ -135,7 +138,7 @@ export default function UpdatePage({ params }: { params: Promise<{ id: string }>
 
           {/* nav row */}
           <div className="flex items-center justify-between mb-7">
-            <button onClick={() => router.back()} aria-label="Voltar" className="h-11 w-11 rounded-[13px] bg-[#161618] border border-white/[0.07] flex items-center justify-center text-white hover:bg-[#262628] active:scale-95 transition-all">
+            <button onClick={goBack} aria-label="Voltar" className="h-11 w-11 rounded-[13px] bg-[#161618] border border-white/[0.07] flex items-center justify-center text-white hover:bg-[#262628] active:scale-95 transition-all">
               <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6" /></svg>
             </button>
 
