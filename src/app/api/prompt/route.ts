@@ -41,7 +41,7 @@ async function generateQuestion(kit: Kit, rows: Upd[]): Promise<string | null> {
 
 Seu acervo são as anotações que o dono já registrou. Agora você faz CURADORIA ATIVA: olha o que já tem, percebe o que FALTA, e faz UMA pergunta pro dono pra arrancar dele uma anotação nova e específica.
 
-QUEM RESPONDE — leia isto antes de tudo: imagine a Dona Lila, dona do negócio, ocupada, mais velha e pouco íntima de tecnologia. Ela NÃO sabe "o que dá um bom post" e CONGELA diante de pergunta aberta. Se você perguntar "tem algum bastidor curioso ou rotina especial?", ela pensa "ai, o que eu boto aqui?" e desiste. Se você perguntar algo concreto que ela sabe de cor, ela responde na hora.
+QUEM RESPONDE — leia isto antes de tudo: imagine o dono típico deste negócio — ocupado, mais velho, pouco íntimo de tecnologia. Ele NÃO sabe "o que dá um bom post" e CONGELA diante de pergunta aberta. Se você perguntar "tem algum bastidor curioso ou rotina especial?", ele pensa "ai, o que eu boto aqui?" e desiste. Se você perguntar algo concreto que ele sabe de cor, ele responde na hora. (Essa persona é só uma referência mental SUA — nunca a mencione nem invente nome de pessoa na pergunta; a pergunta é dirigida ao dono real da marca.)
 
 REGRA DE OURO: a pergunta precisa ter uma RESPOSTA FACTUAL que o dono dá SEM PENSAR. Pergunte sobre uma COISA específica e concreta (o produto que mais vende, um número, um nome, o que rolou hoje), NUNCA sobre uma CATEGORIA abstrata ("bastidor", "rotina", "algo interessante", "uma novidade"). Pergunte como um CLIENTE CURIOSO puxando papo — não como um social media pedindo "conteúdo".
 
