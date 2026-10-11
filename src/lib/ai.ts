@@ -1,12 +1,11 @@
-import OpenAI from "openai";
+import { openai } from "@/lib/openai";
 import type { Category } from "@/lib/categories";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const categories: Category[] = ["novidade", "conquista", "evento", "bastidor", "dica", "parceria", "geral"];
 
 export async function classify(content: string): Promise<Category> {
-  const res = await openai.chat.completions.create({
+  const res = await openai().chat.completions.create({
     model: "gpt-4o-mini",
     temperature: 0,
     messages: [
@@ -75,7 +74,7 @@ Responda APENAS em JSON, sem markdown:
 // O webhook executa a ação (anotar/avaliar/gerar) com base no intent.
 export async function whatsappAgent(message: string, history?: string): Promise<WaAgentResult> {
   try {
-    const res = await openai.chat.completions.create({
+    const res = await openai().chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.5, // um pouco de carisma, mas controlado
       messages: [
@@ -101,7 +100,7 @@ export async function whatsappAgent(message: string, history?: string): Promise<
 }
 
 export async function generateEmbedding(text: string): Promise<number[]> {
-  const res = await openai.embeddings.create({
+  const res = await openai().embeddings.create({
     model: "text-embedding-3-small",
     input: text,
   });

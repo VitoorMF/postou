@@ -1,17 +1,16 @@
-import OpenAI from "openai";
+import { openai } from "@/lib/openai";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import type { Category } from "@/lib/categories";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 const categories: Category[] = ["novidade", "conquista", "evento", "bastidor", "dica", "parceria", "geral"];
 
 type Nature = "temporal" | "evergreen";
 
 async function classify(content: string): Promise<{ category: Category; nature: Nature }> {
-  const res = await openai.chat.completions.create({
+  const res = await openai().chat.completions.create({
     model: "gpt-4o-mini",
     temperature: 0,
     messages: [
@@ -46,7 +45,7 @@ async function classify(content: string): Promise<{ category: Category; nature: 
 }
 
 async function generateEmbedding(text: string): Promise<number[]> {
-  const res = await openai.embeddings.create({
+  const res = await openai().embeddings.create({
     model: "text-embedding-3-small",
     input: text,
   });
@@ -58,7 +57,7 @@ async function generateEmbedding(text: string): Promise<number[]> {
 // num FATO declarativo e autossuficiente — vira matéria-prima limpa pro pipeline.
 async function synthesizeFact(question: string, answer: string): Promise<string | null> {
   try {
-    const res = await openai.chat.completions.create({
+    const res = await openai().chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.3,
       messages: [

@@ -68,6 +68,10 @@ const KEYFRAMES = `
 // enquadra o PNG 3D dentro de um tile/círculo sem cortar a cabeça
 const portrait = "w-full h-full object-cover object-top scale-125 translate-y-1";
 
+// extensão do arquivo; sem ponto no nome, cai no subtipo do MIME (image/png → png)
+const fileExt = (file: File) =>
+  file.name.includes(".") ? file.name.split(".").pop()!.toLowerCase() : (file.type.split("/")[1] || "bin");
+
 export default function Onboarding() {
   const router = useRouter();
   const [step, setStep] = useState(0);
@@ -92,8 +96,12 @@ export default function Onboarding() {
 
   useEffect(() => {
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (!user) router.push("/");
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) { router.push("/"); return; }
+      // quem já tem marca não refaz o onboarding — o upsert do finish() sobrescreveria
+      // logo, fotos, dias e horário com os defaults
+      const { data: kit } = await supabase.from("brand_kits").select("id").eq("user_id", user.id).maybeSingle();
+      if (kit) router.replace("/hoje");
     });
   }, [router]);
 
@@ -113,47 +121,71 @@ export default function Onboarding() {
     const file = e.target.files?.[0];
     if (!file) return;
     setSaving(true);
+    setErr("");
 
-    const objectUrl = URL.createObjectURL(file);
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.src = objectUrl;
-    await new Promise((res) => (img.onload = res));
-    const raw = getPaletteSync(img, { colorCount: 5 });
-    const hexPalette = raw?.map((c: { hex: () => string }) => c.hex()) ?? [];
-    URL.revokeObjectURL(objectUrl);
+    try {
+      // paleta é bônus: se o navegador não abrir a imagem (HEIC, SVG sem tamanho…), segue sem ela
+      let hexPalette: string[] = [];
+      const objectUrl = URL.createObjectURL(file);
+      try {
+        const img = new Image();
+        img.crossOrigin = "anonymous";
+        img.src = objectUrl;
+        await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+        const raw = getPaletteSync(img, { colorCount: 5 });
+        hexPalette = raw?.map((c: { hex: () => string }) => c.hex()) ?? [];
+      } catch {
+        hexPalette = [];
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
 
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setSaving(false); return; }
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const path = `${user.id}/logo-${Date.now()}.${file.name.split(".").pop()}`;
-    const { error } = await supabase.storage.from("brand-kits").upload(path, file, { upsert: true });
-    if (!error) {
+      const path = `${user.id}/logo-${Date.now()}.${fileExt(file)}`;
+      const { error } = await supabase.storage.from("brand-kits").upload(path, file, { upsert: true });
+      if (error) {
+        setErr("Não deu pra enviar o logo. Tenta de novo?");
+        return;
+      }
       const { data: urlData } = supabase.storage.from("brand-kits").getPublicUrl(path);
       setLogoUrl(urlData.publicUrl);
       setPalette(hexPalette);
+    } catch {
+      setErr("Não deu pra enviar o logo. Tenta de novo?");
+    } finally {
+      setSaving(false);
+      e.target.value = "";
     }
-    setSaving(false);
   }
 
   async function handlePersonaUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file || personas.length >= 6) return;
     setSaving(true);
+    setErr("");
 
-    const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) { setSaving(false); return; }
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const path = `${user.id}/personas/persona-${Date.now()}.${file.name.split(".").pop()}`;
-    const { error } = await supabase.storage.from("brand-kits").upload(path, file, { upsert: true });
-    if (!error) {
+      const path = `${user.id}/personas/persona-${Date.now()}.${fileExt(file)}`;
+      const { error } = await supabase.storage.from("brand-kits").upload(path, file, { upsert: true });
+      if (error) {
+        setErr("Não deu pra enviar a foto. Tenta de novo?");
+        return;
+      }
       const { data: urlData } = supabase.storage.from("brand-kits").getPublicUrl(path);
       setPersonas((prev) => [...prev, urlData.publicUrl]);
+    } catch {
+      setErr("Não deu pra enviar a foto. Tenta de novo?");
+    } finally {
+      setSaving(false);
+      e.target.value = "";
     }
-    setSaving(false);
-    e.target.value = "";
   }
 
   function removePersona(index: number) {
@@ -206,7 +238,7 @@ export default function Onboarding() {
       : { background: "#17161c", color: "#c7c6cf", borderColor: "rgba(255,255,255,0.07)", boxShadow: "none" };
 
   return (
-    <div className="h-screen overflow-hidden bg-[#0e0d12] text-[#f4f3f7] font-sans flex flex-col md:flex-row">
+    <div className="h-dvh overflow-hidden bg-[#0e0d12] text-[#f4f3f7] font-sans flex flex-col md:flex-row">
       <style>{KEYFRAMES}</style>
 
       {/* Painel esquerdo — branding (só desktop) */}
@@ -223,7 +255,7 @@ export default function Onboarding() {
       </div>
 
       {/* Painel direito — fluxo */}
-      <div className="flex-1 flex flex-col h-screen max-w-lg w-full mx-auto relative">
+      <div className="flex-1 flex flex-col h-dvh max-w-lg w-full mx-auto relative">
 
         {/* ===== INTRO ===== */}
         {step === 0 && (

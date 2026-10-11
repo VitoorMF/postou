@@ -1,4 +1,4 @@
-import OpenAI from "openai";
+import { openai } from "@/lib/openai";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
@@ -10,7 +10,6 @@ import { createAdminClient } from "@/lib/supabase-admin";
 
 export const dynamic = "force-dynamic";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const STALE_MS = 24 * 60 * 60 * 1000;
 
 // Cold-start / fallback: marca nova (sem updates) ou LLM falhou → pergunta curada.
@@ -72,7 +71,7 @@ ${recent}
 Última pergunta feita (NÃO repita): ${kit.suggested_prompt ?? "nenhuma"}`;
 
   try {
-    const res = await openai.chat.completions.create({
+    const res = await openai().chat.completions.create({
       // gpt-4.1 (mesmo modelo da copy): a pergunta é o "gancho" da feature, vale a
       // qualidade. Frequência baixíssima (1x/24h por marca + 1 por resposta) → custo irrelevante.
       model: "gpt-4.1",

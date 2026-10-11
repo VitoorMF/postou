@@ -1,10 +1,9 @@
-import OpenAI from "openai";
+import { openai } from "@/lib/openai";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { toneGuide } from "@/lib/tone";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // Regenera SÓ a legenda + CTA (texto, barato). Mantém a imagem/título.
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -66,7 +65,7 @@ Responda APENAS em JSON, sem markdown: {"caption":"gancho\\n\\ndesenvolvimento\\
   let caption = "";
   let cta: string | null = null;
   try {
-    const res = await openai.chat.completions.create({
+    const res = await openai().chat.completions.create({
       model: "gpt-4o-mini",
       temperature: 0.9,
       messages: [{ role: "user", content: prompt }],
