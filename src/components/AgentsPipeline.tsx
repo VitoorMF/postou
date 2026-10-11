@@ -137,10 +137,9 @@ export default function AgentsPipeline() {
             <div className="ap-result-body">
               <span className="ap-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12" /></svg>Entregue</span>
               <h3>E aí, está pronto.</h3>
-              <p>Quando todas as imagens ficam prontas, o post aparece no app — e, se você quiser, chega direto no seu WhatsApp. É só revisar e publicar.</p>
+              <p>Quando todas as imagens ficam prontas, o post aparece no app. É só revisar e publicar.</p>
               <div className="ap-chips">
                 <span className="ap-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="7" y="2" width="10" height="20" rx="2.5" /><line x1="11" y1="18" x2="13" y2="18" /></svg>No app</span>
-                <span className="ap-chip ap-chip--wa"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L3 21l2-5.5A8.5 8.5 0 1 1 21 11.5z" /></svg>No WhatsApp</span>
                 <span className="ap-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2.5" /><circle cx="8.5" cy="8.5" r="1.6" /><path d="m21 15-5-5L5 21" /></svg>Imagem + legenda</span>
               </div>
             </div>
@@ -268,7 +267,6 @@ export default function AgentsPipeline() {
         .ap-chips { display: flex; gap: 10px; flex-wrap: wrap; }
         .ap-chip { display: inline-flex; align-items: center; gap: 8px; background: #16161a; border: 1px solid rgba(255,255,255,0.08); color: #c4c4cc; font-size: 13.5px; font-weight: 600; padding: 9px 14px; border-radius: 12px; }
         .ap-chip svg { width: 16px; height: 16px; color: #7da2ff; }
-        .ap-chip--wa svg { color: #4fe08f; }
 
         @media (prefers-reduced-motion: reduce) { .ap-img, .ap-phone { animation: none; } }
 

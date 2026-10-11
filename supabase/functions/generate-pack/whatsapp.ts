@@ -1,6 +1,10 @@
 // Entrega do pack via WhatsApp (Z-API). Manda duas mensagens: a legenda LIMPA
 // (pronta pra copiar e colar no Instagram) e, separada, o link da página do pack.
 
+// Integração desligada (custo da Z-API). Espelha WHATSAPP_ENABLED de src/lib/features.ts —
+// a edge function não importa do app, então a flag é duplicada aqui.
+const WHATSAPP_ENABLED = false;
+
 function normalizePhone(input: string): string {
   const digits = input.replace(/\D/g, "");
   if (digits.startsWith("55")) return digits;
@@ -13,6 +17,7 @@ export async function sendWhatsAppPack(
   imageUrl: string | null,
   packId: string,
 ) {
+  if (!WHATSAPP_ENABLED) return;
   const instanceId = Deno.env.get("Z_API_INSTANCE_ID");
   const token = Deno.env.get("Z_API_TOKEN");
   const clientToken = Deno.env.get("Z_API_CLIENT_TOKEN");

@@ -9,7 +9,7 @@ const FAQ_DATA: Record<Cat, { label: string; items: [string, string][] }> = {
     label: "Geral",
     items: [
       ["Preciso saber design ou escrever bem?", "Não. O Postou cuida do texto e da arte — você só dá o tema (ou nem isso). A IA escreve a legenda, monta os slides e aplica a sua identidade visual. Se quiser ajustar, é só editar antes de publicar."],
-      ["O Postou posta sozinho no meu Instagram?", "O Postou gera o conteúdo pronto e entrega pra você (no app e no WhatsApp). A publicação fica no seu controle — você revisa e posta com um toque, ou agenda. Você nunca perde o controle do que vai pro ar."],
+      ["O Postou posta sozinho no meu Instagram?", "O Postou gera o conteúdo pronto e entrega pra você no app. A publicação fica no seu controle — você revisa e posta com um toque, ou agenda. Você nunca perde o controle do que vai pro ar."],
       ["Funciona para o meu tipo de negócio?", "Sim. O Postou foi pensado pra marcas e criadores brasileiros de dezenas de nichos — do agro à estética, de consultoria a food. Ele aprende o seu tom a partir do seu brand kit e das novidades que você manda."],
       ["Em quanto tempo recebo meu primeiro post?", "Em segundos. Assim que você termina o onboarding, o Postou já prepara o primeiro conteúdo. Depois, ele gera automaticamente nos dias e horário que você escolher."],
     ],

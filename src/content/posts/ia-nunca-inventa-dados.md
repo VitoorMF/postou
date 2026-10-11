@@ -17,7 +17,7 @@ Conteúdo de marca com um telefone errado ou uma promoção inventada não é s�
 Se você **quer** um contato ou dado no post, coloque no lugar certo:
 
 - **Dados da marca** → no **[Brand Kit](https://postou.app/settings/brand-kit)** (nome, sobre a marca).
-- **Algo específico daquele post** → escreva no **tema** da geração manual, ou conte como **novidade** pelo WhatsApp.
+- **Algo específico daquele post** → escreva no **tema** da geração manual, ou conte como **novidade** no app.
 
 ## E o rodapé dos carrosséis?
 

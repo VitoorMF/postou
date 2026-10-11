@@ -10,7 +10,7 @@ Toda a rotina automática do Postou se ajusta em **[Configurar](https://postou.a
 
 ## Horário de entrega
 
-Escolha a hora em que o conteúdo do dia fica pronto e cai no seu WhatsApp. Pense em quando você costuma ter um tempinho pra revisar e publicar — não precisa ser a hora exata do post.
+Escolha a hora em que o conteúdo do dia fica pronto no app. Pense em quando você costuma ter um tempinho pra revisar e publicar — não precisa ser a hora exata do post.
 
 ## Dias da semana
 

@@ -187,10 +187,6 @@ export default function Settings() {
                 href: "/settings/plans", label: "Planos", sub: PLAN_LABELS[plan] ?? "Plano Free",
                 icon: <svg width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" viewBox="0 0 24 24"><path d="M3 7h18l-1.5 12.5a2 2 0 0 1-2 1.5H6.5a2 2 0 0 1-2-1.5z" /><path d="M8 7V5a4 4 0 0 1 8 0v2" /></svg>,
               },
-              {
-                href: "/settings/whatsapp", label: "WhatsApp", sub: "Configurações do WhatsApp",
-                icon: <svg width="22" height="22" fill="currentColor" viewBox="0 0 512 512"><path d="M317.12 285.93c-9.69 3.96-15.88 19.13-22.16 26.88-3.22 3.97-7.06 4.59-12.01 2.6-36.37-14.49-64.25-38.76-84.32-72.23-3.4-5.19-2.79-9.29 1.31-14.11 6.06-7.14 13.68-15.25 15.32-24.87 3.64-21.28-24.18-87.29-60.92-57.38C48.62 232.97 330.7 461.46 381.61 337.88c14.4-35.03-48.43-58.53-64.49-51.95zM256 467.28c-37.39 0-74.18-9.94-106.39-28.76-5.17-3.03-11.42-3.83-17.2-2.26l-69.99 19.21 24.38-53.71a22.34 22.34 0 0 0-2.22-22.32C58.5 343.29 44.71 300.61 44.71 256c0-116.51 94.78-211.29 211.29-211.29S467.28 139.49 467.28 256c0 116.5-94.78 211.28-211.28 211.28zM256 0C114.84 0 0 114.84 0 256c0 49.66 14.1 97.35 40.89 138.74L2 480.39a22.37 22.37 0 0 0 3.34 23.76A22.403 22.403 0 0 0 22.36 512c14.42 0 93.05-24.71 113.06-30.2C172.41 501.59 213.9 512 256 512c141.15 0 256-114.85 256-256C512 114.84 397.15 0 256 0z" /></svg>,
-              },
             ].map(({ href, label, sub, icon }) => (
               <Link key={href} href={href} className="flex items-center gap-4 bg-[#161618] border border-white/[0.07] rounded-[16px] md:rounded-[18px] p-4 md:px-6 md:py-5 hover:border-white/[0.12] hover:bg-[#1A1A1C] transition-colors">
                 <span className="w-[42px] h-[42px] md:w-[46px] md:h-[46px] rounded-[12px] md:rounded-[13px] bg-[#202022] border border-white/[0.12] flex items-center justify-center text-[#8A8A8E] shrink-0">{icon}</span>

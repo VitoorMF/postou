@@ -14,7 +14,7 @@ Dentro da sua cota, você pode **regenerar** quantas vezes quiser até ficar do 
 
 ## Avalie com 👍 / 👎
 
-Cada post tem os botões de **gostei / não gostei** (no app ou pelo WhatsApp, mandando *"gostei"*). Isso não é enfeite: a avaliação **ensina o modelo** a acertar mais no seu gosto com o tempo. Quanto mais você avalia, mais a IA afina.
+Cada post tem os botões de **gostei / não gostei** no app. Isso não é enfeite: a avaliação **ensina o modelo** a acertar mais no seu gosto com o tempo. Quanto mais você avalia, mais a IA afina.
 
 ## Compartilhar
 

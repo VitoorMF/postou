@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
+import { WHATSAPP_ENABLED } from "@/lib/features";
 import { createClient } from "@/lib/supabase-server";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { sendText, normalizePhone } from "@/lib/zapi";
 
 export async function POST(request: Request) {
+  if (!WHATSAPP_ENABLED) return NextResponse.json({ error: "WhatsApp desativado" }, { status: 410 });
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });

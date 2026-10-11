@@ -47,7 +47,6 @@ export const CATEGORIES: { slug: string; label: string; desc: string }[] = [
   { slug: "primeiros-passos", label: "Primeiros passos", desc: "Configure sua marca e gere o primeiro post." },
   { slug: "geracao", label: "Geração de conteúdo", desc: "Posts, stories e carrosséis no automático." },
   { slug: "marca", label: "Sua marca", desc: "Brand kit, tom de voz, paleta e personas." },
-  { slug: "whatsapp", label: "WhatsApp & app", desc: "Entrega no WhatsApp e o assistente." },
   { slug: "planos", label: "Planos & cobrança", desc: "Assinatura, upgrade, reembolso e limites." },
 ];
 

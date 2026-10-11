@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { WHATSAPP_ENABLED } from "@/lib/features";
 import { createAdminClient } from "@/lib/supabase-admin";
 import { whatsappAgent, classify, generateEmbedding } from "@/lib/ai";
 import { sendText, sendButton, normalizePhone } from "@/lib/zapi";
@@ -39,6 +40,7 @@ function fireGeneration(brandKitId: string, theme: string, format: Format) {
 
 // Z-API envia POST aqui quando chega uma mensagem nova no WhatsApp
 export async function POST(request: Request) {
+  if (!WHATSAPP_ENABLED) return NextResponse.json({ error: "WhatsApp desativado" }, { status: 410 });
   // ─── Segurança: valida o z-api-token que a Z-API envia no header ───
   // (não é o "Client-Token"/Token de Segurança da conta — confirmado por log que a
   // Z-API manda, sim, o token da instância no header "z-api-token" em todo webhook).

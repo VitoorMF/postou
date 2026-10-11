@@ -6,13 +6,13 @@ date: "2026-06-22"
 category: "primeiros-passos"
 ---
 
-O Postou é uma IA que aprende a sua marca e **gera conteúdo pronto pro Instagram** — posts, stories e carrosséis — entregando no app e no seu WhatsApp, prontos pra publicar.
+O Postou é uma IA que aprende a sua marca e **gera conteúdo pronto pro Instagram** — posts, stories e carrosséis — entregando no app, prontos pra publicar.
 
 ## O ciclo, em 4 passos
 
 1. **Você monta seu [Brand Kit](https://postou.app/settings/brand-kit)** uma vez — logo, cores, tom de voz e quem é a sua marca.
 2. **Escolhe os dias e o horário** em [Configurar](https://postou.app/settings). A partir daí o Postou gera sozinho.
-3. **Recebe o conteúdo pronto** no app e no WhatsApp, com a legenda já escrita.
+3. **Recebe o conteúdo pronto** no app, com a legenda já escrita.
 4. **Você revisa e publica** — com um toque, no seu tempo.
 
 ## Automático, mas no seu controle

@@ -10,7 +10,7 @@ O [Brand Kit](https://postou.app/settings/brand-kit) é o ponto de partida. Mas 
 
 ## De onde vem o aprendizado
 
-- **As novidades que você manda** — pelo app ou pelo WhatsApp. Cada fato do negócio vira contexto: o que você faz, seus marcos, seu jeito.
+- **As novidades que você manda** — pelo app. Cada fato do negócio vira contexto: o que você faz, seus marcos, seu jeito.
 - **Suas avaliações 👍 / 👎** — cada post que você curte ou rejeita ensina o modelo o que combina (e o que não combina) com você.
 
 ## A memória de marca

@@ -19,7 +19,6 @@ const CAT_ICONS: Record<string, ReactNode> = {
   "primeiros-passos": (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13 2 4.5 13.5H11l-1 8.5 8.5-11.5H12l1-8.5z" /></svg>),
   geracao: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="2" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="2" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2" /></svg>),
   marca: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="13.5" cy="6.5" r="1.4" fill="currentColor" stroke="none" /><circle cx="17" cy="11" r="1.4" fill="currentColor" stroke="none" /><circle cx="8.5" cy="7" r="1.4" fill="currentColor" stroke="none" /><path d="M12 2a10 10 0 0 0 0 20c1.1 0 2-.9 2-2 0-.5-.2-1-.6-1.4-.3-.4-.6-.9-.6-1.4a2 2 0 0 1 2-2H17a5 5 0 0 0 5-5c0-4.4-4.5-8-10-8z" /></svg>),
-  whatsapp: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-8.5 8.5 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8A8.5 8.5 0 0 1 12.5 3a8.5 8.5 0 0 1 8.5 8.5z" /></svg>),
   planos: (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h18l-1.5 12.5a2 2 0 0 1-2 1.5H6.5a2 2 0 0 1-2-1.5z" /><path d="M8 7V5a4 4 0 0 1 8 0v2" /></svg>),
 };
 
@@ -63,7 +62,7 @@ export default function Landing() {
             <div className="hero-load">
 
               <h1>Sua empresa <span className="hl">postando</span> todos os dias.</h1>
-              <p className="hero-sub">O Postou aprende sobre sua marca, cria os posts e entrega prontos no seu <b>WhatsApp</b>. Você só publica.</p>
+              <p className="hero-sub">O Postou aprende sobre sua marca, cria os posts e entrega prontos pra você. Você só publica.</p>
               <div className="hero-ctas">
                 <SignInButton mode="signup" className="btn btn-primary btn-lg">Criar meu primeiro post grátis</SignInButton>
                 <DemoTrigger className="btn btn-ghost btn-lg">
@@ -141,10 +140,10 @@ export default function Landing() {
               </div>
               <div className="feature">
                 <div className="feat-icon">
-                  <svg viewBox="0 0 512 512" fill="currentColor"><path d="M317.12 285.93c-9.69 3.96-15.88 19.13-22.16 26.88-3.22 3.97-7.06 4.59-12.01 2.6-36.37-14.49-64.25-38.76-84.32-72.23-3.4-5.19-2.79-9.29 1.31-14.11 6.06-7.14 13.68-15.25 15.32-24.87 3.64-21.28-24.18-87.29-60.92-57.38C48.62 232.97 330.7 461.46 381.61 337.88c14.4-35.03-48.43-58.53-64.49-51.95zM256 467.28c-37.39 0-74.18-9.94-106.39-28.76-5.17-3.03-11.42-3.83-17.2-2.26l-69.99 19.21 24.38-53.71a22.34 22.34 0 0 0-2.22-22.32C58.5 343.29 44.71 300.61 44.71 256c0-116.51 94.78-211.29 211.29-211.29S467.28 139.49 467.28 256c0 116.5-94.78 211.28-211.28 211.28zM256 0C114.84 0 0 114.84 0 256c0 49.66 14.1 97.35 40.89 138.74L2 480.39a22.37 22.37 0 0 0 3.34 23.76A22.403 22.403 0 0 0 22.36 512c14.42 0 93.05-24.71 113.06-30.2C172.41 501.59 213.9 512 256 512c141.15 0 256-114.85 256-256C512 114.84 397.15 0 256 0z" /></svg>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="7" y="2" width="10" height="20" rx="2.5" /><line x1="11" y1="18" x2="13" y2="18" /></svg>
                 </div>
-                <h3>Chega no seu WhatsApp</h3>
-                <p>O post pronto — imagem e legenda — chega todo dia no seu WhatsApp. É só publicar.</p>
+                <h3>Pronto no app</h3>
+                <p>O post pronto — imagem e legenda — fica esperando por você no app. É só baixar e publicar.</p>
               </div>
             </div>
           </div>
@@ -168,7 +167,6 @@ export default function Landing() {
                 <ul>
                   <li>1 post automático por semana</li>
                   <li>1 post manual por semana</li>
-                  <li>Entrega no WhatsApp</li>
                 </ul>
                 <SignInButton mode="signup" className="btn btn-ghost">Criar conta grátis</SignInButton>
               </div>
