@@ -69,7 +69,3 @@ src/
 supabase/
 └── functions/          # Edge Functions Deno (generate-pack, cron-dispatch)
 ```
-
-## Status
-
-🚧 Em desenvolvimento — preparando lançamento beta.
